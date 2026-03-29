@@ -26,6 +26,15 @@
             border-color: #10b981 !important;
             outline: none;
         }
+        /* Custom file input styling */
+        .file-input-label {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-input-label:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
     </style>
 </head>
 <body class="min-h-screen py-10 px-4">
@@ -35,7 +44,7 @@
                 <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
             <h1 class="text-4xl font-black tracking-tight text-white uppercase">Generador de Promociones <span class="text-green-500">Expert</span></h1>
-            <p class="text-slate-400 mt-2 max-w-xl">Configura los puntos clave de tu software y obtén un archivo HTML 9:16 con estética premium y animaciones de alta fidelidad.</p>
+            <p class="text-slate-400 mt-2 max-w-xl">Configura los puntos clave de tu software y obtén un archivo HTML 9:16 con estética premium, soporte para video/fotos y animaciones de alta fidelidad.</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -69,18 +78,18 @@
             <!-- Panel de Acción -->
             <div class="lg:col-span-4 sticky top-8">
                 <div class="glass-card p-6 rounded-3xl flex flex-col items-center">
-                    <div class="w-full aspect-[9/16] bg-black border-4 border-slate-800 rounded-[2rem] overflow-hidden relative shadow-2xl mb-6">
+                    <div class="w-full aspect-[9/16] bg-black border-4 border-slate-800 rounded-[2rem] overflow-hidden relative shadow-2xl mb-6 flex items-center justify-center">
                         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center opacity-40">
                             <svg class="w-12 h-12 text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
-                            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600">Previsualización de Estilo (9:16)</p>
+                            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 px-4">Previsualización de Estilo Activa</p>
                         </div>
                     </div>
                     
-                    <button onclick="downloadPromo()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-green-900/40 transition-all active:scale-95 uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                    <button onclick="downloadPromo()" id="btn-download" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-green-900/40 transition-all active:scale-95 uppercase tracking-widest text-sm flex items-center justify-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2.5"/></svg>
                         Descargar Promo HTML
                     </button>
-                    <p class="text-[10px] text-slate-500 mt-4 text-center">El archivo descargado será independiente y podrá grabarse con cualquier capturador.</p>
+                    <p class="text-[10px] text-slate-500 mt-4 text-center">Nota: Los archivos multimedia grandes aumentarán el tamaño del archivo final.</p>
                 </div>
             </div>
         </div>
@@ -111,41 +120,87 @@
                             <input type="text" id="title-${i}" placeholder="Ej: Control maestro" class="w-full p-3 rounded-xl text-sm">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Icono Representativo</label>
+                            <label class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Multimedia (Imagen o Video)</label>
+                            <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-700 rounded-xl file-input-label text-slate-500 hover:text-green-500">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <p class="text-[10px] uppercase font-bold" id="label-text-${i}">Subir Archivo</p>
+                                </div>
+                                <input type="file" id="media-${i}" accept="image/*,video/*" class="hidden" onchange="updateFileLabel(this, ${i})">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                         <div class="space-y-1">
+                            <label class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Icono (Opcional)</label>
                             <select id="icon-${i}" class="w-full p-3 rounded-xl text-sm">
+                                <option value="">Sin icono (solo multimedia)</option>
                                 ${ICONS.map(ic => `<option value="${ic.path}">${ic.name}</option>`).join('')}
                             </select>
                         </div>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Descripción del beneficio</label>
-                        <textarea id="desc-${i}" placeholder="Explica por qué es increíble..." class="w-full p-3 rounded-xl text-sm h-[108px] resize-none"></textarea>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Descripción</label>
+                            <textarea id="desc-${i}" placeholder="Explica el beneficio..." class="w-full p-3 rounded-xl text-sm h-[80px] resize-none"></textarea>
+                        </div>
                     </div>
                 </div>
             `;
             editor.appendChild(slideDiv);
         }
 
-        function downloadPromo() {
-            const slidesData = [];
-            for (let i = 1; i <= 5; i++) {
-                const title = document.getElementById(`title-${i}`).value;
-                const desc = document.getElementById(`desc-${i}`).value;
-                const icon = document.getElementById(`icon-${i}`).value;
-                if (title && desc) {
-                    slidesData.push({ title, desc, icon });
+        function updateFileLabel(input, id) {
+            const labelText = document.getElementById(`label-text-${id}`);
+            if (input.files && input.files[0]) {
+                labelText.innerText = input.files[0].name.substring(0, 15) + '...';
+                labelText.classList.add('text-green-500');
+            }
+        }
+
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function downloadPromo() {
+            const btn = document.getElementById('btn-download');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">...</svg> Procesando...';
+            btn.disabled = true;
+
+            try {
+                const slidesData = [];
+                for (let i = 1; i <= 5; i++) {
+                    const title = document.getElementById(`title-${i}`).value;
+                    const desc = document.getElementById(`desc-${i}`).value;
+                    const icon = document.getElementById(`icon-${i}`).value;
+                    const mediaFile = document.getElementById(`media-${i}`).files[0];
+                    
+                    if (title && desc) {
+                        let mediaUrl = '';
+                        let mediaType = '';
+                        if (mediaFile) {
+                            mediaUrl = await fileToBase64(mediaFile);
+                            mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
+                        }
+                        slidesData.push({ title, desc, icon, mediaUrl, mediaType });
+                    }
                 }
-            }
 
-            if (slidesData.length === 0) {
-                alert("Por favor, ingresa al menos un punto de interés.");
-                return;
-            }
+                if (slidesData.length === 0) {
+                    alert("Por favor, ingresa al menos un punto de interés.");
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    return;
+                }
 
-            const ctaUrl = document.getElementById('cta-url').value;
-            const ctaText = document.getElementById('cta-text').value;
+                const ctaUrl = document.getElementById('cta-url').value;
+                const ctaText = document.getElementById('cta-text').value;
 
-            const template = `
+                const template = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -157,14 +212,17 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #020617; color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .canvas { width: 360px; height: 640px; background: #000; position: relative; overflow: hidden; border: 8px solid #1e293b; border-radius: 40px; }
-        .slide { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 40px 20px; opacity: 0; transform: translateY(30px); transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+        .slide { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 40px 20px; opacity: 0; transform: translateY(30px); transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 10; }
         .slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
-        .progress-container { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.1); display: flex; }
+        .progress-container { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.1); display: flex; z-index: 50; }
         .progress-segment { flex: 1; height: 100%; border-right: 1px solid rgba(0,0,0,0.5); position: relative; background: rgba(0,0,0,0.2); }
         .progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: #10b981; width: 0%; }
-        .tag { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: inline-block; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .tag { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: inline-block; border: 1px solid rgba(16, 185, 129, 0.3); backdrop-filter: blur(4px); }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         .float-icon { animation: float 3s ease-in-out infinite; }
+        .media-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0.4; }
+        .media-center { width: 100%; height: 220px; border-radius: 24px; object-fit: cover; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .glass-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.4), rgba(2, 6, 23, 0.9)); z-index: 2; }
     </style>
 </head>
 <body>
@@ -183,13 +241,24 @@
 
         ${slidesData.map((s, i) => `
         <div class="slide">
-            <span class="tag">Novedad 0${i+1}</span>
-            <h2 class="text-4xl font-black mb-4 leading-[1.1] tracking-tight text-white">${s.title}</h2>
-            <p class="text-slate-400 text-base leading-relaxed mb-12">${s.desc}</p>
-            <div class="flex-1 flex flex-col items-center justify-center">
-                <div class="w-40 h-40 bg-slate-900 border-2 border-slate-800 rounded-[3rem] flex items-center justify-center shadow-2xl relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent"></div>
-                    <svg class="w-20 h-20 text-blue-400 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="${s.icon}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${s.mediaUrl ? (s.mediaType === 'video' ? `<video src="${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline></video>` : `<img src="${s.mediaUrl}" class="media-bg" />`) : ''}
+            <div class="glass-overlay"></div>
+            
+            <div class="relative z-10 h-full flex flex-col">
+                <span class="tag">0${i+1}</span>
+                <h2 class="text-4xl font-black mb-4 leading-[1.1] tracking-tight text-white">${s.title}</h2>
+                <p class="text-slate-300 text-base leading-relaxed mb-8 drop-shadow-md">${s.desc}</p>
+                
+                <div class="flex-1 flex flex-col items-center justify-center">
+                    ${s.mediaUrl ? 
+                        (s.mediaType === 'video' ? 
+                            `<video src="${s.mediaUrl}" class="media-center" autoplay loop muted playsinline></video>` : 
+                            `<img src="${s.mediaUrl}" class="media-center" />`) : 
+                        `<div class="w-40 h-40 bg-slate-900/80 border-2 border-slate-700 rounded-[3rem] flex items-center justify-center shadow-2xl backdrop-blur-sm">
+                            <svg class="w-20 h-20 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="${s.icon || ICONS[0].path}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>`
+                    }
+                    ${s.icon && s.mediaUrl ? `<div class="mt-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
                 </div>
             </div>
         </div>
@@ -221,12 +290,16 @@
     <script>
         const slides = document.querySelectorAll('.slide');
         let current = 0;
-        const duration = 4000;
+        const duration = 5000;
 
         function updateSlide() {
             slides.forEach(s => s.classList.remove('active'));
             slides[current].classList.add('active');
             
+            // Reiniciar videos si existen en la slide actual
+            const videos = slides[current].querySelectorAll('video');
+            videos.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); });
+
             const fills = document.querySelectorAll('.progress-fill');
             fills.forEach((f, idx) => {
                 f.style.transition = 'none';
@@ -236,8 +309,10 @@
 
             setTimeout(() => {
                 const activeFill = document.getElementById('fill-' + current);
-                activeFill.style.transition = 'width ' + duration + 'ms linear';
-                activeFill.style.width = '100%';
+                if(activeFill) {
+                    activeFill.style.transition = 'width ' + duration + 'ms linear';
+                    activeFill.style.width = '100%';
+                }
             }, 50);
 
             current = (current + 1) % slides.length;
@@ -249,16 +324,22 @@
 </body>
 </html>`;
 
-            const blob = new Blob([template], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const fileName = `promo-neomonitor-${new Date().getTime()}.html`;
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
+                const blob = new Blob([template], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const fileName = `promo-neomonitor-expert-${new Date().getTime()}.html`;
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                alert("Error al procesar los archivos multimedia. Intenta con archivos más pequeños.");
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
 </html>
-
