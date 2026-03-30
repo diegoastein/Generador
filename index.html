@@ -60,7 +60,6 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Navegación Lateral -->
     <nav class="fixed left-0 top-0 h-full w-20 md:w-64 glass-card border-r border-slate-800 z-50 flex flex-col items-center py-8">
         <div class="mb-12 flex items-center gap-3 px-4">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
@@ -83,10 +82,8 @@
         </div>
     </nav>
 
-    <!-- Contenido Principal -->
     <main class="ml-20 md:ml-64 p-4 md:p-12">
 
-        <!-- HERRAMIENTA 1: PROMOS -->
         <section id="tool-promo" class="tool-section max-w-6xl mx-auto">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Promociones <span class="text-green-500">Expert</span></h2>
@@ -109,7 +106,6 @@
             </div>
         </section>
 
-        <!-- HERRAMIENTA 2: DEMO SYNC -->
         <section id="tool-demo" class="tool-section max-w-5xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Demos <span class="text-amber-500">Sincronizadas</span></h2>
@@ -138,7 +134,6 @@
             </div>
         </section>
 
-        <!-- HERRAMIENTA 3: EDITOR DE CASOS CLÍNICOS -->
         <section id="tool-carousel" class="tool-section max-w-6xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Editor de <span class="text-blue-500">Casos</span></h2>
@@ -146,7 +141,6 @@
             </header>
 
             <div class="grid lg:grid-cols-12 gap-8">
-                <!-- Panel de Edición -->
                 <div class="lg:col-span-5 space-y-6">
                     <div class="glass-card p-6 rounded-3xl border border-slate-800 space-y-6">
                         <div>
@@ -166,7 +160,6 @@
                             </select>
                         </div>
 
-                        <!-- Editor de Diapositiva Activa -->
                         <div id="slide-editor-container" class="hidden space-y-6 border-t border-slate-800 pt-6 fade-in">
                             <div class="flex bg-slate-900/50 rounded-lg p-1">
                                 <button onclick="setActiveSlide(0)" class="slide-tab flex-1 py-2 text-[10px] font-bold uppercase rounded active">Slide 1</button>
@@ -204,7 +197,6 @@
                     </div>
                 </div>
 
-                <!-- Galería de Resultados -->
                 <div class="lg:col-span-7 space-y-6">
                     <div id="carousel-gallery" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="col-span-full bg-slate-900/30 border-2 border-dashed border-slate-800 rounded-3xl h-64 flex flex-col items-center justify-center text-slate-600 text-center px-10">
@@ -218,7 +210,6 @@
 
     </main>
 
-    <!-- LIENZO DE RENDER (OCULTO - SIN NM) -->
     <div id="carousel-render" class="carousel-canvas medical-grid">
         <div class="absolute inset-0 p-20 flex flex-col justify-center">
             <div class="mb-8 flex items-center">
@@ -246,7 +237,6 @@
         </div>
     </div>
 
-    <!-- VIDEOS AUXILIARES -->
     <video id="v-sync-monitor" class="hidden" muted playsinline></video>
     <video id="v-sync-control" class="hidden" muted playsinline></video>
 
@@ -429,7 +419,7 @@
                     const title = document.getElementById(`p-t-${i}`).value;
                     const desc = document.getElementById(`p-d-${i}`).value;
                     const file = document.getElementById(`p-f-${i}`).files[0];
-                    if(title && desc) {
+                    if(title || desc) {
                         const mediaUrl = file ? await fileToBase64(file) : null;
                         const mediaType = file?.type.startsWith('video') ? 'video' : 'image';
                         slides.push({ title, desc, mediaUrl, mediaType });
@@ -438,7 +428,87 @@
                 const ctaT = document.getElementById('promo-cta-text').value;
                 const ctaU = document.getElementById('promo-cta-url').value;
                 
-                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">Punto 0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm leading-relaxed">\${s.desc}<\/p><\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><h2 class="text-3xl font-black mb-8">${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
+                // Construcción segmentada para evitar errores de template literals
+                const barsHtml = slides.map(() => '<div class="bar"><div class="bar-fill"></div></div>').join('');
+                const slidesHtml = slides.map((s, i) => {
+                    const mediaTag = s.mediaUrl 
+                        ? (s.mediaType === 'video' 
+                            ? `<video src="${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline></video>` 
+                            : `<img src="${s.mediaUrl}" class="media-bg">`)
+                        : '';
+                    return `
+                    <div class="slide ${i === 0 ? 'active' : ''}">
+                        ${mediaTag}
+                        <div class="overlay"></div>
+                        <div class="mt-12">
+                            <span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">Punto 0${i + 1}</span>
+                            <h2 class="text-4xl font-black mt-6 leading-tight">${s.title}</h2>
+                            <p class="text-slate-300 mt-4 text-sm leading-relaxed">${s.desc}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                const template = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>NeoMonitor Promo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}
+        .canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}
+        .slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}
+        .active{opacity:1;transform:translateY(0);pointer-events:auto}
+        .bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}
+        .bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}
+        .bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}
+        .media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}
+        .overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}
+    </style>
+</head>
+<body>
+    <div class="canvas">
+        <div class="bar-container">${barsHtml}</div>
+        ${slidesHtml}
+        <div class="slide flex flex-col items-center justify-center text-center">
+            <h2 class="text-3xl font-black mb-8">${ctaT}</h2>
+            <div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">${ctaU}</div>
+        </div>
+    </div>
+    <script>
+        const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');
+        let curr=0;
+        function show(idx){
+            slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+            fills.forEach((f,i)=>{
+                if(i<idx)f.style.width='100%';
+                if(i>idx)f.style.width='0%';
+            });
+            let start=null;
+            function anim(t){
+                if(!start)start=t;
+                const p=(t-start)/5000;
+                if(fills[idx]) fills[idx].style.width=(Math.min(p*100,100))+'%';
+                if(p<1){
+                    if(curr===idx)requestAnimationFrame(anim);
+                }else{
+                    next();
+                }
+            }
+            requestAnimationFrame(anim);
+        }
+        function next(){
+            curr++;
+            if(curr>=slides.length)curr=0;
+            show(curr);
+        }
+        show(0);
+    <\/script>
+</body>
+</html>`;
+
                 const blob = new Blob([template], {type:'text/html'});
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'promo_neomonitor.html'; a.click();
             } catch(e) { console.error(e); }
@@ -479,9 +549,6 @@
             requestAnimationFrame(renderDemoLoop);
         }
 
-        /**
-         * FUNCIÓN DE SINCRONIZACIÓN MAESTRA
-         */
         async function startSyncRecording() {
             const vMon = document.getElementById('v-sync-monitor');
             const vCtl = document.getElementById('v-sync-control');
@@ -493,11 +560,9 @@
                 return; 
             }
             
-            // FASE 1: Pausar y resetear a cero
             vMon.pause(); vCtl.pause();
             vMon.currentTime = 0; vCtl.currentTime = 0;
 
-            // FASE 2: Preparar MediaRecorder
             const stream = demoCanvas.captureStream(30);
             const recorder = new MediaRecorder(stream, { 
                 mimeType: 'video/webm',
@@ -518,20 +583,12 @@
                 vMon.pause(); vCtl.pause();
             };
 
-            // FASE 3: Disparo simultáneo
             try {
-                // Esperamos a que ambos videos estén listos para reproducirse tras el reset
-                await Promise.all([
-                    vMon.play(),
-                    vCtl.play()
-                ]);
-                
-                // Iniciamos la grabación solo cuando ambos están en movimiento
+                await Promise.all([vMon.play(), vCtl.play()]);
                 recorder.start();
                 if(dot) dot.classList.remove('hidden'); 
                 if(btn) btn.disabled = true;
 
-                // FASE 4: Temporizador de finalización basado en el video más corto
                 const duration = Math.min(vMon.duration, vCtl.duration) * 1000;
                 setTimeout(() => {
                     if(recorder.state === "recording") recorder.stop();
@@ -539,7 +596,6 @@
 
             } catch (err) {
                 console.error("Error en sincronización:", err);
-                alert("Error al intentar sincronizar. Asegúrate de que los videos sean válidos.");
                 if(btn) btn.disabled = false;
             }
         }
