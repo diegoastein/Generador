@@ -74,11 +74,11 @@
             </button>
             <button onclick="showTool('demo')" id="btn-demo" class="nav-btn w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50 text-left">
                 <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="hidden md:block font-semibold text-sm leading-none">Demos Rápidas <br><span class="text-[10px] text-amber-500 opacity-60 uppercase tracking-widest">Video Sync</span></span>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Demos Rápidas <br><span class="text-[10px] text-amber-500 opacity-60 uppercase tracking-widest">Video Sync</span></span>
             </button>
             <button onclick="showTool('carousel')" id="btn-carousel" class="nav-btn w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50 text-left">
                 <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="hidden md:block font-semibold text-sm leading-none">Casos Clínicos <br><span class="text-[10px] text-blue-500 opacity-60 uppercase tracking-widest">Post Editor 1:1</span></span>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Casos Clínicos <br><span class="text-[10px] text-blue-500 opacity-60 uppercase tracking-widest">Post Editor 1:1</span></span>
             </button>
         </div>
     </nav>
@@ -479,26 +479,69 @@
             requestAnimationFrame(renderDemoLoop);
         }
 
+        /**
+         * FUNCIÓN DE SINCRONIZACIÓN MAESTRA
+         */
         async function startSyncRecording() {
             const vMon = document.getElementById('v-sync-monitor');
             const vCtl = document.getElementById('v-sync-control');
             const btn = document.getElementById('btn-sync');
             const dot = document.getElementById('rec-dot');
-            if(!vMon?.src || !vCtl?.src) { alert("Carga ambos videos."); return; }
+            
+            if(!vMon?.src || !vCtl?.src) { 
+                alert("Por favor, carga ambos videos antes de sincronizar."); 
+                return; 
+            }
+            
+            // FASE 1: Pausar y resetear a cero
+            vMon.pause(); vCtl.pause();
             vMon.currentTime = 0; vCtl.currentTime = 0;
-            vMon.play(); vCtl.play();
+
+            // FASE 2: Preparar MediaRecorder
             const stream = demoCanvas.captureStream(30);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            const recorder = new MediaRecorder(stream, { 
+                mimeType: 'video/webm',
+                videoBitsPerSecond: 5000000 
+            });
             const chunks = [];
+            
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Sync_Demo.webm'; a.click();
-                if(dot) dot.classList.add('hidden'); if(btn) btn.disabled = false;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `NeoMonitor_Demo_${new Date().getTime()}.webm`;
+                a.click();
+                if(dot) dot.classList.add('hidden'); 
+                if(btn) btn.disabled = false;
+                vMon.pause(); vCtl.pause();
             };
-            recorder.start();
-            if(dot) dot.classList.remove('hidden'); if(btn) btn.disabled = true;
-            setTimeout(() => { recorder.stop(); vMon.pause(); vCtl.pause(); }, Math.min(vMon.duration, vCtl.duration) * 1000);
+
+            // FASE 3: Disparo simultáneo
+            try {
+                // Esperamos a que ambos videos estén listos para reproducirse tras el reset
+                await Promise.all([
+                    vMon.play(),
+                    vCtl.play()
+                ]);
+                
+                // Iniciamos la grabación solo cuando ambos están en movimiento
+                recorder.start();
+                if(dot) dot.classList.remove('hidden'); 
+                if(btn) btn.disabled = true;
+
+                // FASE 4: Temporizador de finalización basado en el video más corto
+                const duration = Math.min(vMon.duration, vCtl.duration) * 1000;
+                setTimeout(() => {
+                    if(recorder.state === "recording") recorder.stop();
+                }, duration);
+
+            } catch (err) {
+                console.error("Error en sincronización:", err);
+                alert("Error al intentar sincronizar. Asegúrate de que los videos sean válidos.");
+                if(btn) btn.disabled = false;
+            }
         }
 
         window.onload = () => {
