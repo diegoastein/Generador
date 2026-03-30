@@ -12,10 +12,11 @@
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             color: #f8fafc;
-            scroll-behavior: smooth;
+            margin: 0;
+            overflow-x: hidden;
         }
         .glass-card {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
@@ -29,136 +30,168 @@
             border: 1px solid #1e293b !important;
             color: white !important;
         }
-        input:focus, textarea:focus, select:focus {
-            border-color: #10b981 !important;
-            outline: none;
-        }
         
-        /* Estilos Mockup Studio */
+        /* Mockup Studio Perspective Styles */
         .mockup-stage { width: 800px; height: 600px; position: relative; background-color: #000; overflow: hidden; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         .bg-image { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; }
-        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; }
         .screen-overlay img { width: 100%; height: 100%; object-fit: cover; }
+        
         .scene-1 .screen-overlay { width: 280px; height: 185px; top: 258px; left: 260px; transform: perspective(1000px) rotateX(4deg) rotateY(-18deg) rotateZ(-1deg); }
         .scene-2 .screen-overlay { width: 112px; height: 242px; top: 148px; left: 344px; transform: perspective(1000px) rotateX(2deg) rotateY(15deg) rotateZ(-12deg); border-radius: 12px; }
         .scene-3 .screen-overlay { width: 320px; height: 180px; top: 150px; left: 240px; }
 
-        /* Estilos Carrusel */
+        /* Carousel Styles */
         .carousel-canvas { width: 1080px; height: 1080px; background: #020617; position: relative; overflow: hidden; display: none; }
         .medical-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; }
 
-        .file-input-label { cursor: pointer; transition: all 0.3s ease; }
-        .file-input-label:hover { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
         .thumb-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        
+        /* Video Sync Styles */
+        #demo-canvas-preview {
+            max-width: 100%;
+            height: auto;
+            background: #000;
+            border: 4px solid #1e293b;
+            border-radius: 24px;
+        }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Nav Lateral -->
+    <!-- Navigation -->
     <nav class="fixed left-0 top-0 h-full w-20 md:w-64 glass-card border-r border-slate-800 z-50 flex flex-col items-center py-8">
         <div class="mb-12 flex items-center gap-3 px-4">
             <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-black font-black shadow-lg shadow-green-500/40">NM</div>
-            <span class="hidden md:block font-black text-xl tracking-tighter">MARKETING SUITE</span>
+            <span class="hidden md:block font-black text-xl tracking-tighter uppercase">Expert Suite</span>
         </div>
 
         <div class="flex-1 w-full space-y-2 px-2">
             <button onclick="showTool('promo')" id="btn-promo" class="nav-btn active w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50">
                 <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2"/></svg>
-                <span class="hidden md:block font-semibold text-sm text-left leading-none">Generador de Promociones <br><span class="text-[10px] text-green-500 opacity-60 uppercase tracking-widest">Expert 9:16</span></span>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Promociones <br><span class="text-[10px] text-green-500 opacity-60 uppercase tracking-widest">Expert 9:16</span></span>
+            </button>
+            <button onclick="showTool('demo')" id="btn-demo" class="nav-btn w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50">
+                <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-width="2"/></svg>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Demos Rápidas <br><span class="text-[10px] text-amber-500 opacity-60 uppercase tracking-widest">Video Sync</span></span>
             </button>
             <button onclick="showTool('carousel')" id="btn-carousel" class="nav-btn w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50">
                 <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2"/></svg>
-                <span class="hidden md:block font-semibold text-sm text-left leading-none">Casos Clínicos <br><span class="text-[10px] text-blue-500 opacity-60 uppercase tracking-widest">Carrusel 1:1</span></span>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Carruseles <br><span class="text-[10px] text-blue-500 opacity-60 uppercase tracking-widest">Post 1:1</span></span>
             </button>
             <button onclick="showTool('mockup')" id="btn-mockup" class="nav-btn w-full p-4 rounded-2xl flex items-center gap-4 transition-all hover:bg-slate-800/50">
                 <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="2"/></svg>
-                <span class="hidden md:block font-semibold text-sm text-left leading-none">Mockup Studio <br><span class="text-[10px] text-purple-500 opacity-60 uppercase tracking-widest">Ambiental 3D</span></span>
+                <span class="hidden md:block font-semibold text-sm text-left leading-none">Mockup Studio <br><span class="text-[10px] text-purple-500 opacity-60 uppercase tracking-widest">Ambiental</span></span>
             </button>
         </div>
     </nav>
 
+    <!-- Main Content Area -->
     <main class="ml-20 md:ml-64 p-4 md:p-12">
 
-        <!-- TOOL 1: PROMO GENERATOR EXPERT -->
+        <!-- 1. PROMO GENERATOR -->
         <section id="tool-promo" class="tool-section max-w-6xl mx-auto">
-            <header class="mb-12">
-                <h2 class="text-4xl font-black tracking-tight mb-2">PROMOCIONES <span class="text-green-500 uppercase">Expert</span></h2>
-                <p class="text-slate-400">Genera archivos HTML independientes con soporte multimedia y transiciones automáticas.</p>
+            <header class="mb-10">
+                <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Promociones <span class="text-green-500">Expert</span></h2>
+                <p class="text-slate-400">Genera archivos HTML interactivos para campañas de marketing.</p>
             </header>
-
             <div class="grid lg:grid-cols-12 gap-8 items-start">
-                <div class="lg:col-span-8 space-y-6" id="promo-slides-container">
-                    <!-- Slides inyectados por JS -->
-                </div>
+                <div class="lg:col-span-8 space-y-6" id="promo-slides-container"></div>
                 <div class="lg:col-span-4 sticky top-12 space-y-6">
                     <div class="glass-card p-6 rounded-3xl border border-slate-700">
-                        <h3 class="font-bold mb-4 uppercase text-[10px] text-slate-500 tracking-widest">Cierre de Campaña</h3>
                         <div class="space-y-4 mb-6">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Llamado a la acción</label>
                             <input type="text" id="promo-cta-text" value="¡Probálo ahora!" class="w-full p-3 rounded-xl text-sm">
                             <input type="text" id="promo-cta-url" value="neomonitor.pro" class="w-full p-3 rounded-xl text-sm">
                         </div>
-                        <button onclick="downloadPromoHTML()" id="btn-download-promo" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-green-900/40 transition-all flex items-center justify-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2.5"/></svg>
-                            DESCARGAR PROMO
+                        <button onclick="downloadPromoHTML()" id="btn-download-promo" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
+                            DESCARGAR PROMO HTML
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- TOOL 2: CAROUSEL CREATOR -->
+        <!-- 2. DEMO EDITOR (VIDEO SYNC) -->
+        <section id="tool-demo" class="tool-section max-w-5xl mx-auto hidden">
+            <header class="mb-10">
+                <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Demos <span class="text-amber-500">Sincronizadas</span></h2>
+                <p class="text-slate-400">Crea comparativas de latencia uniendo el monitor y el control en un Reel.</p>
+            </header>
+            <div class="grid lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="glass-card p-6 rounded-3xl space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Video del Monitor (Top)</label>
+                            <input type="file" id="video-monitor" accept="video/*" onchange="loadSyncVideo('monitor')" class="w-full text-xs">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Video del Control (Bottom)</label>
+                            <input type="file" id="video-control" accept="video/*" onchange="loadSyncVideo('control')" class="w-full text-xs">
+                        </div>
+                        <button onclick="startSyncRecording()" id="btn-sync" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2">
+                            <div id="rec-dot" class="w-3 h-3 bg-red-500 rounded-full hidden animate-pulse"></div>
+                            Sincronizar y Exportar
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-7 flex justify-center">
+                    <canvas id="demo-canvas-preview"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. CAROUSEL CREATOR -->
         <section id="tool-carousel" class="tool-section max-w-5xl mx-auto hidden">
-            <header class="mb-12">
-                <h2 class="text-4xl font-black tracking-tight mb-2">CASOS <span class="text-blue-500 uppercase">Clínicos</span></h2>
-                <p class="text-slate-400">Crea posts educativos 1:1 para el feed basándote en protocolos internacionales.</p>
+            <header class="mb-10">
+                <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Casos <span class="text-blue-500">Clínicos</span></h2>
+                <p class="text-slate-400">Genera posts educativos de alto impacto para Instagram.</p>
             </header>
             <div class="glass-card p-8 rounded-3xl border border-slate-800">
                 <div class="grid md:grid-cols-2 gap-8 items-center">
                     <div class="space-y-6">
-                        <select id="carousel-scenario" class="w-full p-4 rounded-xl text-sm outline-none">
+                        <select id="carousel-scenario" class="w-full p-4 rounded-xl text-sm">
                             <option value="brady">Bradicardia Severa (Protocolo NRP)</option>
                             <option value="pneumo">Neumotórax a Tensión</option>
                             <option value="hdc">Hernia Diafragmática Congénita</option>
                             <option value="shock">Shock Hipovolémico</option>
                         </select>
-                        <button onclick="generateCarousel()" id="btn-generate-carousel" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-sm">
-                            Generar Imágenes de Carrusel
+                        <button onclick="generateCarousel()" id="btn-gen-car" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-sm">
+                            Generar Diapositivas
                         </button>
                     </div>
-                    <div id="carousel-preview-area" class="bg-slate-950 rounded-2xl aspect-square flex items-center justify-center border border-slate-800 text-slate-700 font-bold uppercase tracking-widest text-center p-12 text-xs">
-                        Selecciona un caso y genera <br> las diapositivas para Instagram
+                    <div id="carousel-status-area" class="bg-slate-950 rounded-2xl aspect-square flex items-center justify-center border border-slate-800 text-slate-700 font-bold uppercase p-8 text-center text-xs">
+                        Selecciona un caso clínico <br> para generar el post
                     </div>
                 </div>
             </div>
-            <div id="carousel-gallery-container" class="mt-12 hidden">
-                <div id="carousel-gallery" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
-            </div>
+            <div id="carousel-gallery" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8"></div>
         </section>
 
-        <!-- TOOL 3: MOCKUP STUDIO -->
+        <!-- 4. MOCKUP STUDIO -->
         <section id="tool-mockup" class="tool-section max-w-6xl mx-auto hidden">
-            <header class="mb-12">
-                <h2 class="text-4xl font-black tracking-tight mb-2">STUDIO <span class="text-purple-500 uppercase">Mockups</span></h2>
-                <p class="text-slate-400">Coloca NeoMonitor en manos de profesionales o en la UCIN.</p>
+            <header class="mb-10">
+                <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Mockup <span class="text-purple-500">Studio</span></h2>
+                <p class="text-slate-400">Contextualiza NeoMonitor en un entorno clínico real.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-10">
                 <div class="lg:col-span-4 space-y-6">
                     <div class="glass-card p-6 rounded-3xl">
-                        <input type="file" id="mockup-file" class="hidden" onchange="handleMockupUpload(this)">
-                        <label for="mockup-file" class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 text-slate-600">
-                            <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" stroke-width="2"/></svg>
-                            <span class="text-xs font-bold uppercase tracking-widest">Cargar Pantalla</span>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Captura de Pantalla</label>
+                        <input type="file" id="mockup-input" class="hidden" onchange="handleMockupFile(this)">
+                        <label for="mockup-input" class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 text-slate-600">
+                            Subir Captura
                         </label>
                     </div>
-                    <div class="glass-card p-6 rounded-3xl space-y-2">
-                        <button onclick="changeMockupScene(1)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Tablet en UCIN</button>
-                        <button onclick="changeMockupScene(2)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Smartphone en Mano</button>
-                        <button onclick="changeMockupScene(3)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Escritorio Médico</button>
+                    <div class="glass-card p-4 rounded-2xl space-y-2">
+                        <button onclick="setMockupScene(1)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Tablet en UCIN</button>
+                        <button onclick="setMockupScene(2)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Mano con Celular</button>
+                        <button onclick="setMockupScene(3)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Escritorio Médico</button>
                     </div>
-                    <button onclick="exportMockup()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-4 rounded-2xl shadow-xl">EXPORTAR MOCKUP</button>
+                    <button onclick="exportMockup()" class="w-full bg-purple-600 font-black py-4 rounded-2xl">EXPORTAR IMAGEN</button>
                 </div>
                 <div class="lg:col-span-8 flex justify-center">
-                    <div id="mockup-capture-area" class="mockup-stage scene-1">
+                    <div id="mockup-area" class="mockup-stage scene-1">
                         <img id="mockup-bg" src="https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200" class="bg-image" crossorigin="anonymous">
                         <div class="screen-overlay"><img id="mockup-screen" src="https://placehold.co/600x400/0f172a/42b334?text=NeoMonitor"></div>
                     </div>
@@ -168,115 +201,106 @@
 
     </main>
 
-    <!-- RENDER TEMPLATES -->
-    <div id="carousel-template" class="carousel-canvas medical-grid">
+    <!-- HIDDEN RENDER ELEMENTS -->
+    <div id="carousel-render" class="carousel-canvas medical-grid">
         <div class="absolute inset-0 p-20 flex flex-col justify-center">
-            <div class="mb-10"><span id="c-tag" class="bg-blue-600 text-white px-8 py-3 rounded-full text-2xl font-black uppercase tracking-widest">CASO</span></div>
-            <h2 id="c-title" class="text-[80px] font-black leading-[1.1] mb-12 text-white"></h2>
+            <div class="mb-8"><span id="cr-tag" class="bg-blue-600 text-white px-8 py-3 rounded-full text-2xl font-black uppercase">CASO CLÍNICO</span></div>
+            <h2 id="cr-title" class="text-[80px] font-black leading-none mb-10 text-white"></h2>
             <div class="bg-slate-900/80 border border-slate-700 p-16 rounded-[60px] flex-1 flex flex-col justify-center backdrop-blur-xl">
-                <p id="c-desc" class="text-5xl leading-[1.4] text-slate-200"></p>
-                <div id="c-vitals" class="mt-16 flex gap-20 hidden">
-                    <div class="text-center"><p class="text-green-500 text-3xl font-black mb-2 uppercase">FC</p><p id="cv-hr" class="text-[120px] font-black text-green-500 leading-none"></p></div>
-                    <div class="text-center"><p class="text-yellow-400 text-3xl font-black mb-2 uppercase">SpO2</p><p id="cv-spo2" class="text-[120px] font-black text-yellow-400 leading-none"></p></div>
+                <p id="cr-desc" class="text-5xl leading-tight text-slate-200"></p>
+                <div id="cr-vitals" class="mt-16 flex gap-20 hidden">
+                    <div class="text-center"><p class="text-green-500 text-3xl font-black mb-2 uppercase">FC</p><p id="crv-hr" class="text-[120px] font-black text-green-500"></p></div>
+                    <div class="text-center"><p class="text-yellow-400 text-3xl font-black mb-2 uppercase">SpO2</p><p id="crv-spo2" class="text-[120px] font-black text-yellow-400"></p></div>
                 </div>
             </div>
-            <div class="mt-16 flex justify-between items-center px-10">
-                <div class="flex items-center gap-6"><div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-3xl">NM</div><span class="text-3xl font-bold text-slate-500">neomonitor.pro</span></div>
-                <span id="c-page" class="text-6xl font-black text-slate-800">1/5</span>
+            <div class="mt-12 flex justify-between items-center px-10">
+                <span class="text-3xl font-bold text-slate-500">neomonitor.pro</span>
+                <span id="cr-page" class="text-6xl font-black text-slate-800">1/5</span>
             </div>
         </div>
     </div>
+    <video id="v-sync-monitor" class="hidden" muted playsinline></video>
+    <video id="v-sync-control" class="hidden" muted playsinline></video>
 
     <script>
-        // Navegación
-        function showTool(id) {
+        // NAVIGATION LOGIC
+        function showTool(toolId) {
             document.querySelectorAll('.tool-section').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tool-${id}`).classList.remove('hidden');
-            document.getElementById(`btn-${id}`).classList.add('active');
+            document.getElementById(`tool-${toolId}`).classList.remove('hidden');
+            document.getElementById(`btn-${toolId}`).classList.add('active');
+            if(toolId === 'demo') renderDemoLoop();
         }
 
-        const ICONS_EXPERT = [
-            { id: 'activity', name: 'Actividad', path: 'M22 12h-4l-3 9L9 3l-3 9H2' },
-            { id: 'monitor', name: 'Monitor', path: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-            { id: 'zap', name: 'Rayo', path: 'M13 10V3L4 14h7v7l9-11h-7z' },
-            { id: 'qr', name: 'QR', path: 'M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z' }
+        // TOOL 1: PROMO EXPERT
+        const ICONS_PROMO = [
+            { id: 'activity', path: 'M22 12h-4l-3 9L9 3l-3 9H2' },
+            { id: 'monitor', path: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+            { id: 'zap', path: 'M13 10V3L4 14h7v7l9-11h-7z' }
         ];
 
-        // --- PROMO GENERATOR EXPERT ---
-        function initPromoExpert() {
+        function initPromoGenerator() {
             const container = document.getElementById('promo-slides-container');
-            for(let i=1; i<=5; i++) {
+            if(!container) return;
+            for(let i=1; i<=5; i++){
                 const div = document.createElement('div');
-                div.className = "bg-slate-900/50 p-6 rounded-3xl border border-slate-800 relative group overflow-hidden";
+                div.className = "glass-card p-6 rounded-3xl grid md:grid-cols-2 gap-6 relative group overflow-hidden";
                 div.innerHTML = `
-                    <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity font-black italic text-6xl italic">#${i}</div>
-                    <div class="grid md:grid-cols-2 gap-6 relative z-10">
-                        <div class="space-y-4">
-                            <input type="text" id="px-title-${i}" placeholder="Título del punto" class="w-full p-3 rounded-xl text-sm font-bold">
-                            <textarea id="px-desc-${i}" placeholder="Descripción técnica..." class="w-full p-3 rounded-xl text-sm h-24 resize-none"></textarea>
-                        </div>
-                        <div class="space-y-4">
-                            <label class="w-full h-32 border-2 border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-500 relative overflow-hidden text-slate-600">
-                                <div id="px-preview-${i}" class="absolute inset-0 hidden"></div>
-                                <div id="px-ph-${i}" class="flex flex-col items-center">
-                                    <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-width="2"/></svg>
-                                    <span class="text-[10px] uppercase font-black">Multimedia</span>
-                                </div>
-                                <input type="file" id="px-file-${i}" accept="image/*,video/*" class="hidden" onchange="handlePromoExpertFile(this, ${i})">
-                            </label>
-                            <select id="px-icon-${i}" class="w-full p-3 rounded-xl text-xs uppercase tracking-widest">
-                                <option value="">Sin Icono</option>
-                                ${ICONS_EXPERT.map(ic => `<option value="${ic.path}">${ic.name}</option>`).join('')}
-                            </select>
-                        </div>
+                    <div class="absolute top-0 right-0 p-4 opacity-5 font-black text-6xl">#${i}</div>
+                    <div class="space-y-4 relative z-10">
+                        <input type="text" id="p-t-${i}" placeholder="Título de diapositiva" class="w-full p-3 rounded-xl font-bold">
+                        <textarea id="p-d-${i}" placeholder="Descripción técnica..." class="w-full p-3 rounded-xl h-24 resize-none"></textarea>
+                    </div>
+                    <div class="space-y-4 relative z-10">
+                        <label class="w-full h-32 border-2 border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-500 relative overflow-hidden">
+                            <div id="p-pv-${i}" class="absolute inset-0 hidden"></div>
+                            <span id="p-txt-${i}" class="text-[10px] uppercase font-black text-slate-600">Subir Multimedia</span>
+                            <input type="file" id="p-f-${i}" accept="image/*,video/*" class="hidden" onchange="previewPromoMedia(this, ${i})">
+                        </label>
+                        <select id="p-i-${i}" class="w-full p-3 rounded-xl text-xs uppercase">
+                            <option value="">Sin Icono</option>
+                            ${ICONS_PROMO.map(ic => `<option value="${ic.path}">${ic.id.toUpperCase()}</option>`).join('')}
+                        </select>
                     </div>
                 `;
                 container.appendChild(div);
             }
         }
 
-        function handlePromoExpertFile(input, id) {
-            const preview = document.getElementById(`px-preview-${id}`);
-            const ph = document.getElementById(`px-ph-${id}`);
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const url = URL.createObjectURL(file);
-                preview.innerHTML = file.type.startsWith('video') ? `<video src="${url}" class="thumb-preview" muted autoplay loop></video>` : `<img src="${url}" class="thumb-preview">`;
-                preview.classList.remove('hidden');
-                ph.classList.add('opacity-0');
+        function previewPromoMedia(input, id) {
+            const pv = document.getElementById(`p-pv-${id}`);
+            const txt = document.getElementById(`p-txt-${id}`);
+            if(input.files && input.files[0]) {
+                const url = URL.createObjectURL(input.files[0]);
+                pv.innerHTML = input.files[0].type.startsWith('video') ? `<video src="${url}" class="thumb-preview" muted autoplay loop></video>` : `<img src="${url}" class="thumb-preview">`;
+                pv.classList.remove('hidden');
+                txt.classList.add('hidden');
             }
         }
 
         async function downloadPromoHTML() {
             const btn = document.getElementById('btn-download-promo');
-            btn.innerHTML = 'PROCESANDO...';
-            btn.disabled = true;
-
+            btn.disabled = true; btn.innerHTML = 'PROCESANDO...';
             try {
                 const slides = [];
-                for(let i=1; i<=5; i++) {
-                    const title = document.getElementById(`px-title-${i}`).value;
-                    const desc = document.getElementById(`px-desc-${i}`).value;
-                    const icon = document.getElementById(`px-icon-${i}`).value;
-                    const file = document.getElementById(`px-file-${i}`).files[0];
+                for(let i=1; i<=5; i++){
+                    const title = document.getElementById(`p-t-${i}`).value;
+                    const desc = document.getElementById(`p-d-${i}`).value;
+                    const icon = document.getElementById(`p-i-${i}`).value;
+                    const file = document.getElementById(`p-f-${i}`).files[0];
                     if(title && desc) {
                         const mediaUrl = await fileToBase64(file);
                         const mediaType = file?.type.startsWith('video') ? 'video' : 'image';
                         slides.push({ title, desc, icon, mediaUrl, mediaType });
                     }
                 }
-
-                if(slides.length === 0) { alert("Completa al menos un punto."); return; }
                 const ctaT = document.getElementById('promo-cta-text').value;
                 const ctaU = document.getElementById('promo-cta-url').value;
-
-                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.glass-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="glass-overlay"></div><div class="mt-12"><span class="bg-green-500/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Punto 0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm leading-relaxed">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-green-500/20 text-black"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></div><h2 class="text-3xl font-black mb-10">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
-                
+                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><h2 class="text-3xl font-black mb-8">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
                 const blob = new Blob([template], {type:'text/html'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'promo_neomonitor_expert.html'; a.click();
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'neomonitor_promo.html'; a.click();
             } catch(e) { console.error(e); }
-            btn.innerHTML = 'DESCARGAR PROMO'; btn.disabled = false;
+            btn.disabled = false; btn.innerHTML = 'DESCARGAR PROMO HTML';
         }
 
         async function fileToBase64(file) {
@@ -287,62 +311,122 @@
             });
         }
 
-        // --- CAROUSEL CREATOR ---
+        // TOOL 2: DEMO EDITOR (VIDEO SYNC)
+        const demoCanvas = document.getElementById('demo-canvas-preview');
+        const demoCtx = demoCanvas.getContext('2d');
+        demoCanvas.width = 1080; demoCanvas.height = 1920;
+
+        function loadSyncVideo(type) {
+            const input = document.getElementById(`video-${type}`);
+            const videoEl = document.getElementById(`v-sync-${type}`);
+            if(input.files && input.files[0]) {
+                videoEl.src = URL.createObjectURL(input.files[0]);
+                videoEl.play();
+            }
+        }
+
+        function renderDemoLoop() {
+            const vMon = document.getElementById('v-sync-monitor');
+            const vCtl = document.getElementById('v-sync-control');
+            
+            demoCtx.fillStyle = '#020617'; demoCtx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+            
+            // Layout (Top / Bottom)
+            if(vMon.readyState >= 2) demoCtx.drawImage(vMon, 40, 100, 1000, 800);
+            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.strokeRect(40,100,1000,800); }
+            
+            if(vCtl.readyState >= 2) demoCtx.drawImage(vCtl, 290, 1000, 500, 850);
+            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.strokeRect(290,1000,500,850); }
+
+            // Branding
+            demoCtx.fillStyle = '#3b82f6'; demoCtx.fillRect(0, 940, 1080, 15);
+            demoCtx.fillStyle = '#fff'; demoCtx.font = "bold 60px Inter"; demoCtx.textAlign = "center";
+            demoCtx.fillText("NEOMONITOR", 540, 1020);
+            
+            requestAnimationFrame(renderDemoLoop);
+        }
+
+        async function startSyncRecording() {
+            const vMon = document.getElementById('v-sync-monitor');
+            const vCtl = document.getElementById('v-sync-control');
+            const btn = document.getElementById('btn-sync');
+            const dot = document.getElementById('rec-dot');
+
+            if(!vMon.src || !vCtl.src) { alert("Carga ambos videos."); return; }
+            
+            vMon.currentTime = 0; vCtl.currentTime = 0;
+            vMon.play(); vCtl.play();
+            
+            const stream = demoCanvas.captureStream(30);
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            const chunks = [];
+
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'NeoMonitor_Sync.webm'; a.click();
+                dot.classList.add('hidden'); btn.disabled = false;
+            };
+
+            recorder.start();
+            dot.classList.remove('hidden'); btn.disabled = true;
+            setTimeout(() => { recorder.stop(); vMon.pause(); vCtl.pause(); }, Math.min(vMon.duration, vCtl.duration) * 1000);
+        }
+
+        // TOOL 3: CAROUSEL CREATOR
         const SCENARIOS = {
-            brady: { title: "Bradicardia Severa", steps: [{t:"Desafío Clínico",d:"Recién nacido de término. FC < 60 lpm y apnea persistente tras pasos iniciales."}, {t:"Estado del Monitor",d:"Parámetros críticos detectados:",v:{hr:55,sp:72}}, {t:"Conducta (NRP)",d:"Iniciar VPP efectiva inmediatamente."}, {t:"Resolución",d:"La ventilación adecuada suele revertir la bradicardia."}, {t:"Simulación Pro",d:"Usa NeoMonitor para medir la velocidad de respuesta."}] },
-            pneumo: { title: "Neumotórax", steps: [{t:"Deterioro Súbito",d:"Bebé en ARM presenta desaturación brusca."}, {t:"Monitor en Alerta",d:"Signos vitales captados:",v:{hr:185,sp:74}}, {t:"Diagnóstico",d:"Sospechar neumotórax ante asimetría y ruidos bajos."}, {t:"Acción",d:"Proceder a descompresión de emergencia."}, {t:"Docencia",d:"Entrena estos fallos críticos en neomonitor.pro"}] }
+            brady: { title: "Bradicardia Severa", steps: [{t:"Desafío Clínico",d:"FC < 60 lpm tras pasos iniciales."}, {t:"Signos en Monitor",d:"Parámetros críticos:",v:{hr:55,sp:72}}, {t:"Conducta",d:"Iniciar VPP efectiva inmediatamente."}, {t:"Resultados",d:"Con ventilación, la FC debería estabilizarse."}, {t:"NeoMonitor",d:"Entrena escenarios reales en neomonitor.pro"}] },
+            pneumo: { title: "Neumotórax", steps: [{t:"Emergencia súbita",d:"Bebé desatura bruscamente en ARM."}, {t:"Monitorización",d:"Deterioro detectado:",v:{hr:185,sp:74}}, {t:"Diagnóstico",d:"Sospechar ante ruidos asimétricos."}, {t:"Acción",d:"Descompresión con aguja de emergencia."}, {t:"NeoMonitor",d:"Simulación avanzada para el NRP."}] }
         };
 
         async function generateCarousel() {
-            const btn = document.getElementById('btn-generate-carousel');
             const sc = SCENARIOS[document.getElementById('carousel-scenario').value];
-            const gallery = document.getElementById('carousel-gallery');
-            const temp = document.getElementById('carousel-template');
-            btn.innerHTML = 'GENERANDO...';
-            gallery.innerHTML = '';
-            temp.style.display = 'block';
+            const gal = document.getElementById('carousel-gallery');
+            const temp = document.getElementById('carousel-render');
+            gal.innerHTML = ''; temp.style.display = 'block';
             for(let i=0; i<sc.steps.length; i++){
                 const st = sc.steps[i];
-                document.getElementById('c-title').innerText = st.t;
-                document.getElementById('c-desc').innerText = st.d;
-                document.getElementById('c-page').innerText = `${i+1}/5`;
-                document.getElementById('c-tag').innerText = sc.title;
-                const vb = document.getElementById('c-vitals');
-                if(st.v) { vb.classList.remove('hidden'); document.getElementById('cv-hr').innerText = st.v.hr; document.getElementById('cv-spo2').innerText = st.v.sp + "%"; }
-                else { vb.classList.add('hidden'); }
+                document.getElementById('cr-title').innerText = st.t;
+                document.getElementById('cr-desc').innerText = st.d;
+                document.getElementById('cr-page').innerText = `${i+1}/5`;
+                document.getElementById('cr-tag').innerText = sc.title;
+                const v = document.getElementById('cr-vitals');
+                if(st.v) { v.classList.remove('hidden'); document.getElementById('crv-hr').innerText = st.v.hr; document.getElementById('crv-spo2').innerText = st.v.sp + "%"; }
+                else v.classList.add('hidden');
                 const canvas = await html2canvas(temp, {scale: 1});
                 const img = document.createElement('img'); img.src = canvas.toDataURL();
-                img.className = "w-full rounded-xl border border-slate-700 cursor-pointer hover:border-blue-500 transition";
+                img.className = "w-full rounded-xl border border-slate-700 cursor-pointer";
                 img.onclick = () => { const a = document.createElement('a'); a.download=`Slide_${i+1}.png`; a.href=img.src; a.click(); };
-                gallery.appendChild(img);
+                gal.appendChild(img);
             }
             temp.style.display = 'none';
-            document.getElementById('carousel-gallery-container').classList.remove('hidden');
-            btn.innerHTML = 'GENERAR IMÁGENES DE CARRUSEL';
         }
 
-        // --- MOCKUP STUDIO ---
-        function handleMockupUpload(input) {
-            if (input.files && input.files[0]) {
+        // TOOL 4: MOCKUP STUDIO
+        function handleMockupFile(input) {
+            if(input.files && input.files[0]) {
                 const rd = new FileReader(); rd.onload = e => document.getElementById('mockup-screen').src = e.target.result; rd.readAsDataURL(input.files[0]);
             }
         }
-        function changeMockupScene(id) {
-            const sc = {
+        function setMockupScene(id) {
+            const scenes = {
                 1: { c: 'scene-1', bg: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200' },
                 2: { c: 'scene-2', bg: 'https://images.unsplash.com/photo-1512428559083-a401c338afb7?q=80&w=1200' },
                 3: { c: 'scene-3', bg: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1200' }
             };
-            document.getElementById('mockup-capture-area').className = "mockup-stage " + sc[id].c;
-            document.getElementById('mockup-bg').src = sc[id].bg;
+            document.getElementById('mockup-area').className = "mockup-stage " + scenes[id].c;
+            document.getElementById('mockup-bg').src = scenes[id].bg;
         }
         function exportMockup() {
-            html2canvas(document.getElementById('mockup-capture-area'), { useCORS: true, scale: 2 }).then(cv => {
-                const a = document.createElement('a'); a.download='NeoMonitor_Mockup.png'; a.href=cv.toDataURL(); a.click();
+            html2canvas(document.getElementById('mockup-area'), { useCORS: true, scale: 2 }).then(cv => {
+                const a = document.createElement('a'); a.download='mockup.png'; a.href=cv.toDataURL(); a.click();
             });
         }
 
-        window.onload = initPromoExpert;
+        window.onload = () => {
+            initPromoGenerator();
+            renderDemoLoop();
+        };
     </script>
 </body>
 </html>
