@@ -34,12 +34,13 @@
         /* Mockup Studio Perspective Styles */
         .mockup-stage { width: 800px; height: 600px; position: relative; background-color: #000; overflow: hidden; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         .bg-image { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; }
-        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; }
+        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
         .screen-overlay img { width: 100%; height: 100%; object-fit: cover; }
         
-        .scene-1 .screen-overlay { width: 280px; height: 185px; top: 258px; left: 260px; transform: perspective(1000px) rotateX(4deg) rotateY(-18deg) rotateZ(-1deg); }
-        .scene-2 .screen-overlay { width: 112px; height: 242px; top: 148px; left: 344px; transform: perspective(1000px) rotateX(2deg) rotateY(15deg) rotateZ(-12deg); border-radius: 12px; }
-        .scene-3 .screen-overlay { width: 320px; height: 180px; top: 150px; left: 240px; }
+        /* Ajuste de Perspectivas Corregidas */
+        .scene-1 .screen-overlay { width: 345px; height: 235px; top: 165px; left: 228px; transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) rotateZ(0deg); border-radius: 5px; }
+        .scene-2 .screen-overlay { width: 125px; height: 270px; top: 125px; left: 338px; transform: perspective(1000px) rotateX(5deg) rotateY(18deg) rotateZ(-12deg); border-radius: 15px; }
+        .scene-3 .screen-overlay { width: 320px; height: 185px; top: 128px; left: 240px; transform: perspective(1000px) rotateX(1deg) rotateY(0deg); border-radius: 4px; }
 
         /* Carousel Styles */
         .carousel-canvas { width: 1080px; height: 1080px; background: #020617; position: relative; overflow: hidden; display: none; }
@@ -59,7 +60,7 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Navigation -->
+    <!-- Navegación Lateral -->
     <nav class="fixed left-0 top-0 h-full w-20 md:w-64 glass-card border-r border-slate-800 z-50 flex flex-col items-center py-8">
         <div class="mb-12 flex items-center gap-3 px-4">
             <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-black font-black shadow-lg shadow-green-500/40">NM</div>
@@ -86,14 +87,14 @@
         </div>
     </nav>
 
-    <!-- Main Content Area -->
+    <!-- Área de Contenido Principal -->
     <main class="ml-20 md:ml-64 p-4 md:p-12">
 
-        <!-- 1. PROMO GENERATOR -->
+        <!-- 1. GENERADOR DE PROMOS -->
         <section id="tool-promo" class="tool-section max-w-6xl mx-auto">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Promociones <span class="text-green-500">Expert</span></h2>
-                <p class="text-slate-400">Genera archivos HTML interactivos para campañas de marketing.</p>
+                <p class="text-slate-400">Genera archivos HTML interactivos para tus campañas.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-8 items-start">
                 <div class="lg:col-span-8 space-y-6" id="promo-slides-container"></div>
@@ -112,11 +113,11 @@
             </div>
         </section>
 
-        <!-- 2. DEMO EDITOR (VIDEO SYNC) -->
+        <!-- 2. EDITOR DE DEMOS (VIDEO SYNC) -->
         <section id="tool-demo" class="tool-section max-w-5xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Demos <span class="text-amber-500">Sincronizadas</span></h2>
-                <p class="text-slate-400">Crea comparativas de latencia uniendo el monitor y el control en un Reel.</p>
+                <p class="text-slate-400">Crea comparativas uniendo el monitor y el control en un Reel.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-8 items-start">
                 <div class="lg:col-span-5 space-y-4">
@@ -141,38 +142,50 @@
             </div>
         </section>
 
-        <!-- 3. CAROUSEL CREATOR -->
+        <!-- 3. CREADOR DE CARRUSELES (CON 12 CASOS) -->
         <section id="tool-carousel" class="tool-section max-w-5xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Casos <span class="text-blue-500">Clínicos</span></h2>
-                <p class="text-slate-400">Genera posts educativos de alto impacto para Instagram.</p>
+                <p class="text-slate-400">Genera posts educativos de alto impacto con 12 escenarios médicos.</p>
             </header>
             <div class="glass-card p-8 rounded-3xl border border-slate-800">
                 <div class="grid md:grid-cols-2 gap-8 items-center">
                     <div class="space-y-6">
                         <select id="carousel-scenario" class="w-full p-4 rounded-xl text-sm">
-                            <option value="brady">Bradicardia Severa (Protocolo NRP)</option>
-                            <option value="pneumo">Neumotórax a Tensión</option>
-                            <option value="hdc">Hernia Diafragmática Congénita</option>
-                            <option value="shock">Shock Hipovolémico</option>
+                            <optgroup label="Respiratorios">
+                                <option value="brady">Bradicardia Severa (Protocolo NRP)</option>
+                                <option value="pneumo">Neumotórax a Tensión</option>
+                                <option value="meconio">Aspiración de Meconio Severa</option>
+                                <option value="hdc">Hernia Diafragmática (Evitar VPP)</option>
+                                <option value="apnea">Apnea del Prematuro</option>
+                            </optgroup>
+                            <optgroup label="Hemodinámicos / Otros">
+                                <option value="shock">Shock Hipovolémico</option>
+                                <option value="pphn">HTP Neonatal (Gradiente Pre/Post)</option>
+                                <option value="sepsis">Shock Séptico Precoz</option>
+                                <option value="hipo">Hipotermia Terapéutica</option>
+                                <option value="cardio">Cardiopatía Ducto-Dependiente</option>
+                                <option value="asfixia">Asfixia Perinatal (Puntaje Apgar Bajo)</option>
+                                <option value="estable">Estabilización Post-Resucitación</option>
+                            </optgroup>
                         </select>
                         <button onclick="generateCarousel()" id="btn-gen-car" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-sm">
-                            Generar Diapositivas
+                            Generar Diapositivas (1:1)
                         </button>
                     </div>
                     <div id="carousel-status-area" class="bg-slate-950 rounded-2xl aspect-square flex items-center justify-center border border-slate-800 text-slate-700 font-bold uppercase p-8 text-center text-xs">
-                        Selecciona un caso clínico <br> para generar el post
+                        Selecciona un escenario <br> para generar el post educativo
                     </div>
                 </div>
             </div>
             <div id="carousel-gallery" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8"></div>
         </section>
 
-        <!-- 4. MOCKUP STUDIO -->
+        <!-- 4. MOCKUP STUDIO (CORREGIDO) -->
         <section id="tool-mockup" class="tool-section max-w-6xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Mockup <span class="text-purple-500">Studio</span></h2>
-                <p class="text-slate-400">Contextualiza NeoMonitor en un entorno clínico real.</p>
+                <p class="text-slate-400">Contextualiza NeoMonitor en entornos médicos reales corregidos.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-10">
                 <div class="lg:col-span-4 space-y-6">
@@ -180,19 +193,28 @@
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Captura de Pantalla</label>
                         <input type="file" id="mockup-input" class="hidden" onchange="handleMockupFile(this)">
                         <label for="mockup-input" class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 text-slate-600">
-                            Subir Captura
+                            Subir Imagen
                         </label>
                     </div>
                     <div class="glass-card p-4 rounded-2xl space-y-2">
-                        <button onclick="setMockupScene(1)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Tablet en UCIN</button>
-                        <button onclick="setMockupScene(2)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Mano con Celular</button>
-                        <button onclick="setMockupScene(3)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition">Escritorio Médico</button>
+                        <button onclick="setMockupScene(1)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
+                            <span>Tablet en UCIN/Quirófano</span>
+                            <span class="text-[10px] opacity-40">16:9</span>
+                        </button>
+                        <button onclick="setMockupScene(2)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
+                            <span>Mano con Celular (Control)</span>
+                            <span class="text-[10px] opacity-40">9:19</span>
+                        </button>
+                        <button onclick="setMockupScene(3)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
+                            <span>Escritorio Médico Real</span>
+                            <span class="text-[10px] opacity-40">Laptop</span>
+                        </button>
                     </div>
-                    <button onclick="exportMockup()" class="w-full bg-purple-600 font-black py-4 rounded-2xl">EXPORTAR IMAGEN</button>
+                    <button onclick="exportMockup()" class="w-full bg-purple-600 font-black py-4 rounded-2xl hover:bg-purple-500 transition shadow-xl">EXPORTAR MOCKUP</button>
                 </div>
                 <div class="lg:col-span-8 flex justify-center">
                     <div id="mockup-area" class="mockup-stage scene-1">
-                        <img id="mockup-bg" src="https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200" class="bg-image" crossorigin="anonymous">
+                        <img id="mockup-bg" src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1200" class="bg-image" crossorigin="anonymous">
                         <div class="screen-overlay"><img id="mockup-screen" src="https://placehold.co/600x400/0f172a/42b334?text=NeoMonitor"></div>
                     </div>
                 </div>
@@ -201,20 +223,20 @@
 
     </main>
 
-    <!-- HIDDEN RENDER ELEMENTS -->
+    <!-- ELEMENTOS DE RENDERIZADO OCULTOS -->
     <div id="carousel-render" class="carousel-canvas medical-grid">
         <div class="absolute inset-0 p-20 flex flex-col justify-center">
-            <div class="mb-8"><span id="cr-tag" class="bg-blue-600 text-white px-8 py-3 rounded-full text-2xl font-black uppercase">CASO CLÍNICO</span></div>
-            <h2 id="cr-title" class="text-[80px] font-black leading-none mb-10 text-white"></h2>
+            <div class="mb-8"><span id="cr-tag" class="bg-blue-600 text-white px-8 py-3 rounded-full text-2xl font-black uppercase tracking-widest">CASO CLÍNICO</span></div>
+            <h2 id="cr-title" class="text-[80px] font-black leading-none mb-10 text-white tracking-tighter"></h2>
             <div class="bg-slate-900/80 border border-slate-700 p-16 rounded-[60px] flex-1 flex flex-col justify-center backdrop-blur-xl">
                 <p id="cr-desc" class="text-5xl leading-tight text-slate-200"></p>
                 <div id="cr-vitals" class="mt-16 flex gap-20 hidden">
-                    <div class="text-center"><p class="text-green-500 text-3xl font-black mb-2 uppercase">FC</p><p id="crv-hr" class="text-[120px] font-black text-green-500"></p></div>
-                    <div class="text-center"><p class="text-yellow-400 text-3xl font-black mb-2 uppercase">SpO2</p><p id="crv-spo2" class="text-[120px] font-black text-yellow-400"></p></div>
+                    <div class="text-center"><p class="text-green-500 text-3xl font-black mb-2 uppercase">FC</p><p id="crv-hr" class="text-[120px] font-black text-green-500 leading-none"></p></div>
+                    <div class="text-center"><p class="text-yellow-400 text-3xl font-black mb-2 uppercase">SpO2</p><p id="crv-spo2" class="text-[120px] font-black text-yellow-400 leading-none"></p></div>
                 </div>
             </div>
             <div class="mt-12 flex justify-between items-center px-10">
-                <span class="text-3xl font-bold text-slate-500">neomonitor.pro</span>
+                <span class="text-3xl font-bold text-slate-500 uppercase tracking-widest">neomonitor.pro</span>
                 <span id="cr-page" class="text-6xl font-black text-slate-800">1/5</span>
             </div>
         </div>
@@ -223,7 +245,7 @@
     <video id="v-sync-control" class="hidden" muted playsinline></video>
 
     <script>
-        // NAVIGATION LOGIC
+        // LÓGICA DE NAVEGACIÓN
         function showTool(toolId) {
             document.querySelectorAll('.tool-section').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -232,7 +254,7 @@
             if(toolId === 'demo') renderDemoLoop();
         }
 
-        // TOOL 1: PROMO EXPERT
+        // --- HERRAMIENTA 1: GENERADOR DE PROMOS EXPERT ---
         const ICONS_PROMO = [
             { id: 'activity', path: 'M22 12h-4l-3 9L9 3l-3 9H2' },
             { id: 'monitor', path: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
@@ -244,20 +266,20 @@
             if(!container) return;
             for(let i=1; i<=5; i++){
                 const div = document.createElement('div');
-                div.className = "glass-card p-6 rounded-3xl grid md:grid-cols-2 gap-6 relative group overflow-hidden";
+                div.className = "glass-card p-6 rounded-3xl grid md:grid-cols-2 gap-6 relative group overflow-hidden border border-slate-800";
                 div.innerHTML = `
                     <div class="absolute top-0 right-0 p-4 opacity-5 font-black text-6xl">#${i}</div>
                     <div class="space-y-4 relative z-10">
-                        <input type="text" id="p-t-${i}" placeholder="Título de diapositiva" class="w-full p-3 rounded-xl font-bold">
-                        <textarea id="p-d-${i}" placeholder="Descripción técnica..." class="w-full p-3 rounded-xl h-24 resize-none"></textarea>
+                        <input type="text" id="p-t-${i}" placeholder="Título Diapositiva ${i}" class="w-full p-3 rounded-xl font-bold">
+                        <textarea id="p-d-${i}" placeholder="Detalle técnico para el profesional..." class="w-full p-3 rounded-xl h-24 resize-none"></textarea>
                     </div>
                     <div class="space-y-4 relative z-10">
-                        <label class="w-full h-32 border-2 border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-500 relative overflow-hidden">
+                        <label class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-500 relative overflow-hidden transition-all">
                             <div id="p-pv-${i}" class="absolute inset-0 hidden"></div>
-                            <span id="p-txt-${i}" class="text-[10px] uppercase font-black text-slate-600">Subir Multimedia</span>
+                            <span id="p-txt-${i}" class="text-[10px] uppercase font-black text-slate-600">Subir Video/Imagen</span>
                             <input type="file" id="p-f-${i}" accept="image/*,video/*" class="hidden" onchange="previewPromoMedia(this, ${i})">
                         </label>
-                        <select id="p-i-${i}" class="w-full p-3 rounded-xl text-xs uppercase">
+                        <select id="p-i-${i}" class="w-full p-3 rounded-xl text-xs uppercase font-bold">
                             <option value="">Sin Icono</option>
                             ${ICONS_PROMO.map(ic => `<option value="${ic.path}">${ic.id.toUpperCase()}</option>`).join('')}
                         </select>
@@ -296,9 +318,9 @@
                 }
                 const ctaT = document.getElementById('promo-cta-text').value;
                 const ctaU = document.getElementById('promo-cta-url').value;
-                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><h2 class="text-3xl font-black mb-8">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
+                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">Punto 0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm leading-relaxed">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-green-500/20 text-black font-black"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></div><h2 class="text-3xl font-black mb-8">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
                 const blob = new Blob([template], {type:'text/html'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'neomonitor_promo.html'; a.click();
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'neomonitor_expert_promo.html'; a.click();
             } catch(e) { console.error(e); }
             btn.disabled = false; btn.innerHTML = 'DESCARGAR PROMO HTML';
         }
@@ -311,7 +333,7 @@
             });
         }
 
-        // TOOL 2: DEMO EDITOR (VIDEO SYNC)
+        // --- HERRAMIENTA 2: DEMO EDITOR (VIDEO SYNC) ---
         const demoCanvas = document.getElementById('demo-canvas-preview');
         const demoCtx = demoCanvas.getContext('2d');
         demoCanvas.width = 1080; demoCanvas.height = 1920;
@@ -328,21 +350,14 @@
         function renderDemoLoop() {
             const vMon = document.getElementById('v-sync-monitor');
             const vCtl = document.getElementById('v-sync-control');
-            
             demoCtx.fillStyle = '#020617'; demoCtx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
-            
-            // Layout (Top / Bottom)
             if(vMon.readyState >= 2) demoCtx.drawImage(vMon, 40, 100, 1000, 800);
-            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.strokeRect(40,100,1000,800); }
-            
+            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.lineWidth = 4; demoCtx.strokeRect(40,100,1000,800); }
             if(vCtl.readyState >= 2) demoCtx.drawImage(vCtl, 290, 1000, 500, 850);
-            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.strokeRect(290,1000,500,850); }
-
-            // Branding
+            else { demoCtx.strokeStyle = '#1e293b'; demoCtx.lineWidth = 4; demoCtx.strokeRect(290,1000,500,850); }
             demoCtx.fillStyle = '#3b82f6'; demoCtx.fillRect(0, 940, 1080, 15);
             demoCtx.fillStyle = '#fff'; demoCtx.font = "bold 60px Inter"; demoCtx.textAlign = "center";
             demoCtx.fillText("NEOMONITOR", 540, 1020);
-            
             requestAnimationFrame(renderDemoLoop);
         }
 
@@ -351,32 +366,37 @@
             const vCtl = document.getElementById('v-sync-control');
             const btn = document.getElementById('btn-sync');
             const dot = document.getElementById('rec-dot');
-
-            if(!vMon.src || !vCtl.src) { alert("Carga ambos videos."); return; }
-            
+            if(!vMon.src || !vCtl.src) { alert("Carga ambos videos para sincronizar."); return; }
             vMon.currentTime = 0; vCtl.currentTime = 0;
             vMon.play(); vCtl.play();
-            
             const stream = demoCanvas.captureStream(30);
             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
             const chunks = [];
-
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'NeoMonitor_Sync.webm'; a.click();
                 dot.classList.add('hidden'); btn.disabled = false;
             };
-
             recorder.start();
             dot.classList.remove('hidden'); btn.disabled = true;
             setTimeout(() => { recorder.stop(); vMon.pause(); vCtl.pause(); }, Math.min(vMon.duration, vCtl.duration) * 1000);
         }
 
-        // TOOL 3: CAROUSEL CREATOR
+        // --- HERRAMIENTA 3: CREADOR DE CARRUSELES (CON 12 ESCENARIOS) ---
         const SCENARIOS = {
-            brady: { title: "Bradicardia Severa", steps: [{t:"Desafío Clínico",d:"FC < 60 lpm tras pasos iniciales."}, {t:"Signos en Monitor",d:"Parámetros críticos:",v:{hr:55,sp:72}}, {t:"Conducta",d:"Iniciar VPP efectiva inmediatamente."}, {t:"Resultados",d:"Con ventilación, la FC debería estabilizarse."}, {t:"NeoMonitor",d:"Entrena escenarios reales en neomonitor.pro"}] },
-            pneumo: { title: "Neumotórax", steps: [{t:"Emergencia súbita",d:"Bebé desatura bruscamente en ARM."}, {t:"Monitorización",d:"Deterioro detectado:",v:{hr:185,sp:74}}, {t:"Diagnóstico",d:"Sospechar ante ruidos asimétricos."}, {t:"Acción",d:"Descompresión con aguja de emergencia."}, {t:"NeoMonitor",d:"Simulación avanzada para el NRP."}] }
+            brady: { title: "Bradicardia Severa", steps: [{t:"Desafío Clínico",d:"FC < 60 lpm tras pasos iniciales."}, {t:"Monitor en Alerta",d:"Signos vitales críticos:",v:{hr:55,sp:72}}, {t:"Conducta (NRP)",d:"Iniciar VPP efectiva inmediatamente."}, {t:"Resultados",d:"La ventilación adecuada suele revertir la bradicardia."}, {t:"Uso Profesional",d:"Entrena estos fallos en neomonitor.pro"}] },
+            pneumo: { title: "Neumotórax", steps: [{t:"Deterioro Súbito",d:"Bebé desatura bruscamente en ARM."}, {t:"Monitor en Alerta",d:"Parámetros detectados:",v:{hr:185,sp:74}}, {t:"Diagnóstico",d:"Sospechar ante ruidos asimétricos."}, {t:"Acción",d:"Descompresión con aguja de emergencia."}, {t:"Simulación",d:"NeoMonitor: Realismo total en UCIN."}] },
+            meconio: { title: "Meconio Severo", steps: [{t:"Recién Nacido",d:"Líquido amniótico meconial espeso."}, {t:"Monitor Inicial",d:"Apnea y cianosis central:",v:{hr:105,sp:68}}, {t:"Pasos Críticos",d:"Pasos iniciales y VPP inmediata si no respira."}, {t:"Evolución",d:"Vigilancia estrecha de la oxigenación."}, {t:"NeoMonitor",d:"Optimiza la formación de tu equipo."}] },
+            hdc: { title: "Hernia Diafragmática", steps: [{t:"Caso Clínico",d:"RN con abdomen excavado y distrés."}, {t:"Monitoría",d:"Hipoxemia severa:",v:{hr:140,sp:72}}, {t:"¡Alerta!",d:"EVITAR ventilación con máscara y bolsa."}, {t:"Conducta",d:"Intubación endotraqueal precoz."}, {t:"NeoMonitor",d:"Crea escenarios complejos fácilmente."}] },
+            apnea: { title: "Apnea Prematuro", steps: [{t:"Paciente UCIN",d:"RNPT de 28 semanas en CPAP."}, {t:"Monitor Súbito",d:"Caída de FC y saturación:",v:{hr:82,sp:70}}, {t:"Maniobra",d:"Estimulación táctil vigorosa."}, {t:"Resolución",d:"Recuperación tras estímulo o VPP corta."}, {t:"Capacitación",d:"El estándar en simulación neonatal."}] },
+            shock: { title: "Shock Hipovolémico", steps: [{t:"Emergencia",d:"Antecedente de DPPNI o hemorragia."}, {t:"Monitor Real",d:"Taquicardia y palidez extrema:",v:{hr:195,sp:92}}, {t:"Evaluación",d:"Pulsos débiles, mala perfusión distal."}, {t:"Tratamiento",d:"Expansión de volumen con SF (10ml/kg)."}, {t:"NeoMonitor",d:"Simulación avanzada en todo lugar."}] },
+            pphn: { title: "HTP Neonatal", steps: [{t:"Fisiopatología",d:"Gradiente ductal significativo."}, {t:"Monitoría Dúplex",d:"SpO2 pre-ductal vs post-ductal:",v:{hr:135,sp:85}}, {t:"Conducta",d:"O2 al 100%, considerar Óxido Nítrico."}, {t:"Gestión",d:"Eestabilización hemodinámica crítica."}, {t:"NeoMonitor",d:"Visualización de alta fidelidad."}] },
+            sepsis: { title: "Shock Séptico", steps: [{t:"Caso Infeccioso",d:"RN con factores de riesgo de sepsis."}, {t:"Monitorización",d:"Taquicardia sostenida y fiebre:",v:{hr:188,sp:94}}, {t:"Signos",d:"Llenado capilar lento (> 3 seg)."}, {t:"Conducta",d:"Carga de fluidos y antibióticos."}, {t:"Educación",d:"Herramienta técnica para instructores."}] },
+            hipo: { title: "Hipotermia Terap.", steps: [{t:"Neuroprotección",d:"Bebé con asfixia moderada/grave."}, {t:"Monitoría",d:"Bradicardia relativa esperada:",v:{hr:92,sp:95}}, {t:"Vigilancia",d:"Mantener temperatura central estable."}, {t:"Evolución",d:"Monitorización continua de 72 horas."}, {t:"NeoMonitor",d:"Acompaña cada fase del cuidado."}] },
+            cardio: { title: "Cardiopatía Ducto", steps: [{t:"RN 24 Horas",d:"Cierre de ductus arterioso sospechado."}, {t:"Monitor Crítico",d:"Cianosis que no mejora con O2:",v:{hr:155,sp:62}}, {t:"Conducta",d:"Inicio inmediato de Prostaglandinas."}, {t:"Derivación",d:"Traslado urgente a cardiocirugía."}, {t:"NeoMonitor",d:"Simula lo que antes era imposible."}] },
+            asfixia: { title: "Asfixia Perinatal", steps: [{t:"Parto Distócico",d:"Depresión neonatal severa."}, {t:"Monitor al Nacer",d:"FC inicial muy baja:",v:{hr:45,sp:40}}, {t:"Resucitación",d:"Protocolo completo de RCP Neonatal."}, {t:"Recuperación",d:"Ascenso de FC tras VPP y masaje."}, {t:"Simulación",d:"Entrenamiento que salva vidas."}] },
+            estable: { title: "Estabilización", steps: [{t:"Post-RCP",d:"Bebé recuperado tras maniobras."}, {t:"Monitor Estable",d:"Parámetros en rango normal:",v:{hr:138,sp:96}}, {t:"Cuidado",d:"Mantener normotermia y monitoreo."}, {t:"Checklist",d:"Verificación de accesos y medicación."}, {t:"NeoMonitor",d:"La evolución de la simulación médica."}] }
         };
 
         async function generateCarousel() {
@@ -389,20 +409,20 @@
                 document.getElementById('cr-title').innerText = st.t;
                 document.getElementById('cr-desc').innerText = st.d;
                 document.getElementById('cr-page').innerText = `${i+1}/5`;
-                document.getElementById('cr-tag').innerText = sc.title;
+                document.getElementById('cr-tag').innerText = sc.title.toUpperCase();
                 const v = document.getElementById('cr-vitals');
                 if(st.v) { v.classList.remove('hidden'); document.getElementById('crv-hr').innerText = st.v.hr; document.getElementById('crv-spo2').innerText = st.v.sp + "%"; }
                 else v.classList.add('hidden');
-                const canvas = await html2canvas(temp, {scale: 1});
+                const canvas = await html2canvas(temp, {scale: 1, useCORS: true});
                 const img = document.createElement('img'); img.src = canvas.toDataURL();
-                img.className = "w-full rounded-xl border border-slate-700 cursor-pointer";
-                img.onclick = () => { const a = document.createElement('a'); a.download=`Slide_${i+1}.png`; a.href=img.src; a.click(); };
+                img.className = "w-full rounded-xl border border-slate-700 cursor-pointer shadow-lg hover:border-blue-500 transition";
+                img.onclick = () => { const a = document.createElement('a'); a.download=`${sc.title}_Slide_${i+1}.png`; a.href=img.src; a.click(); };
                 gal.appendChild(img);
             }
             temp.style.display = 'none';
         }
 
-        // TOOL 4: MOCKUP STUDIO
+        // --- HERRAMIENTA 4: MOCKUP STUDIO (URLS CORREGIDAS) ---
         function handleMockupFile(input) {
             if(input.files && input.files[0]) {
                 const rd = new FileReader(); rd.onload = e => document.getElementById('mockup-screen').src = e.target.result; rd.readAsDataURL(input.files[0]);
@@ -410,16 +430,17 @@
         }
         function setMockupScene(id) {
             const scenes = {
-                1: { c: 'scene-1', bg: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1200' },
-                2: { c: 'scene-2', bg: 'https://images.unsplash.com/photo-1512428559083-a401c338afb7?q=80&w=1200' },
-                3: { c: 'scene-3', bg: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1200' }
+                1: { c: 'scene-1', bg: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1200' }, // Quirófano/UCIN Real
+                2: { c: 'scene-2', bg: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1200' }, // Mano sosteniendo Celular
+                3: { c: 'scene-3', bg: 'https://images.unsplash.com/photo-1559839734-2b71f1e3c770?q=80&w=1200' }  // Escritorio Médico Real
             };
             document.getElementById('mockup-area').className = "mockup-stage " + scenes[id].c;
             document.getElementById('mockup-bg').src = scenes[id].bg;
         }
         function exportMockup() {
-            html2canvas(document.getElementById('mockup-area'), { useCORS: true, scale: 2 }).then(cv => {
-                const a = document.createElement('a'); a.download='mockup.png'; a.href=cv.toDataURL(); a.click();
+            const area = document.getElementById('mockup-area');
+            html2canvas(area, { useCORS: true, scale: 2 }).then(cv => {
+                const a = document.createElement('a'); a.download='NeoMonitor_Mockup_Export.png'; a.href=cv.toDataURL(); a.click();
             });
         }
 
@@ -430,4 +451,3 @@
     </script>
 </body>
 </html>
-
