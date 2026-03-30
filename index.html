@@ -34,13 +34,17 @@
         /* Mockup Studio Perspective Styles */
         .mockup-stage { width: 800px; height: 600px; position: relative; background-color: #000; overflow: hidden; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         .bg-image { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 1; }
-        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        .screen-overlay { position: absolute; z-index: 10; overflow: hidden; background: #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
         .screen-overlay img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Ajuste de Perspectivas Corregidas */
-        .scene-1 .screen-overlay { width: 345px; height: 235px; top: 165px; left: 228px; transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) rotateZ(0deg); border-radius: 5px; }
-        .scene-2 .screen-overlay { width: 125px; height: 270px; top: 125px; left: 338px; transform: perspective(1000px) rotateX(5deg) rotateY(18deg) rotateZ(-12deg); border-radius: 15px; }
-        .scene-3 .screen-overlay { width: 320px; height: 185px; top: 128px; left: 240px; transform: perspective(1000px) rotateX(1deg) rotateY(0deg); border-radius: 4px; }
+        /* Ajuste de Perspectivas de Precisión para nuevas imágenes */
+        .scene-1 .screen-overlay { width: 345px; height: 230px; top: 182px; left: 228px; transform: perspective(1000px) rotateX(15deg) rotateY(-5deg) rotateZ(0deg); border-radius: 8px; }
+        .scene-2 .screen-overlay { width: 110px; height: 240px; top: 145px; left: 345px; transform: perspective(1000px) rotateX(2deg) rotateY(18deg) rotateZ(-12deg); border-radius: 12px; }
+        .scene-3 .screen-overlay { width: 310px; height: 195px; top: 122px; left: 245px; transform: perspective(1000px) rotateX(2deg); border-radius: 4px; }
+
+        /* Estilos de Previsualización de Fondos */
+        .bg-thumb { width: 100%; aspect-ratio: 16/9; border-radius: 8px; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; object-fit: cover; }
+        .bg-thumb.active { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
 
         /* Carousel Styles */
         .carousel-canvas { width: 1080px; height: 1080px; background: #020617; position: relative; overflow: hidden; display: none; }
@@ -94,7 +98,7 @@
         <section id="tool-promo" class="tool-section max-w-6xl mx-auto">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Promociones <span class="text-green-500">Expert</span></h2>
-                <p class="text-slate-400">Genera archivos HTML interactivos para tus campañas.</p>
+                <p class="text-slate-400">Genera archivos HTML interactivos para tus campañas de captación.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-8 items-start">
                 <div class="lg:col-span-8 space-y-6" id="promo-slides-container"></div>
@@ -181,42 +185,57 @@
             <div id="carousel-gallery" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8"></div>
         </section>
 
-        <!-- 4. MOCKUP STUDIO (CORREGIDO) -->
+        <!-- 4. MOCKUP STUDIO (MEJORADO Y CORREGIDO) -->
         <section id="tool-mockup" class="tool-section max-w-6xl mx-auto hidden">
             <header class="mb-10">
                 <h2 class="text-4xl font-black tracking-tight mb-2 uppercase">Mockup <span class="text-purple-500">Studio</span></h2>
-                <p class="text-slate-400">Contextualiza NeoMonitor en entornos médicos reales corregidos.</p>
+                <p class="text-slate-400">Contextualiza NeoMonitor en ambientes clínicos profesionales reales.</p>
             </header>
             <div class="grid lg:grid-cols-12 gap-10">
                 <div class="lg:col-span-4 space-y-6">
                     <div class="glass-card p-6 rounded-3xl">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Captura de Pantalla</label>
                         <input type="file" id="mockup-input" class="hidden" onchange="handleMockupFile(this)">
-                        <label for="mockup-input" class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 text-slate-600">
-                            Subir Imagen
+                        <label for="mockup-input" class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 text-slate-600 transition-all">
+                            <svg class="w-8 h-8 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" stroke-width="2"/></svg>
+                            <span class="text-xs font-bold uppercase tracking-widest">Subir Captura</span>
                         </label>
                     </div>
-                    <div class="glass-card p-4 rounded-2xl space-y-2">
-                        <button onclick="setMockupScene(1)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
-                            <span>Tablet en UCIN/Quirófano</span>
-                            <span class="text-[10px] opacity-40">16:9</span>
-                        </button>
-                        <button onclick="setMockupScene(2)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
-                            <span>Mano con Celular (Control)</span>
-                            <span class="text-[10px] opacity-40">9:19</span>
-                        </button>
-                        <button onclick="setMockupScene(3)" class="w-full p-3 bg-slate-800 rounded-xl text-left text-sm font-semibold hover:bg-slate-700 transition flex justify-between items-center">
-                            <span>Escritorio Médico Real</span>
-                            <span class="text-[10px] opacity-40">Laptop</span>
-                        </button>
+                    
+                    <!-- Previsualizador de Fondos del Sistema -->
+                    <div class="glass-card p-6 rounded-3xl">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block text-center">Seleccionar Escena Real</label>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="space-y-2">
+                                <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=400" id="thumb-1" onclick="setMockupScene(1)" class="bg-thumb active" alt="UCIN">
+                                <p class="text-[10px] font-bold text-center text-slate-500 uppercase">UCIN / Quirófano (Tablet)</p>
+                            </div>
+                            <div class="space-y-2">
+                                <img src="https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=400" id="thumb-2" onclick="setMockupScene(2)" class="bg-thumb" alt="Mano">
+                                <p class="text-[10px] font-bold text-center text-slate-500 uppercase">Mano Médica (Smartphone)</p>
+                            </div>
+                            <div class="space-y-2">
+                                <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=400" id="thumb-3" onclick="setMockupScene(3)" class="bg-thumb" alt="Escritorio">
+                                <p class="text-[10px] font-bold text-center text-slate-500 uppercase">Escritorio Médico (Laptop)</p>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="exportMockup()" class="w-full bg-purple-600 font-black py-4 rounded-2xl hover:bg-purple-500 transition shadow-xl">EXPORTAR MOCKUP</button>
+
+                    <button onclick="exportMockup()" class="w-full bg-purple-600 font-black py-4 rounded-2xl hover:bg-purple-500 transition shadow-xl uppercase tracking-widest text-sm">
+                        Exportar Mockup Final
+                    </button>
                 </div>
-                <div class="lg:col-span-8 flex justify-center">
+                
+                <div class="lg:col-span-8 flex flex-col items-center">
                     <div id="mockup-area" class="mockup-stage scene-1">
-                        <img id="mockup-bg" src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1200" class="bg-image" crossorigin="anonymous">
-                        <div class="screen-overlay"><img id="mockup-screen" src="https://placehold.co/600x400/0f172a/42b334?text=NeoMonitor"></div>
+                        <!-- Imagen de fondo corregida (Hospital/Medical context) -->
+                        <img id="mockup-bg" src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1200" class="bg-image" crossorigin="anonymous">
+                        <div class="screen-overlay">
+                            <img id="mockup-screen" src="https://placehold.co/600x400/0f172a/42b334?text=NeoMonitor" alt="Screen">
+                        </div>
+                        <div class="absolute bottom-4 right-6 z-20 opacity-30 text-[10px] font-black uppercase tracking-[0.3em]">neomonitor.pro</div>
                     </div>
+                    <p class="text-xs text-slate-600 mt-4 italic">Vista previa de composición en alta resolución</p>
                 </div>
             </div>
         </section>
@@ -271,7 +290,7 @@
                     <div class="absolute top-0 right-0 p-4 opacity-5 font-black text-6xl">#${i}</div>
                     <div class="space-y-4 relative z-10">
                         <input type="text" id="p-t-${i}" placeholder="Título Diapositiva ${i}" class="w-full p-3 rounded-xl font-bold">
-                        <textarea id="p-d-${i}" placeholder="Detalle técnico para el profesional..." class="w-full p-3 rounded-xl h-24 resize-none"></textarea>
+                        <textarea id="p-d-${i}" placeholder="Detalle técnico..." class="w-full p-3 rounded-xl h-24 resize-none"></textarea>
                     </div>
                     <div class="space-y-4 relative z-10">
                         <label class="w-full h-32 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-500 relative overflow-hidden transition-all">
@@ -318,7 +337,7 @@
                 }
                 const ctaT = document.getElementById('promo-cta-text').value;
                 const ctaU = document.getElementById('promo-cta-url').value;
-                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">Punto 0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm leading-relaxed">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-green-500/20 text-black font-black"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></div><h2 class="text-3xl font-black mb-8">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
+                const template = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>NeoMonitor Promo</title><script src="https://cdn.tailwindcss.com"><\/script><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');body{background:#020617;color:#fff;font-family:Inter,sans-serif;margin:0;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}.canvas{width:360px;height:640px;background:#000;position:relative;overflow:hidden;border:4px solid #1e293b;border-radius:40px}.slide{position:absolute;inset:0;padding:40px 20px;opacity:0;transform:translateY(20px);transition:all .8s ease;display:flex;flex-direction:column;pointer-events:none}.active{opacity:1;transform:translateY(0);pointer-events:auto}.bar-container{position:absolute;top:0;left:0;right:0;height:4px;display:flex;z-index:100}.bar{flex:1;height:100%;background:rgba(255,255,255,.2);margin:0 2px;position:relative}.bar-fill{position:absolute;top:0;left:0;height:100%;background:#10b981;width:0%}.media-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(2,6,23,0.9), transparent, rgba(2,6,23,0.95));z-index:-1}<\/style><\/head><body><div class="canvas"><div class="bar-container">${slides.map(()=>'<div class="bar"><div class="bar-fill"></div></div>').join('')}</div>${slides.map((s,i)=>`<div class="slide ${i===0?'active':''}">\${s.mediaUrl?(s.mediaType==='video'?\`<video src="\${s.mediaUrl}" class="media-bg" autoplay loop muted playsinline><\/video>\`:\`<img src="\${s.mediaUrl}" class="media-bg">\`):''}<div class="overlay"></div><div class="mt-12"><span class="bg-green-600/20 text-green-500 border border-green-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase">0\${i+1}<\/span><h2 class="text-4xl font-black mt-6 leading-tight">\${s.title}<\/h2><p class="text-slate-300 mt-4 text-sm leading-relaxed">\${s.desc}<\/p>\${s.icon?\`<div class="mt-8 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="\${s.icon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>\`:''} <\/div><\/div>`).join('')}<div class="slide flex flex-col items-center justify-center text-center"><div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-green-500/20 text-black font-black"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></div><h2 class="text-3xl font-black mb-8">\${ctaT}<\/h2><div class="bg-slate-900 border border-slate-700 w-full p-4 rounded-2xl font-black text-green-500 tracking-tighter">\${ctaU}<\/div><\/div><\/div><script>const slides=document.querySelectorAll('.slide'),fills=document.querySelectorAll('.bar-fill');let curr=0;function show(idx){slides.forEach((s,i)=>s.classList.toggle('active',i===idx));fills.forEach((f,i)=>{if(i<idx)f.style.width='100%';if(i>idx)f.style.width='0%'});let start=null;function anim(t){if(!start)start=t;const p=(t-start)/5000;fills[idx].style.width=(Math.min(p*100,100))+'%';if(p<1){if(curr===idx)requestAnimationFrame(anim)}else next()}requestAnimationFrame(anim)}function next(){curr++;if(curr>=slides.length)curr=0;show(curr)}show(0)<\/script><\/body><\/html>`;
                 const blob = new Blob([template], {type:'text/html'});
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'neomonitor_expert_promo.html'; a.click();
             } catch(e) { console.error(e); }
@@ -422,7 +441,7 @@
             temp.style.display = 'none';
         }
 
-        // --- HERRAMIENTA 4: MOCKUP STUDIO (URLS CORREGIDAS) ---
+        // --- HERRAMIENTA 4: MOCKUP STUDIO (MEJORADO) ---
         function handleMockupFile(input) {
             if(input.files && input.files[0]) {
                 const rd = new FileReader(); rd.onload = e => document.getElementById('mockup-screen').src = e.target.result; rd.readAsDataURL(input.files[0]);
@@ -430,12 +449,16 @@
         }
         function setMockupScene(id) {
             const scenes = {
-                1: { c: 'scene-1', bg: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1200' }, // Quirófano/UCIN Real
-                2: { c: 'scene-2', bg: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1200' }, // Mano sosteniendo Celular
+                1: { c: 'scene-1', bg: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1200' }, // UCIN / Quirófano Realista
+                2: { c: 'scene-2', bg: 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=1200' }, // Mano Médica Limpia
                 3: { c: 'scene-3', bg: 'https://images.unsplash.com/photo-1559839734-2b71f1e3c770?q=80&w=1200' }  // Escritorio Médico Real
             };
             document.getElementById('mockup-area').className = "mockup-stage " + scenes[id].c;
             document.getElementById('mockup-bg').src = scenes[id].bg;
+            
+            // Actualizar UI de miniaturas
+            document.querySelectorAll('.bg-thumb').forEach(img => img.classList.remove('active'));
+            document.getElementById(`thumb-${id}`).classList.add('active');
         }
         function exportMockup() {
             const area = document.getElementById('mockup-area');
