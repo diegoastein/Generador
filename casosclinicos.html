@@ -25,206 +25,262 @@
 <script type="text/babel">
 const { useState, useRef, useCallback } = React;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   ESCENARIOS — 13 casos NRP (AHA/AAP 8ª ed. 2021 + actualización 2023)
+───────────────────────────────────────────────────────────────────────────── */
 const SCENARIOS_BASE = {
+
+    /* ── CASOS ORIGINALES ── */
     brady: {
         title: "Bradicardia Severa",
         steps: [
-            {t:"Desafío Clínico",   d:"Recién nacido con FC < 60 lpm tras pasos iniciales de estabilización en sala de partos.", v:null},
-            {t:"Monitor en Alerta", d:"Se detecta caída sostenida de la frecuencia y saturación pre-ductal crítica.", v:{hr:55,sp:72}},
-            {t:"Conducta (NRP)",    d:"Inicio inmediato de VPP efectiva. Evaluación de técnica MR. SOPA.", v:{hr:58,sp:70}},
-            {t:"Evolución",         d:"Mejora de la ventilación resulta en ascenso de la frecuencia cardiaca por encima de 100.", v:{hr:115,sp:88}},
-            {t:"Entrenamiento",     d:"Domina la reanimación neonatal con los escenarios de NeoMonitor Expert.", v:null}
+            {t:"Desafío Clínico",   d:"Recién nacido de término con FC < 60 lpm tras pasos iniciales de estabilización en sala de partos.", v:null},
+            {t:"Monitor en Alerta", d:"Se detecta caída sostenida de la FC y SpO₂ pre-ductal crítica. EKG confirma bradicardia sinusal.", v:{hr:55,sp:72}},
+            {t:"Conducta (NRP)",    d:"VPP efectiva inmediata. Evaluación de técnica MR-SOPA. Considerar intubación si no responde.", v:{hr:58,sp:70}},
+            {t:"Evolución",         d:"La ventilación adecuada revierte la bradicardia. FC supera 100 lpm en 30 segundos.", v:{hr:115,sp:88}},
+            {t:"Clave NRP",         d:"La causa más frecuente de bradicardia neonatal es la ventilación inadecuada. Ventila primero.", v:null}
         ]
     },
     pneumo: {
         title: "Neumotórax a Tensión",
         steps: [
-            {t:"Deterioro Súbito", d:"Bebé en asistencia respiratoria mecánica presenta desaturación brusca y cianosis.", v:null},
-            {t:"Signos Críticos",  d:"Taquicardia compensatoria con caída de la saturación de oxígeno.", v:{hr:185,sp:74}},
-            {t:"Diagnóstico",      d:"Sospechar ante ruidos asimétricos y tórax abombado.", v:{hr:190,sp:72}},
-            {t:"Intervención",     d:"Descompresión inmediata con aguja en segundo espacio intercostal.", v:{hr:160,sp:85}},
-            {t:"Simulación",       d:"NeoMonitor: Alta fidelidad para decisiones en segundos críticos.", v:null}
+            {t:"Deterioro Súbito", d:"RNPT en ARM presenta desaturación brusca e hipotensión. Murmullo vesicular asimétrico.", v:null},
+            {t:"Signos Críticos",  d:"Taquicardia compensatoria y SpO₂ en caída a pesar de FiO₂ al 100%.", v:{hr:185,sp:74}},
+            {t:"Diagnóstico",      d:"Tórax abombado derecho, tráquea desviada. Transiluminación positiva. Confirmar con Rx.", v:{hr:190,sp:72}},
+            {t:"Intervención",     d:"Descompresión urgente con aguja calibre 18G en 2° EIC línea medioclavicular.", v:{hr:160,sp:85}},
+            {t:"Clave NRP",        d:"Sospechar neumotórax ante todo deterioro brusco en paciente con ventilación a presión.", v:null}
         ]
     },
     sepsis: {
-        title: "Shock Séptico",
+        title: "Shock Séptico Neonatal",
         steps: [
-            {t:"Caso Infeccioso",  d:"RN con factores de riesgo de sepsis presenta inestabilidad térmica y taquipnea.", v:null},
-            {t:"Inestabilidad",    d:"Taquicardia sostenida y perfusión periférica disminuida (relleno > 3 seg).", v:{hr:188,sp:94}},
-            {t:"Monitorización",   d:"Tendencia a la hipotensión y necesidad de soporte inotrópico.", v:{hr:195,sp:90}},
-            {t:"Conducta",         d:"Carga de fluidos (10 ml/kg) y cobertura antibiótica de amplio espectro.", v:{hr:175,sp:92}},
-            {t:"Optimización",     d:"Mejora tus protocolos de respuesta con simulación avanzada.", v:null}
+            {t:"Caso Infeccioso",  d:"RN de 2 días con factores de riesgo de sepsis: RPM > 18h, fiebre materna, líquido fétido.", v:null},
+            {t:"Inestabilidad",    d:"Taquicardia sostenida, relleno capilar > 3 seg, hipotermia. Signos de bajo gasto.", v:{hr:188,sp:94}},
+            {t:"Monitorización",   d:"Tendencia hipotensiva. Lactato elevado. Hemocultivos tomados antes de antibióticos.", v:{hr:195,sp:90}},
+            {t:"Conducta",         d:"Acceso vascular urgente. Ampicilina + Gentamicina. Expansión SF 10 ml/kg en 30 min.", v:{hr:175,sp:92}},
+            {t:"Clave NRP",        d:"En sepsis neonatal el reconocimiento precoz y los antibióticos dentro de la 1ª hora son críticos.", v:null}
+        ]
+    },
+
+    /* ── NUEVOS CASOS NRP 8ª ED. ── */
+
+    /* 4 */
+    apnea_primaria: {
+        title: "Apnea Primaria al Nacer",
+        steps: [
+            {t:"Escenario Inicial", d:"RN de término. No respira espontáneamente al nacer. Tono flácido. Madre con anestesia epidural.", v:null},
+            {t:"Evaluación Rápida", d:"FC 90 lpm. Sin esfuerzo respiratorio. SpO₂ no detectable. Apnea primaria probable.", v:{hr:90,sp:null}},
+            {t:"Pasos Iniciales",   d:"Calor, secar, estimular táctilmente (frotar espalda / golpear plantas). Posicionar vía aérea.", v:{hr:88,sp:null}},
+            {t:"VPP Iniciada",      d:"Sin respuesta a estimulación. VPP con máscara-bolsa a 40-60 rpm, FiO₂ 21%. MR-SOPA.", v:{hr:110,sp:86}},
+            {t:"Clave NRP",        d:"Apnea primaria responde a estimulación. Si no: iniciar VPP dentro de los 60 segundos de vida.", v:null}
+        ]
+    },
+
+    /* 5 */
+    vpp_inefectiva: {
+        title: "VPP Inefectiva — MR-SOPA",
+        steps: [
+            {t:"Problema Ventilatorio", d:"RN con VPP en curso. FC no asciende por encima de 100. No se observa expansión torácica.", v:null},
+            {t:"Monitor Alerta",        d:"FC estancada en 80 lpm. SpO₂ sin mejoría pese a ventilación aparente.", v:{hr:80,sp:68}},
+            {t:"MR-SOPA",              d:"M: ajustar máscara. R: reposicionar. S: succionar. O: abrir boca. P: presión. A: vía aérea alternativa.", v:{hr:82,sp:70}},
+            {t:"Vía Alternativa",       d:"Tras SOPA sin éxito: intubación orotraqueal o máscara laríngea. Confirmar posición con capnógrafo.", v:{hr:128,sp:92}},
+            {t:"Clave NRP",            d:"Si la FC no sube con VPP, el primer paso es siempre corregir la ventilación antes de comprimir.", v:null}
+        ]
+    },
+
+    /* 6 */
+    aspiracion_meconio: {
+        title: "Líquido Amniótico Meconial",
+        steps: [
+            {t:"Escenario Obstétrico", d:"RNAT 39 sem. Líquido amniótico meconial espeso (partículas). Nacimiento deprimido.", v:null},
+            {t:"Decisión Inicial",     d:"NRP 8ª ed.: NO aspirar rutinariamente. Solo intubar si hay obstrucción de VA o no ventila.", v:{hr:72,sp:null}},
+            {t:"Conducta Activa",      d:"RN no respira, tono deprimido. Intubación directa para aspirar solo si hay meconio en hipofaringe.", v:{hr:70,sp:60}},
+            {t:"Soporte Ventilatorio", d:"VPP una vez liberada vía aérea. Ajustar FiO₂ por SpO₂. Monitorizar SAM.", v:{hr:120,sp:85}},
+            {t:"Clave NRP",           d:"La intubación de rutina en bebés deprimidos con líquido meconial ya NO está recomendada en NRP 8ª.", v:null}
+        ]
+    },
+
+    /* 7 */
+    comprensiones_cardiacas: {
+        title: "Compresiones Cardíacas Neonatales",
+        steps: [
+            {t:"Indicación",      d:"FC < 60 lpm a pesar de 30 seg de VPP correcta, con expansión torácica visible confirmada.", v:null},
+            {t:"Técnica",         d:"Técnica bimanual: pulgares sobre tercio inferior del esternón. Ratio 3:1 (90 compresiones + 30 vent.).", v:{hr:48,sp:64}},
+            {t:"Oxígeno al 100%", d:"Aumentar FiO₂ a 100% durante compresiones. Considerar intubación. Acceso vascular umbilical.", v:{hr:45,sp:60}},
+            {t:"Evaluación",      d:"Pausar cada 60 seg. Si FC > 60: cesar compresiones, continuar VPP. Si FC > 100: reducir soporte.", v:{hr:95,sp:88}},
+            {t:"Clave NRP",       d:"Compresiones solo son efectivas si la ventilación es correcta. Ventilación es la prioridad absoluta.", v:null}
+        ]
+    },
+
+    /* 8 */
+    epinefrina_neonatal: {
+        title: "Epinefrina en Reanimación",
+        steps: [
+            {t:"Colapso Cardiovascular", d:"FC no detectable o < 60 lpm tras compresiones + VPP por 60 seg. Sin respuesta.", v:null},
+            {t:"Acceso Vascular",        d:"Cateterismo umbilical venoso urgente. Preferir vía IV. Vía endotraqueal solo si no hay acceso.", v:{hr:40,sp:55}},
+            {t:"Dosis NRP",             d:"Epinefrina IV: 0.01-0.03 mg/kg (0.1-0.3 ml/kg de 1:10,000). Repetir cada 3-5 min si necesario.", v:{hr:38,sp:52}},
+            {t:"Respuesta",             d:"FC comienza a ascender. Continuar VPP. Valorar volumen si sospecha de hipovolemia.", v:{hr:110,sp:90}},
+            {t:"Clave NRP",            d:"Epinefrina IV es superior a endotraqueal. La dosis ET (si inevitable) es 0.05-0.1 mg/kg.", v:null}
+        ]
+    },
+
+    /* 9 */
+    prematuro_extremo: {
+        title: "Prematuro Extremo < 28 sem",
+        steps: [
+            {t:"Preparación Prenatal", d:"Parto 26 sem inminente. Briefing de equipo. Esteroides completos. Consentimiento familiar informado.", v:null},
+            {t:"Sala de Partos",       d:"Recibir en bolsa de polietileno sin secar. Calor radiante. Gorro. Temperatura objetivo 36.5-37.5°C.", v:{hr:100,sp:null}},
+            {t:"Soporte Respiratorio", d:"CPAP nasal desde sala de partos si respira. FiO₂ inicial 30%. Guiar por SpO₂ pre-ductal.", v:{hr:115,sp:82}},
+            {t:"Surfactante",          d:"Considerar surfactante temprano (INSURE o LISA). Evitar intubación prolongada si es posible.", v:{hr:130,sp:90}},
+            {t:"Clave NRP",           d:"En prematuros < 28 sem, la prevención de hipotermia reduce mortalidad. Temperatura es vital.", v:null}
+        ]
+    },
+
+    /* 10 */
+    hernia_diafragmatica: {
+        title: "Hernia Diafragmática Congénita",
+        steps: [
+            {t:"Diagnóstico Prenatal", d:"HDC izquierda diagnosticada. RN nace con dificultad respiratoria inmediata y abdomen excavado.", v:null},
+            {t:"Conducta Inicial",     d:"NO usar máscara-bolsa (distensión intestinal). Intubación orotraqueal de inmediato.", v:{hr:160,sp:70}},
+            {t:"Estabilización",       d:"Sonda nasogástrica a caída libre. PIP bajas. Hipercapnia permisiva. Evitar barotrauma.", v:{hr:155,sp:75}},
+            {t:"Soporte Avanzado",     d:"NO usar surfactante de rutina. Referir a centro terciario. Considerar VAFO u OMEC si falla.", v:{hr:140,sp:82}},
+            {t:"Clave NRP",           d:"En HDC: intubar de inmediato, jamás ventilar con máscara. Las vísceras en tórax comprimen pulmón.", v:null}
+        ]
+    },
+
+    /* 11 */
+    hipoglucemia_neonatal: {
+        title: "Hipoglucemia Neonatal Severa",
+        steps: [
+            {t:"Factores de Riesgo", d:"RNPT tardío 35 sem, hijo de madre diabética. Glucemia en talón a la hora de vida: 28 mg/dl.", v:null},
+            {t:"Signos Clínicos",    d:"Irritabilidad, temblores, quejido leve. FC elevada por respuesta adrenérgica a hipoglucemia.", v:{hr:168,sp:96}},
+            {t:"Clasificación",      d:"Glucemia < 40 mg/dl con síntomas: hipoglucemia sintomática. Requiere tratamiento IV inmediato.", v:{hr:170,sp:95}},
+            {t:"Tratamiento",        d:"Dextrosa 10% IV: 2 ml/kg en bolo. Luego infusión a 6-8 mg/kg/min. Repetir glucemia en 30 min.", v:{hr:148,sp:97}},
+            {t:"Clave NRP",         d:"Hipoglucemia neonatal es causa de daño neurológico. Monitorizar en todo RN de riesgo desde la 1ª hora.", v:null}
+        ]
+    },
+
+    /* 12 */
+    encefalopatia_hipoxica: {
+        title: "Encefalopatía Hipóxico-Isquémica",
+        steps: [
+            {t:"Antecedente",      d:"Parto distócico con bradicardia fetal prolongada. RN deprimido. Apgar 2/5. pH de cordón: 6.98.", v:null},
+            {t:"Estabilización",   d:"Reanimación exitosa en sala de partos. FC estable. Tono disminuido. Signos neurológicos.", v:{hr:122,sp:96}},
+            {t:"Criterios de HT",  d:"EG ≥ 36 sem, pH < 7.0 o déficit de base < -16, encefalopatía moderada-severa al examen. Sarnat ≥ II.", v:{hr:118,sp:97}},
+            {t:"Hipotermia",       d:"Iniciar hipotermia pasiva (no calentar activamente) y transferir a centro con capacidad de HT activa.", v:{hr:115,sp:98}},
+            {t:"Clave NRP",       d:"La hipotermia terapéutica (33-34°C por 72h) debe iniciarse antes de las 6 horas del insulto.", v:null}
+        ]
+    },
+
+    /* 13 */
+    hipertension_pulmonar: {
+        title: "Hipertensión Pulmonar Neonatal",
+        steps: [
+            {t:"Presentación",      d:"RNAT 38 sem con SDR severo desde nacimiento. FiO₂ 100% y SpO₂ pre-ductal 82%. Diferencial > 10%.", v:null},
+            {t:"Diferencial",       d:"Gradiente pre vs post-ductal. SpO₂ pre-ductal 82% vs post-ductal 68%. Confirma shunt D-I.", v:{hr:155,sp:82}},
+            {t:"Diagnóstico",       d:"ECO confirma HTP con shunt D-I a nivel ductal y foramen. PAP sistémica. PDA con flujo bidireccional.", v:{hr:160,sp:78}},
+            {t:"Tratamiento",       d:"FiO₂ 100%, alcalosis suave, sedación. Óxido Nítrico inhalado 20 ppm si disponible. OMEC si falla.", v:{hr:140,sp:88}},
+            {t:"Clave NRP",        d:"Hiperoxia controlada y ventilación óptima antes del iNO. La hipotensión empeora el shunt D-I.", v:null}
         ]
     }
 };
 
-// ─── Helpers de texto ────────────────────────────────────────────────────────
+// ─── Canvas helpers ───────────────────────────────────────────────────────────
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(' ');
-    let line = '';
-    let lines = [];
+    let line = '', lines = [];
     for (let w of words) {
         const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxWidth && line) {
-            lines.push(line);
-            line = w;
-        } else { line = test; }
+        if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+        else line = test;
     }
     if (line) lines.push(line);
-    for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], x, y + i * lineHeight);
-    }
+    for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i], x, y + i * lineHeight);
     return lines.length;
 }
 
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+    ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
     ctx.closePath();
 }
 
-// ─── Renderizador de diapositivas con Canvas API ─────────────────────────────
 function renderSlideToCanvas(canvas, step, slideIndex) {
     const SIZE = 1080;
-    canvas.width  = SIZE;
-    canvas.height = SIZE;
+    canvas.width = SIZE; canvas.height = SIZE;
     const ctx = canvas.getContext('2d');
 
-    // Fondo principal
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(0, 0, SIZE, SIZE);
-
-    // Grid de puntos
+    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,SIZE,SIZE);
     ctx.fillStyle = '#1e293b';
-    for (let gx = 20; gx < SIZE; gx += 40) {
-        for (let gy = 20; gy < SIZE; gy += 40) {
-            ctx.beginPath();
-            ctx.arc(gx, gy, 1, 0, Math.PI * 2);
-            ctx.fill();
-        }
+    for (let gx=20; gx<SIZE; gx+=40) for (let gy=20; gy<SIZE; gy+=40) {
+        ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill();
     }
 
     const PAD = 80;
-
-    // ── Badge "CASO CLÍNICO" ──
     const badgeText = 'CASO CLÍNICO';
     ctx.font = 'bold 28px Inter, sans-serif';
-    const badgeW = ctx.measureText(badgeText).width + 60;
-    roundRect(ctx, PAD, PAD, badgeW, 60, 30);
-    ctx.fillStyle = '#2563eb';
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(badgeText, PAD + 30, PAD + 30);
+    const bw = ctx.measureText(badgeText).width + 60;
+    roundRect(ctx, PAD, PAD, bw, 60, 30); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(badgeText, PAD+30, PAD+30); ctx.textBaseline='top';
 
-    // ── Título ──
-    const titleY = PAD + 90;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 88px Inter, sans-serif';
-    ctx.textBaseline = 'top';
-    const titleText = step.t || 'Sin título';
-    const titleLines = wrapText(ctx, titleText.toUpperCase(), PAD, titleY, SIZE - PAD * 2, 92);
+    const titleY = PAD+90;
+    ctx.fillStyle='#fff'; ctx.font='bold 88px Inter, sans-serif'; ctx.textBaseline='top';
+    const tl = wrapText(ctx, (step.t||'Sin título').toUpperCase(), PAD, titleY, SIZE-PAD*2, 92);
 
-    // ── Tarjeta de contenido ──
-    const cardY = titleY + titleLines * 92 + 32;
+    const cardY = titleY + tl*92 + 32;
     const cardH = step.v ? 460 : 320;
-    const cardW = SIZE - PAD * 2;
+    const cardW = SIZE - PAD*2;
+    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.fillStyle='#0f172a'; ctx.fill();
+    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1.5; ctx.stroke();
 
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60);
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    const grd = ctx.createRadialGradient(PAD+100,cardY+100,0,PAD+100,cardY+100,400);
+    grd.addColorStop(0,'rgba(37,99,235,0.12)'); grd.addColorStop(1,'transparent');
+    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.fillStyle=grd; ctx.fill();
 
-    // Glow decorativo
-    const grd = ctx.createRadialGradient(PAD + 100, cardY + 100, 0, PAD + 100, cardY + 100, 400);
-    grd.addColorStop(0, 'rgba(37,99,235,0.12)');
-    grd.addColorStop(1, 'transparent');
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60);
-    ctx.fillStyle = grd;
-    ctx.fill();
+    ctx.fillStyle='#e2e8f0'; ctx.font='400 42px Inter, sans-serif'; ctx.textBaseline='top';
+    wrapText(ctx, step.d||'', PAD+60, cardY+60, cardW-120, 58);
 
-    // Texto descripción
-    const descX = PAD + 60;
-    const descY = cardY + 60;
-    const descMaxW = cardW - 120;
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '400 42px Inter, sans-serif';
-    ctx.textBaseline = 'top';
-    wrapText(ctx, step.d || '', descX, descY, descMaxW, 58);
-
-    // ── Vitales ──
     if (step.v) {
-        const vitalsY = cardY + cardH - 260;
-        const col1X = descX;
-        const col2X = descX + 380;
-
-        // FC
-        ctx.fillStyle = '#22c55e';
-        ctx.font = 'bold 26px Inter, sans-serif';
-        ctx.textBaseline = 'top';
-        ctx.fillText('FRECUENCIA CARDIACA', col1X, vitalsY);
-        ctx.font = 'bold 160px Inter, sans-serif';
-        ctx.fillText(String(step.v.hr || '--'), col1X, vitalsY + 30);
-
-        // SpO2
-        ctx.fillStyle = '#facc15';
-        ctx.font = 'bold 26px Inter, sans-serif';
-        ctx.fillText('SATURACIÓN O₂', col2X, vitalsY);
-        ctx.font = 'bold 160px Inter, sans-serif';
-        ctx.fillText(String(step.v.sp || '--'), col2X, vitalsY + 30);
-        ctx.font = 'bold 72px Inter, sans-serif';
-        const spW = ctx.measureText(String(step.v.sp || '--')).width;
-        ctx.fillText('%', col2X + spW + 8, vitalsY + 110);
+        const vy = cardY + cardH - 260;
+        if (step.v.hr !== null) {
+            ctx.fillStyle='#22c55e'; ctx.font='bold 26px Inter, sans-serif'; ctx.textBaseline='top';
+            ctx.fillText('FRECUENCIA CARDIACA', PAD+60, vy);
+            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.hr), PAD+60, vy+30);
+        }
+        if (step.v.sp !== null) {
+            ctx.fillStyle='#facc15'; ctx.font='bold 26px Inter, sans-serif';
+            ctx.fillText('SATURACIÓN O₂', PAD+60+380, vy);
+            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.sp), PAD+60+380, vy+30);
+            ctx.font='bold 72px Inter, sans-serif';
+            ctx.fillText('%', PAD+60+380+ctx.measureText(String(step.v.sp)).width+8, vy+110);
+        }
     }
 
-    // ── Footer ──
-    const footerY = SIZE - PAD - 60;
-    ctx.fillStyle = '#475569';
-    ctx.font = 'bold 28px Inter, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText('neomonitor.pro', PAD + 10, footerY);
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 18px Inter, sans-serif';
-    ctx.fillText('SIMULACIÓN MÉDICA AVANZADA', PAD + 10, footerY + 38);
-
-    // Contador slide
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 120px Inter, sans-serif';
-    ctx.textBaseline = 'bottom';
-    ctx.textAlign = 'right';
-    ctx.fillText(`${slideIndex + 1}/5`, SIZE - PAD, SIZE - PAD + 20);
-    ctx.textAlign = 'left';
+    const fy = SIZE-PAD-60;
+    ctx.fillStyle='#475569'; ctx.font='bold 28px Inter, sans-serif'; ctx.textBaseline='top';
+    ctx.fillText('neomonitor.pro', PAD+10, fy);
+    ctx.fillStyle='#1e293b'; ctx.font='bold 18px Inter, sans-serif';
+    ctx.fillText('NRP · AHA/AAP 8ª EDICIÓN', PAD+10, fy+38);
+    ctx.fillStyle='#1e293b'; ctx.font='bold 120px Inter, sans-serif';
+    ctx.textBaseline='bottom'; ctx.textAlign='right';
+    ctx.fillText((slideIndex+1)+'/5', SIZE-PAD, SIZE-PAD+20);
+    ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
-// ─── Preview visual de diapositiva (SVG simplificado) ────────────────────────
+// ─── Preview ──────────────────────────────────────────────────────────────────
 const SlidePreview = ({ step, index }) => (
-    <div className="w-full aspect-square bg-slate-950 rounded-2xl overflow-hidden relative select-none border border-white/5 flex flex-col p-5"
-         style={{fontFamily:'Inter,sans-serif', background:'#020617'}}>
+    <div className="w-full aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-white/5 flex flex-col p-5" style={{background:'#020617'}}>
         <div className="bg-blue-600 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit mb-3">Caso Clínico</div>
-        <h2 className="text-white font-black uppercase leading-none mb-3" style={{fontSize:'clamp(14px,3.5vw,22px)'}}>{step.t || 'Sin título'}</h2>
+        <h2 className="text-white font-black uppercase leading-none mb-3" style={{fontSize:'clamp(14px,3.5vw,22px)'}}>{step.t||'Sin título'}</h2>
         <div className="flex-1 bg-slate-900 rounded-2xl p-4 border border-white/5 flex flex-col justify-center">
             <p className="text-slate-300 text-xs leading-relaxed">{step.d}</p>
             {step.v && (
                 <div className="flex gap-6 mt-3">
-                    <div>
-                        <p className="text-green-500 text-[8px] font-black uppercase tracking-widest">FC</p>
-                        <p className="text-green-500 font-black text-3xl leading-none">{step.v.hr}</p>
-                    </div>
-                    <div>
-                        <p className="text-yellow-400 text-[8px] font-black uppercase tracking-widest">SpO₂</p>
-                        <p className="text-yellow-400 font-black text-3xl leading-none">{step.v.sp}<span className="text-base">%</span></p>
-                    </div>
+                    {step.v.hr !== null && <div><p className="text-green-500 text-[8px] font-black uppercase tracking-widest">FC</p><p className="text-green-500 font-black text-3xl leading-none">{step.v.hr}</p></div>}
+                    {step.v.sp !== null && <div><p className="text-yellow-400 text-[8px] font-black uppercase tracking-widest">SpO₂</p><p className="text-yellow-400 font-black text-3xl leading-none">{step.v.sp}<span className="text-base">%</span></p></div>}
                 </div>
             )}
         </div>
@@ -235,7 +291,7 @@ const SlidePreview = ({ step, index }) => (
     </div>
 );
 
-// ─── App principal ────────────────────────────────────────────────────────────
+// ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
     const [activeSlide, setActiveSlide] = useState(0);
     const [scenario, setScenario] = useState({
@@ -250,45 +306,35 @@ const App = () => {
         if (!key) return;
         const base = SCENARIOS_BASE[key];
         setScenario({ title: base.title, steps: JSON.parse(JSON.stringify(base.steps)) });
-        setActiveSlide(0);
-        setGallery([]);
+        setActiveSlide(0); setGallery([]);
     };
 
     const updateSlide = (field, value) => {
         const newSteps = [...scenario.steps];
-        if (field === 'hr' || field === 'sp') {
+        if (field==='hr'||field==='sp') {
             if (!newSteps[activeSlide].v) newSteps[activeSlide].v = { hr:"", sp:"" };
             newSteps[activeSlide].v[field] = value;
-        } else {
-            newSteps[activeSlide][field] = value;
-        }
-        setScenario({ ...scenario, steps: newSteps });
+        } else newSteps[activeSlide][field] = value;
+        setScenario({...scenario, steps: newSteps});
     };
 
     const generateImages = async () => {
-        setIsGenerating(true);
-        setGallery([]);
+        setIsGenerating(true); setGallery([]);
         const images = [];
-
-        for (let i = 0; i < 5; i++) {
-            setStatus(`Generando diapositiva ${i+1}/5…`);
+        for (let i=0; i<5; i++) {
+            setStatus('Generando diapositiva '+(i+1)+'/5…');
             await new Promise(r => setTimeout(r, 30));
             const canvas = document.createElement('canvas');
             renderSlideToCanvas(canvas, scenario.steps[i], i);
             images.push(canvas.toDataURL('image/png'));
         }
-
-        setGallery(images);
-        setStatus('');
-        setIsGenerating(false);
+        setGallery(images); setStatus(''); setIsGenerating(false);
     };
 
     const currentStep = scenario.steps[activeSlide];
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
-
-            {/* Sidebar */}
             <aside className="w-full md:w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col items-center md:items-start shrink-0">
                 <div className="flex items-center gap-3 mb-12">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
@@ -300,76 +346,71 @@ const App = () => {
                         <span className="font-bold text-sm">Casos 1:1 Post</span>
                     </div>
                 </nav>
+                <div className="mt-6 w-full p-3 rounded-xl bg-blue-950/40 border border-blue-900/40">
+                    <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">Basado en NRP<br/>AHA/AAP 8ª Ed. 2021<br/>+ Actualización 2023</p>
+                </div>
                 <div className="mt-auto hidden md:block pt-8 border-t border-white/5 w-full">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Editor de Contenido v3.0</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Editor de Contenido v3.1</p>
                 </div>
             </aside>
 
-            {/* Contenido */}
             <main className="flex-1 p-6 md:p-12 overflow-y-auto">
                 <header className="mb-10 max-w-6xl mx-auto">
                     <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
                         <h2 className="text-4xl font-black tracking-tight uppercase">Editor de <span className="text-blue-500">Casos</span></h2>
-                        <div className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase inline-block w-fit">Post HD 1:1</div>
+                        <div className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase inline-block w-fit">13 Escenarios NRP</div>
                     </div>
-                    <p className="text-slate-400">Diseña diapositivas para tus redes sociales con precisión técnica y estética médica.</p>
+                    <p className="text-slate-400">Casos clínicos neonatales basados en el NRP · AHA/AAP 8ª edición.</p>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
-
-                    {/* Panel de edición */}
                     <div className="lg:col-span-5 space-y-6">
-
-                        {/* Preview live */}
                         <div className="rounded-[24px] overflow-hidden border border-white/5 shadow-2xl">
-                            <SlidePreview step={currentStep} index={activeSlide} />
+                            <SlidePreview step={currentStep} index={activeSlide}/>
                         </div>
 
                         <div className="glass-card p-6 rounded-[32px] space-y-6">
                             <div>
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Escenario Maestro</label>
-                                <select onChange={(e) => loadScenario(e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold cursor-pointer">
+                                <select onChange={e=>loadScenario(e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold cursor-pointer">
                                     <option value="">-- Nuevo Documento --</option>
-                                    <option value="brady">Bradicardia NRP</option>
-                                    <option value="pneumo">Neumotórax UCIN</option>
-                                    <option value="sepsis">Shock Séptico</option>
+                                    <optgroup label="─ Casos Originales ─">
+                                        <option value="brady">Bradicardia Severa</option>
+                                        <option value="pneumo">Neumotórax a Tensión</option>
+                                        <option value="sepsis">Shock Séptico Neonatal</option>
+                                    </optgroup>
+                                    <optgroup label="─ Nuevos NRP 8ª Ed. ─">
+                                        <option value="apnea_primaria">Apnea Primaria al Nacer</option>
+                                        <option value="vpp_inefectiva">VPP Inefectiva — MR-SOPA</option>
+                                        <option value="aspiracion_meconio">Líquido Amniótico Meconial</option>
+                                        <option value="comprensiones_cardiacas">Compresiones Cardíacas Neonatales</option>
+                                        <option value="epinefrina_neonatal">Epinefrina en Reanimación</option>
+                                        <option value="prematuro_extremo">Prematuro Extremo &lt; 28 sem</option>
+                                        <option value="hernia_diafragmatica">Hernia Diafragmática Congénita</option>
+                                        <option value="hipoglucemia_neonatal">Hipoglucemia Neonatal Severa</option>
+                                        <option value="encefalopatia_hipoxica">Encefalopatía Hipóxico-Isquémica</option>
+                                        <option value="hipertension_pulmonar">Hipertensión Pulmonar Neonatal</option>
+                                    </optgroup>
                                 </select>
                             </div>
 
                             <div className="space-y-4 pt-4 border-t border-white/5">
                                 <div className="flex bg-slate-950 rounded-xl p-1">
-                                    {[0,1,2,3,4].map(i => (
-                                        <button key={i} onClick={() => setActiveSlide(i)}
-                                            className={`flex-1 py-3 text-[10px] font-black uppercase rounded-lg transition-all ${activeSlide === i ? 'active-tab' : 'text-slate-500 hover:text-slate-300'}`}>
-                                            S{i+1}
-                                        </button>
+                                    {[0,1,2,3,4].map(i=>(
+                                        <button key={i} onClick={()=>setActiveSlide(i)}
+                                            className={'flex-1 py-3 text-[10px] font-black uppercase rounded-lg transition-all '+(activeSlide===i?'active-tab':'text-slate-500 hover:text-slate-300')}>S{i+1}</button>
                                     ))}
                                 </div>
-
-                                <div className="space-y-3">
-                                    <input type="text" placeholder="Título de diapositiva"
-                                        value={currentStep.t}
-                                        onChange={(e) => updateSlide('t', e.target.value)}
-                                        className="w-full rounded-xl p-4 text-sm font-bold" />
-                                    <textarea placeholder="Descripción del caso..." rows={4}
-                                        value={currentStep.d}
-                                        onChange={(e) => updateSlide('d', e.target.value)}
-                                        className="w-full rounded-xl p-4 text-sm resize-none" />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">FC (bpm)</label>
-                                            <input type="text" placeholder="--"
-                                                value={currentStep.v?.hr || ""}
-                                                onChange={(e) => updateSlide('hr', e.target.value)}
-                                                className="w-full rounded-xl p-4 text-sm font-black text-green-500 text-center" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">SpO₂ (%)</label>
-                                            <input type="text" placeholder="--"
-                                                value={currentStep.v?.sp || ""}
-                                                onChange={(e) => updateSlide('sp', e.target.value)}
-                                                className="w-full rounded-xl p-4 text-sm font-black text-yellow-500 text-center" />
-                                        </div>
+                                <input type="text" placeholder="Título" value={currentStep.t} onChange={e=>updateSlide('t',e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold"/>
+                                <textarea placeholder="Descripción..." rows={4} value={currentStep.d} onChange={e=>updateSlide('d',e.target.value)} className="w-full rounded-xl p-4 text-sm resize-none"/>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">FC (bpm)</label>
+                                        <input type="text" placeholder="--" value={currentStep.v?.hr||""} onChange={e=>updateSlide('hr',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-green-500 text-center"/>
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">SpO₂ (%)</label>
+                                        <input type="text" placeholder="--" value={currentStep.v?.sp||""} onChange={e=>updateSlide('sp',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-yellow-500 text-center"/>
                                     </div>
                                 </div>
                             </div>
@@ -383,33 +424,25 @@ const App = () => {
                         </div>
                     </div>
 
-                    {/* Galería */}
                     <div className="lg:col-span-7">
-                        {gallery.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
-                                {gallery.map((img, i) => (
-                                    <div key={i} className="group relative rounded-3xl border border-white/5 overflow-hidden shadow-2xl transition-all hover:scale-[1.02]">
-                                        <img src={img} alt={`Slide ${i+1}`} className="w-full aspect-square object-cover" />
+                        {gallery.length > 0
+                            ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
+                                {gallery.map((img,i) => (
+                                    <div key={i} className="group relative rounded-3xl border border-white/5 overflow-hidden shadow-2xl hover:scale-[1.02] transition-all">
+                                        <img src={img} alt={'Slide '+(i+1)} className="w-full aspect-square object-cover"/>
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
-                                            <a href={img} download={`NeoMonitor_Caso_Slide_${i+1}.png`}
-                                               className="bg-white text-black p-4 rounded-full shadow-2xl transform active:scale-95">
+                                            <a href={img} download={'NeoMonitor_Caso_Slide_'+(i+1)+'.png'} className="bg-white text-black p-4 rounded-full shadow-2xl active:scale-95">
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                             </a>
                                         </div>
-                                        <div className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                                            DIAPOSITIVA {i+1}
-                                        </div>
+                                        <div className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">DIAPOSITIVA {i+1}</div>
                                     </div>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
+                              </div>
+                            : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
                                 <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="10"/><path d="M12 8v8M8 12h8"/></svg>
-                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
-                                    Completá los campos y presioná<br/><span className="text-blue-600">Renderizar Imágenes</span>
-                                </p>
-                            </div>
-                        )}
+                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Seleccioná un escenario y presioná<br/><span className="text-blue-600">Renderizar Imágenes</span></p>
+                              </div>}
                     </div>
                 </div>
             </main>
@@ -417,7 +450,7 @@ const App = () => {
     );
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
