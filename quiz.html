@@ -24,34 +24,139 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// ─── Presets ──────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   PRESETS — 12 quiz NRP (AHA/AAP 8ª ed. 2021 + actualización 2023)
+───────────────────────────────────────────────────────────────────────────── */
 const PRESETS = {
+
+    /* ── ORIGINALES ── */
     arritmia: {
         title: "Desafío de Arritmias",
-        caseText: "Recién nacido de 36 semanas presenta frecuencia cardiaca persistente de 230 lpm. No responde a maniobras de estimulación.",
-        question: "¿Cuál es la primera línea de tratamiento recomendada?",
-        options: ["Adenosina (0.1 mg/kg)", "Amiodarona", "Maniobras Vagales (Hielo)"],
-        answer: "Maniobras Vagales",
-        explanation: "En pacientes estables, el hielo en la cara es la primera intervención antes de la farmacología."
+        caseText: "RN de 36 sem presenta FC persistente de 230 lpm. Hemodinámicamente estable. No responde a maniobras de estimulación.",
+        question: "¿Cuál es la primera línea de tratamiento recomendada por NRP?",
+        options: ["Adenosina IV (0.1 mg/kg)", "Amiodarona IV", "Maniobras Vagales (Hielo facial)"],
+        answer: "Maniobras Vagales (Hielo facial)",
+        explanation: "En TSV estable, el reflejo de inmersión con hielo en la cara es la primera intervención no farmacológica antes de pasar a adenosina."
     },
     cpap: {
         title: "Fallo de CPAP",
-        caseText: "RNPT de 30 semanas en CPAP con PEEP de 6. Presenta quejido audaz y FiO2 requerida del 45%.",
-        question: "¿Cuál es el siguiente paso en la gestión respiratoria?",
-        options: ["Aumentar PEEP a 8", "Surfactante (LISA)", "Intubación Orotraqueal"],
-        answer: "Surfactante (LISA)",
-        explanation: "El rescate temprano con surfactante mediante técnicas mínimamente invasivas reduce la necesidad de VMNI."
+        caseText: "RNPT 30 sem en CPAP con PEEP 6 cmH₂O. Presenta quejido audaz, retracción y FiO₂ requerida 45% a las 2 horas de vida.",
+        question: "¿Cuál es el siguiente paso según NRP/ILCOR?",
+        options: ["Aumentar PEEP a 8 cmH₂O", "Surfactante (técnica LISA/MIST)", "Intubación y VMA convencional"],
+        answer: "Surfactante (técnica LISA/MIST)",
+        explanation: "El rescate temprano con surfactante mediante técnica mínimamente invasiva (LISA/MIST) es preferido sobre la intubación rutinaria en prematuros estables en CPAP."
+    },
+
+    /* ── NUEVOS NRP 8ª ED. ── */
+
+    /* 3 */
+    vpp_inicio: {
+        title: "¿Cuándo iniciar VPP?",
+        caseText: "RN de término, líquido claro. Al nacer: no llora, respira débilmente. Tono disminuido. Estímulo táctil sin respuesta en 30 seg.",
+        question: "Según NRP 8ª ed., ¿cuándo se debe iniciar la VPP?",
+        options: ["Solo si FC < 60 lpm", "Solo si no hay esfuerzo respiratorio a los 60 seg", "Si no respira o jadea y/o FC < 100 a los 60 seg"],
+        answer: "Si no respira o jadea y/o FC < 100 a los 60 seg",
+        explanation: "NRP 8ª ed.: iniciar VPP dentro de los 60 segundos si el RN no respira, jadea, o tiene FC < 100 lpm tras pasos iniciales y estimulación."
+    },
+
+    /* 4 */
+    fio2_termino: {
+        title: "FiO₂ Inicial en RN de Término",
+        caseText: "RNAT 39 sem que requiere VPP al nacer. No hay oxígeno mezclador disponible de inmediato. Se debe iniciar ventilación.",
+        question: "¿Con qué FiO₂ debe iniciarse la VPP en un RN de término según NRP?",
+        options: ["FiO₂ 100% (oxígeno puro)", "FiO₂ 21% (aire ambiente)", "FiO₂ 40% como mínimo"],
+        answer: "FiO₂ 21% (aire ambiente)",
+        explanation: "NRP 8ª ed.: en RN ≥ 35 sem, iniciar VPP con FiO₂ 21%. Aumentar según SpO₂ pre-ductal. El oxígeno al 100% inicial se asocia con mayor daño oxidativo."
+    },
+
+    /* 5 */
+    fio2_prematuro: {
+        title: "FiO₂ Inicial en Prematuro",
+        caseText: "Parto prematuro de 28 sem. RN no respira al nacer. Equipo preparado para VPP con mezclador de oxígeno disponible.",
+        question: "¿Con qué FiO₂ inicial se debe ventilar según NRP para prematuros < 35 sem?",
+        options: ["FiO₂ 21% (aire ambiente)", "FiO₂ 30%", "FiO₂ 100%"],
+        answer: "FiO₂ 30%",
+        explanation: "NRP 8ª ed.: en RN < 35 sem, iniciar VPP con FiO₂ 21-30%. Titular guiado por SpO₂ pre-ductal. Evitar hiperoxia en prematuros por riesgo de retinopatía y daño pulmonar."
+    },
+
+    /* 6 */
+    sopa_steps: {
+        title: "Pasos MR-SOPA",
+        caseText: "RN en VPP por 30 seg. FC se mantiene en 75 lpm. No se observa movimiento torácico claro durante la ventilación.",
+        question: "¿Cuál es el primer paso correctivo de MR-SOPA a realizar?",
+        options: ["S — Succionar boca y nariz", "M — Ajustar sello de la máscara", "P — Aumentar la presión pico"],
+        answer: "M — Ajustar sello de la máscara",
+        explanation: "MR-SOPA comienza siempre por M (Máscara: reajustar el sello facial) y R (Reposicionar la vía aérea). Son los pasos más frecuentemente resolutivos de ventilación inefectiva."
+    },
+
+    /* 7 */
+    compresiones_indicacion: {
+        title: "Indicación de Compresiones",
+        caseText: "RN con VPP correcta durante 30 seg (expansión torácica visible, frecuencia 40-60 rpm, FiO₂ 100%). FC persiste en 52 lpm.",
+        question: "¿Cuál es la conducta correcta según NRP?",
+        options: ["Continuar VPP y esperar otros 30 seg", "Iniciar compresiones cardíacas torácicas", "Administrar epinefrina endotraqueal de inmediato"],
+        answer: "Iniciar compresiones cardíacas torácicas",
+        explanation: "NRP: iniciar compresiones si FC < 60 lpm pese a 30 seg de VPP efectiva (expansión torácica visible). La técnica bimanual con pulgares es preferida. Ratio 3:1."
+    },
+
+    /* 8 */
+    epinefrina_via: {
+        title: "Epinefrina: Vía y Dosis",
+        caseText: "RN sin pulso palpable luego de 60 seg de compresiones + VPP coordinada. Catéter umbilical venoso (CUV) colocado y confirmado.",
+        question: "¿Cuál es la dosis correcta de epinefrina por vía IV según NRP 8ª ed.?",
+        options: ["0.01-0.03 mg/kg de dilución 1:10.000", "0.1 mg/kg de dilución 1:1.000", "0.05-0.1 mg/kg de dilución 1:10.000"],
+        answer: "0.01-0.03 mg/kg de dilución 1:10.000",
+        explanation: "NRP 8ª ed.: epinefrina IV/IO: 0.01-0.03 mg/kg (0.1-0.3 ml/kg de solución 1:10.000). Vía endotraqueal (si no hay acceso IV): 0.05-0.1 mg/kg. Preferir siempre IV."
+    },
+
+    /* 9 */
+    temperatura_prematuro: {
+        title: "Termorregulación en Prematuro",
+        caseText: "RNPT de 26 sem nace en parto de urgencia. Sala de partos a 22°C. El equipo tiene calor radiante, toallas y bolsas de polietileno.",
+        question: "¿Cuál es la intervención de temperatura más eficaz para este prematuro según NRP?",
+        options: ["Secar bien y envolver en toalla tibia", "Colocar en bolsa de polietileno sin secar", "Solo usar calor radiante al máximo"],
+        answer: "Colocar en bolsa de polietileno sin secar",
+        explanation: "NRP: en prematuros < 32 sem, colocar en bolsa de polietileno SIN secar inmediatamente tras el nacimiento. Reduce pérdida de calor por evaporación. Meta: 36.5-37.5°C."
+    },
+
+    /* 10 */
+    meconio_nrp8: {
+        title: "Meconio Espeso — NRP 8ª Ed.",
+        caseText: "RN a término nace con líquido meconial espeso. Al nacer está deprimido: tono ausente, no respira, FC 65 lpm.",
+        question: "¿Qué indica NRP 8ª ed. respecto a la intubación de rutina en este caso?",
+        options: ["Intubar y aspirar tráquea antes de cualquier otra maniobra", "Aspirar hipofaringe con boca DeLee y luego VPP", "Iniciar VPP con máscara si no hay obstrucción evidente de VA"],
+        answer: "Iniciar VPP con máscara si no hay obstrucción evidente de VA",
+        explanation: "NRP 8ª ed.: la intubación rutinaria de RN deprimidos con meconio ya NO está recomendada. Solo intubar si hay obstrucción de vía aérea superior o falla de VPP con máscara."
+    },
+
+    /* 11 */
+    clampe_cordon: {
+        title: "Pinzamiento del Cordón",
+        caseText: "RNAT 39 sem. Parto vaginal sin complicaciones. RN vigoroso: llora, buen tono, respira bien. Líquido claro.",
+        question: "¿Cuál es la recomendación de NRP 8ª ed. / AHA 2023 para el manejo del cordón umbilical?",
+        options: ["Clampear inmediatamente (primeros 15 seg)", "Clampear diferido ≥ 60 segundos", "Ordeñar el cordón siempre antes de clampear"],
+        answer: "Clampear diferido ≥ 60 segundos",
+        explanation: "AHA/AAP 2023: el pinzamiento diferido ≥ 60 seg en RN vigorosos de término reduce anemia, mejora reservas de hierro y no aumenta policitemia sintomática. Es la recomendación estándar."
+    },
+
+    /* 12 */
+    hipotermia_ehi: {
+        title: "Hipotermia Terapéutica — EHI",
+        caseText: "RN 38 sem, pH de cordón 6.95, déficit de base -18. A los 30 min de vida: hipotonía, reflejos ausentes, sin actividad. Apgar 1/4.",
+        question: "¿Cuál es el criterio temporal más crítico para iniciar hipotermia terapéutica con eficacia neuroprotectora?",
+        options: ["Antes de las 12 horas de vida", "Antes de las 6 horas de vida", "Cualquier momento dentro de las 24 horas"],
+        answer: "Antes de las 6 horas de vida",
+        explanation: "La hipotermia terapéutica (33-34°C por 72h) es neuroprotectora solo si se inicia ANTES de las 6 horas del insulto hipóxico. Pasada esta ventana, el beneficio se pierde."
     }
 };
 
 // ─── Canvas helpers ───────────────────────────────────────────────────────────
 function rrect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x+r, y);
-    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
-    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
-    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
-    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+    ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
     ctx.closePath();
 }
 
@@ -61,190 +166,113 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
     let line = '', lines = [];
     for (const w of words) {
         const test = line ? line+' '+w : w;
-        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
-        else line = test;
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line=w; }
+        else line=test;
     }
     if (line) lines.push(line);
-    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+    lines.forEach((l,i) => ctx.fillText(l, x, y+i*lineH));
     return lines.length;
 }
 
-// ─── Renderizador principal ───────────────────────────────────────────────────
 function drawQuizSlide(canvas, step, data) {
-    const W = 1080, H = 1920;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
+    const W=1080, H=1920;
+    canvas.width=W; canvas.height=H;
+    const ctx=canvas.getContext('2d');
 
-    // Fondo
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(0, 0, W, H);
-
-    // Dot grid
-    ctx.fillStyle = '#1e293b';
-    for (let gx = 30; gx < W; gx += 60)
-        for (let gy = 30; gy < H; gy += 60) {
-            ctx.beginPath(); ctx.arc(gx, gy, 1.2, 0, Math.PI*2); ctx.fill();
-        }
-
-    const P = 90; // padding
-
-    // ── Logo NM ──
-    rrect(ctx, W/2 - 60, P, 120, 120, 28);
-    ctx.fillStyle = '#2563eb'; ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 52px system-ui, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('NM', W/2, P + 60);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-
-    // ── Tarjeta central ──
-    const cardY = P + 160, cardH = H - cardY - 180, cardW = W - P*2;
-    rrect(ctx, P, cardY, cardW, cardH, 72);
-    ctx.fillStyle = '#0f172a'; ctx.fill();
-    rrect(ctx, P, cardY, cardW, cardH, 72);
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2; ctx.stroke();
-
-    // Glow accent
-    const grd = ctx.createRadialGradient(W-P, cardY+200, 0, W-P, cardY+200, 500);
-    grd.addColorStop(0, 'rgba(245,158,11,0.08)'); grd.addColorStop(1, 'transparent');
-    rrect(ctx, P, cardY, cardW, cardH, 72);
-    ctx.fillStyle = grd; ctx.fill();
-
-    const iX = P + 72, iW = cardW - 144; // inner x, inner width
-    let curY = cardY + 80;
-
-    // ─────── PASO 0: Portada ───────────────────────────────────────────────────
-    if (step === 0) {
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = 'bold 36px system-ui, sans-serif';
-        ctx.fillText('NUEVO DESAFÍO', iX, curY);
-        curY += 70;
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 108px system-ui, sans-serif';
-        const tLines = wrapText(ctx, data.title.toUpperCase(), iX, curY, iW, 112);
-        curY += tLines * 112 + 60;
-
-        ctx.fillStyle = '#64748b';
-        ctx.font = '400 46px system-ui, sans-serif';
-        wrapText(ctx, '¿Estás listo para responder como un experto?', iX, curY, iW, 58);
+    ctx.fillStyle='#020617'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#1e293b';
+    for(let gx=30;gx<W;gx+=60) for(let gy=30;gy<H;gy+=60){
+        ctx.beginPath(); ctx.arc(gx,gy,1.2,0,Math.PI*2); ctx.fill();
     }
 
-    // ─────── PASO 1: El Escenario ──────────────────────────────────────────────
-    if (step === 1) {
-        // Badge
-        rrect(ctx, iX, curY, 280, 58, 29);
-        ctx.fillStyle = 'rgba(59,130,246,0.15)'; ctx.fill();
-        ctx.fillStyle = '#3b82f6';
-        ctx.font = 'bold 28px system-ui, sans-serif';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('EL ESCENARIO', iX + 24, curY + 29);
-        ctx.textBaseline = 'top';
-        curY += 90;
+    const P=90;
+    rrect(ctx,W/2-60,P,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 52px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('NM',W/2,P+60); ctx.textAlign='left'; ctx.textBaseline='top';
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 56px system-ui, sans-serif';
-        wrapText(ctx, data.caseText, iX, curY, iW, 70);
+    const cY=P+160, cH=H-cY-180, cW=W-P*2;
+    rrect(ctx,P,cY,cW,cH,72); ctx.fillStyle='#0f172a'; ctx.fill();
+    rrect(ctx,P,cY,cW,cH,72); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=2; ctx.stroke();
+    const grd=ctx.createRadialGradient(W-P,cY+200,0,W-P,cY+200,500);
+    grd.addColorStop(0,'rgba(245,158,11,0.08)'); grd.addColorStop(1,'transparent');
+    rrect(ctx,P,cY,cW,cH,72); ctx.fillStyle=grd; ctx.fill();
+
+    const iX=P+72, iW=cW-144;
+    let y=cY+80;
+
+    if(step===0){
+        ctx.fillStyle='#f59e0b'; ctx.font='bold 36px system-ui'; ctx.fillText('NUEVO DESAFÍO',iX,y); y+=70;
+        ctx.fillStyle='#fff'; ctx.font='bold 108px system-ui';
+        const tl=wrapText(ctx,data.title.toUpperCase(),iX,y,iW,112); y+=tl*112+60;
+        ctx.fillStyle='#64748b'; ctx.font='400 46px system-ui';
+        wrapText(ctx,'¿Estás listo para responder como un experto?',iX,y,iW,58);
     }
 
-    // ─────── PASO 2: La Pregunta + Opciones ───────────────────────────────────
-    if (step === 2) {
-        // Badge
-        rrect(ctx, iX, curY, 280, 58, 29);
-        ctx.fillStyle = 'rgba(245,158,11,0.15)'; ctx.fill();
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = 'bold 28px system-ui, sans-serif';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('LA PREGUNTA', iX + 24, curY + 29);
-        ctx.textBaseline = 'top';
-        curY += 90;
+    if(step===1){
+        rrect(ctx,iX,y,280,58,29); ctx.fillStyle='rgba(59,130,246,0.15)'; ctx.fill();
+        ctx.fillStyle='#3b82f6'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('EL ESCENARIO',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#fff'; ctx.font='bold 52px system-ui'; wrapText(ctx,data.caseText,iX,y,iW,66);
+    }
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 56px system-ui, sans-serif';
-        const qLines = wrapText(ctx, data.question, iX, curY, iW, 68);
-        curY += qLines * 68 + 60;
-
-        // Opciones
-        const optColors = ['#2563eb', '#7c3aed', '#0891b2'];
-        for (let i = 0; i < data.options.length; i++) {
-            const oH = 110;
-            rrect(ctx, iX, curY, iW, oH, 36);
-            ctx.fillStyle = '#020617'; ctx.fill();
-            rrect(ctx, iX, curY, iW, oH, 36);
-            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2; ctx.stroke();
-
-            // Número
-            ctx.fillStyle = optColors[i] || '#3b82f6';
-            ctx.font = 'bold 36px system-ui, sans-serif';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`0${i+1}.`, iX + 30, curY + oH/2);
-
-            ctx.fillStyle = '#cbd5e1';
-            ctx.font = 'bold 36px system-ui, sans-serif';
-            ctx.fillText(data.options[i], iX + 120, curY + oH/2);
-            ctx.textBaseline = 'top';
-            curY += oH + 20;
+    if(step===2){
+        rrect(ctx,iX,y,280,58,29); ctx.fillStyle='rgba(245,158,11,0.15)'; ctx.fill();
+        ctx.fillStyle='#f59e0b'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('LA PREGUNTA',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#fff'; ctx.font='bold 52px system-ui';
+        const ql=wrapText(ctx,data.question,iX,y,iW,64); y+=ql*64+55;
+        const oc=['#2563eb','#7c3aed','#0891b2'];
+        for(let i=0;i<data.options.length;i++){
+            const optText=data.options[i];
+            // Medir líneas de la opción para determinar altura del bloque
+            ctx.font='bold 32px system-ui';
+            const words=optText.split(' '); let line=''; let optLines=1;
+            for(const w of words){
+                const t=line?line+' '+w:w;
+                if(ctx.measureText(t).width>iW-140&&line){optLines++;line=w;}else line=t;
+            }
+            const oH=Math.max(110, 60+optLines*42);
+            rrect(ctx,iX,y,iW,oH,36); ctx.fillStyle='#020617'; ctx.fill();
+            rrect(ctx,iX,y,iW,oH,36); ctx.strokeStyle='#1e293b'; ctx.lineWidth=2; ctx.stroke();
+            ctx.fillStyle=oc[i]||'#3b82f6'; ctx.font='bold 32px system-ui'; ctx.textBaseline='top';
+            ctx.fillText('0'+(i+1)+'.',iX+24,y+20);
+            ctx.fillStyle='#cbd5e1'; ctx.font='bold 32px system-ui';
+            wrapText(ctx,optText,iX+110,y+20,iW-130,42);
+            ctx.textBaseline='top'; y+=oH+18;
         }
     }
 
-    // ─────── PASO 3: Respuesta ────────────────────────────────────────────────
-    if (step === 3) {
-        // Badge
-        rrect(ctx, iX, curY, 340, 58, 29);
-        ctx.fillStyle = 'rgba(34,197,94,0.15)'; ctx.fill();
-        ctx.fillStyle = '#22c55e';
-        ctx.font = 'bold 28px system-ui, sans-serif';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('RESPUESTA TÉCNICA', iX + 24, curY + 29);
-        ctx.textBaseline = 'top';
-        curY += 90;
-
-        // Respuesta correcta
-        ctx.fillStyle = '#22c55e';
-        ctx.font = 'bold 72px system-ui, sans-serif';
-        const aLines = wrapText(ctx, data.answer, iX, curY, iW, 82);
-        curY += aLines * 82 + 30;
-
-        // Línea separadora
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(iX, curY, 120, 6);
-        curY += 50;
-
-        // Explicación
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '400 46px system-ui, sans-serif';
-        wrapText(ctx, data.explanation, iX, curY, iW, 60);
+    if(step===3){
+        rrect(ctx,iX,y,340,58,29); ctx.fillStyle='rgba(34,197,94,0.15)'; ctx.fill();
+        ctx.fillStyle='#22c55e'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('RESPUESTA TÉCNICA',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#22c55e'; ctx.font='bold 64px system-ui';
+        const al=wrapText(ctx,data.answer,iX,y,iW,76); y+=al*76+30;
+        ctx.fillStyle='#22c55e'; ctx.fillRect(iX,y,120,6); y+=50;
+        ctx.fillStyle='#94a3b8'; ctx.font='400 42px system-ui'; wrapText(ctx,data.explanation,iX,y,iW,58);
     }
 
-    // ── Footer ──
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 30px system-ui, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('NEOMONITOR.PRO', W/2, H - P - 50);
+    // Badge NRP
+    ctx.fillStyle='rgba(37,99,235,0.15)'; ctx.font='bold 22px system-ui';
+    const badge='NRP · AHA/AAP 8ª ED.';
+    const bw=ctx.measureText(badge).width+40;
+    rrect(ctx,W/2-bw/2,H-P-90,bw,44,22); ctx.fill();
+    ctx.fillStyle='#3b82f6'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(badge,W/2,H-P-68);
 
-    // Dots indicadores
-    const dotW = 48, dotH = 12, dotGap = 16;
-    const totalDots = (dotW + dotGap) * 4 - dotGap;
-    let dotX = W/2 - totalDots/2;
-    for (let d = 0; d < 4; d++) {
-        rrect(ctx, dotX, H - P - 20, dotW, dotH, 6);
-        ctx.fillStyle = d === step ? '#f59e0b' : '#1e293b';
-        ctx.fill();
-        dotX += dotW + dotGap;
+    ctx.fillStyle='#1e293b'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle';
+    ctx.fillText('NEOMONITOR.PRO',W/2,H-P-30);
+
+    const dW=48,dH=12,dG=16,total=(dW+dG)*4-dG;
+    let dx=W/2-total/2;
+    for(let d=0;d<4;d++){
+        rrect(ctx,dx,H-P+10,dW,dH,6); ctx.fillStyle=d===step?'#f59e0b':'#1e293b'; ctx.fill(); dx+=dW+dG;
     }
-
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
 // ─── Preview component ────────────────────────────────────────────────────────
 function SlidePreview({ step, data }) {
-    const ref = useRef(null);
-    useEffect(() => {
-        if (ref.current) drawQuizSlide(ref.current, step, data);
-    }, [step, data]);
-    return (
-        <canvas ref={ref} style={{ width:'100%', height:'auto', borderRadius:16, display:'block' }} />
-    );
+    const ref=useRef(null);
+    useEffect(()=>{ if(ref.current) drawQuizSlide(ref.current,step,data); },[step,data]);
+    return <canvas ref={ref} style={{width:'100%',height:'auto',borderRadius:16,display:'block'}}/>;
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -254,46 +282,39 @@ const App = () => {
     const [gallery, setGallery] = useState([]);
     const [status, setStatus] = useState('');
     const [data, setData] = useState({
-        title: "Desafío Clínico",
-        caseText: "Describe aquí el escenario...",
-        question: "¿Qué conducta tomarías?",
-        options: ["Opción A", "Opción B", "Opción C"],
-        answer: "Respuesta correcta",
-        explanation: "Explica aquí la resolución técnica..."
+        title:"Desafío Clínico",
+        caseText:"Describe aquí el escenario...",
+        question:"¿Qué conducta tomarías?",
+        options:["Opción A","Opción B","Opción C"],
+        answer:"Respuesta correcta",
+        explanation:"Explica aquí la resolución técnica..."
     });
 
-    const loadPreset = (key) => {
-        if (PRESETS[key]) { setData(PRESETS[key]); setActiveStep(0); setGallery([]); }
+    const loadPreset=(key)=>{
+        if(PRESETS[key]){ setData(PRESETS[key]); setActiveStep(0); setGallery([]); }
     };
 
-    const updateField = (field, value, idx = null) => {
-        if (idx !== null) {
-            const opts = [...data.options]; opts[idx] = value;
-            setData(prev => ({ ...prev, options: opts }));
-        } else {
-            setData(prev => ({ ...prev, [field]: value }));
-        }
+    const updateField=(field,value,idx=null)=>{
+        if(idx!==null){ const opts=[...data.options]; opts[idx]=value; setData(p=>({...p,options:opts})); }
+        else setData(p=>({...p,[field]:value}));
     };
 
-    const generate = async () => {
+    const generate=async()=>{
         setGenerating(true); setGallery([]);
-        const imgs = [];
-        for (let i = 0; i < 4; i++) {
-            setStatus(`Generando paso ${i+1}/4…`);
-            await new Promise(r => setTimeout(r, 20));
-            const c = document.createElement('canvas');
-            drawQuizSlide(c, i, data);
+        const imgs=[];
+        for(let i=0;i<4;i++){
+            setStatus('Generando paso '+(i+1)+'/4…');
+            await new Promise(r=>setTimeout(r,20));
+            const c=document.createElement('canvas'); drawQuizSlide(c,i,data);
             imgs.push(c.toDataURL('image/png'));
         }
         setGallery(imgs); setStatus(''); setGenerating(false);
     };
 
-    const inp = "w-full rounded-xl p-3 text-sm";
+    const inp="w-full rounded-xl p-3 text-sm";
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex overflow-hidden">
-
-            {/* Sidebar */}
             <aside className="w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col shrink-0">
                 <div className="flex items-center gap-3 mb-12">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
@@ -305,109 +326,117 @@ const App = () => {
                         <span className="font-bold text-sm">Interactive Quiz</span>
                     </div>
                 </nav>
+                <div className="mt-4 p-3 rounded-xl bg-blue-950/40 border border-blue-900/40">
+                    <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">Basado en NRP<br/>AHA/AAP 8ª Ed. 2021<br/>+ Actualización 2023</p>
+                </div>
                 <div className="mt-auto pt-8 border-t border-white/5">
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Editor de Contenido v3.0</p>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">12 Presets NRP · v3.1</p>
                 </div>
             </aside>
 
-            {/* Main */}
             <main className="flex-1 p-12 overflow-y-auto">
                 <header className="mb-10 max-w-6xl mx-auto">
                     <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
-                    <p className="text-slate-400 text-sm">Genera secuencias de 4 imágenes para Stories en formato 9:16.</p>
+                    <p className="text-slate-400 text-sm">12 presets NRP · Genera secuencias de 4 imágenes para Stories 9:16.</p>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
-
-                    {/* Panel izquierdo */}
                     <div className="lg:col-span-5 space-y-6">
-
-                        {/* Preview tabs */}
                         <div className="glass-card p-3 rounded-2xl">
                             <div className="flex gap-1 mb-3">
-                                {['Portada','Escenario','Pregunta','Respuesta'].map((label, i) => (
-                                    <button key={i} onClick={() => setActiveStep(i)}
-                                        className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${activeStep===i ? 'bg-amber-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                                {['Portada','Escenario','Pregunta','Respuesta'].map((label,i)=>(
+                                    <button key={i} onClick={()=>setActiveStep(i)}
+                                        className={'flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all '+(activeStep===i?'bg-amber-500 text-white':'text-slate-500 hover:text-slate-300')}>
                                         {label}
                                     </button>
                                 ))}
                             </div>
                             <div className="rounded-xl overflow-hidden border border-white/5">
-                                <SlidePreview step={activeStep} data={data} />
+                                <SlidePreview step={activeStep} data={data}/>
                             </div>
                         </div>
 
-                        {/* Editor */}
                         <div className="glass-card p-6 rounded-[32px] space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset</label>
-                                <select onChange={e => loadPreset(e.target.value)} className={inp + " font-bold cursor-pointer"}>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset NRP</label>
+                                <select onChange={e=>loadPreset(e.target.value)} className={inp+" font-bold cursor-pointer"}>
                                     <option value="">— Nuevo desafío —</option>
-                                    <option value="arritmia">Arritmia Neonatal</option>
-                                    <option value="cpap">Fallo Respiratorio</option>
+                                    <optgroup label="─ Originales ─">
+                                        <option value="arritmia">Arritmia Neonatal (TSV)</option>
+                                        <option value="cpap">Fallo Respiratorio / CPAP</option>
+                                    </optgroup>
+                                    <optgroup label="─ Nuevos NRP 8ª Ed. ─">
+                                        <option value="vpp_inicio">¿Cuándo Iniciar VPP?</option>
+                                        <option value="fio2_termino">FiO₂ Inicial — RN de Término</option>
+                                        <option value="fio2_prematuro">FiO₂ Inicial — Prematuro</option>
+                                        <option value="sopa_steps">Pasos MR-SOPA</option>
+                                        <option value="compresiones_indicacion">Indicación de Compresiones</option>
+                                        <option value="epinefrina_via">Epinefrina: Vía y Dosis</option>
+                                        <option value="temperatura_prematuro">Termorregulación Prematuro</option>
+                                        <option value="meconio_nrp8">Meconio Espeso — NRP 8ª Ed.</option>
+                                        <option value="clampe_cordon">Pinzamiento del Cordón</option>
+                                        <option value="hipotermia_ehi">Hipotermia Terapéutica — EHI</option>
+                                    </optgroup>
                                 </select>
                             </div>
 
                             <div>
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Título</label>
-                                <input className={inp + " font-bold"} value={data.title} onChange={e => updateField('title', e.target.value)} placeholder="Título del quiz" />
+                                <input className={inp+" font-bold"} value={data.title} onChange={e=>updateField('title',e.target.value)} placeholder="Título del quiz"/>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Escenario</label>
-                                <textarea className={inp + " resize-none"} rows={3} value={data.caseText} onChange={e => updateField('caseText', e.target.value)} placeholder="Caso clínico..." />
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Escenario clínico</label>
+                                <textarea className={inp+" resize-none"} rows={3} value={data.caseText} onChange={e=>updateField('caseText',e.target.value)} placeholder="Caso clínico..."/>
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 block">Pregunta</label>
-                                <input className={inp + " font-bold"} style={{color:'#f59e0b'}} value={data.question} onChange={e => updateField('question', e.target.value)} placeholder="¿Qué conducta tomarías?" />
+                                <input className={inp+" font-bold"} style={{color:'#f59e0b'}} value={data.question} onChange={e=>updateField('question',e.target.value)} placeholder="¿Qué conducta tomarías?"/>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Opciones</label>
-                                {data.options.map((opt, i) => (
-                                    <input key={i} className={inp} value={opt} onChange={e => updateField('options', e.target.value, i)} placeholder={`Opción ${i+1}`} />
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Opciones de respuesta</label>
+                                {data.options.map((opt,i)=>(
+                                    <input key={i} className={inp} value={opt} onChange={e=>updateField('options',e.target.value,i)} placeholder={'Opción '+(i+1)}/>
                                 ))}
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 block">Respuesta correcta</label>
-                                <input className={inp + " font-bold"} style={{color:'#22c55e'}} value={data.answer} onChange={e => updateField('answer', e.target.value)} placeholder="Respuesta" />
+                                <input className={inp+" font-bold"} style={{color:'#22c55e'}} value={data.answer} onChange={e=>updateField('answer',e.target.value)} placeholder="Respuesta"/>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Explicación</label>
-                                <textarea className={inp + " resize-none"} rows={3} value={data.explanation} onChange={e => updateField('explanation', e.target.value)} placeholder="Explicación técnica..." />
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Explicación técnica</label>
+                                <textarea className={inp+" resize-none"} rows={3} value={data.explanation} onChange={e=>updateField('explanation',e.target.value)} placeholder="Explicación técnica basada en NRP..."/>
                             </div>
 
                             <button onClick={generate} disabled={generating}
                                 className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3">
                                 {generating
-                                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{status}</>
+                                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>{status}</>
                                     : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
                             </button>
                         </div>
                     </div>
 
-                    {/* Galería */}
                     <div className="lg:col-span-7">
-                        {gallery.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-4 fade-in">
-                                {gallery.map((img, i) => (
-                                    <div key={i} className="group relative rounded-3xl overflow-hidden border border-white/5 shadow-2xl transition-all hover:scale-[1.02]">
-                                        <img src={img} className="w-full aspect-[9/16] object-cover block" />
+                        {gallery.length>0
+                            ? <div className="grid grid-cols-2 gap-4 fade-in">
+                                {gallery.map((img,i)=>(
+                                    <div key={i} className="group relative rounded-3xl overflow-hidden border border-white/5 shadow-2xl hover:scale-[1.02] transition-all">
+                                        <img src={img} className="w-full aspect-[9/16] object-cover block"/>
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
-                                            <a href={img} download={`NeoQuiz_Paso_${i+1}.png`} className="bg-white text-black p-4 rounded-full shadow-2xl active:scale-95">
+                                            <a href={img} download={'NeoQuiz_Paso_'+(i+1)+'.png'} className="bg-white text-black p-4 rounded-full shadow-2xl active:scale-95">
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                             </a>
                                         </div>
                                         <div className="absolute top-4 left-4 bg-amber-500 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">PASO {i+1}</div>
                                     </div>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
+                              </div>
+                            : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
                                 <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
                                 <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
-                                    Completá el formulario<br/>y presioná <span className="text-amber-500">Generar Pack</span>
+                                    Seleccioná un preset NRP<br/>y presioná <span className="text-amber-500">Generar Pack</span>
                                 </p>
-                            </div>
-                        )}
+                              </div>}
                     </div>
                 </div>
             </main>
@@ -415,7 +444,7 @@ const App = () => {
     );
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
