@@ -18,6 +18,7 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0f172a; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        
         .recording-dot { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
@@ -189,6 +190,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // ─── Renderizado 1:1 (Post) ──────────────────────────────────
 function renderSlideToCanvas(canvas, step, slideIndex) {
+    if (!canvas || !step) return;
     const SIZE = 1080;
     canvas.width = SIZE; canvas.height = SIZE;
     const ctx = canvas.getContext('2d');
@@ -244,6 +246,7 @@ function renderSlideToCanvas(canvas, step, slideIndex) {
 
 // ─── Renderizado 9:16 (Reel) ───────────────────────────────────────
 function renderReelSlideToCanvas(canvas, step, slideIndex) {
+    if (!canvas || !step) return;
     const W = 1080, H = 1920;
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
@@ -300,7 +303,7 @@ function renderReelSlideToCanvas(canvas, step, slideIndex) {
 const SlidePreview = ({ step, index }) => {
     const canvasRef = useRef(null);
     useEffect(() => {
-        if (canvasRef.current) {
+        if (canvasRef.current && step) {
             renderSlideToCanvas(canvasRef.current, step, index);
         }
     }, [step, index]);
@@ -346,7 +349,7 @@ const App = () => {
         const images = [];
         for (let i=0; i<5; i++) {
             setStatus('Generando '+(i+1)+'/5…');
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise(r => setTimeout(r, 60));
             const canvas = document.createElement('canvas');
             renderSlideToCanvas(canvas, scenario.steps[i], i);
             images.push(canvas.toDataURL('image/png'));
@@ -381,15 +384,22 @@ const App = () => {
             };
             
             recorder.start();
-            await new Promise(r => setTimeout(r, 300));
+            await new Promise(r => setTimeout(r, 400));
 
             for (let i = 0; i < 5; i++) {
-                setStatus(`Grabando Slide ${i+1}/5...`);
-                renderReelSlideToCanvas(canvas, scenario.steps[i], i);
-                await new Promise(r => setTimeout(r, slideDuration * 1000));
+                setStatus(`Grabando Diapositiva ${i+1}/5...`);
+                // Renderizado activo durante el tiempo de la diapositiva para evitar que el encoder se salte frames
+                const slideStartTime = Date.now();
+                const totalDuration = slideDuration * 1000;
+                
+                while (Date.now() - slideStartTime < totalDuration) {
+                    renderReelSlideToCanvas(canvas, scenario.steps[i], i);
+                    // Usar rAF para sincronizar con el refresco del navegador
+                    await new Promise(r => requestAnimationFrame(r));
+                }
             }
             
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 300));
             recorder.stop();
         } catch (err) {
             console.error(err);
@@ -416,7 +426,7 @@ const App = () => {
                     <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">Basado en NRP<br/>AHA/AAP 8ª Ed. 2021<br/>+ Actualización 2023</p>
                 </div>
                 <div className="mt-auto hidden md:block pt-8 border-t border-white/5 w-full">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Editor de Contenido v4.2</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Editor de Contenido v4.3</p>
                 </div>
             </aside>
 
@@ -466,16 +476,16 @@ const App = () => {
                                             className={'flex-1 py-3 text-[10px] font-black uppercase rounded-lg transition-all '+(activeSlide===i?'active-tab':'text-slate-500 hover:text-slate-300')}>S{i+1}</button>
                                     ))}
                                 </div>
-                                <input type="text" placeholder="Título" value={currentStep.t} onChange={e=>updateSlide('t',e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold"/>
-                                <textarea placeholder="Descripción..." rows={4} value={currentStep.d} onChange={e=>updateSlide('d',e.target.value)} className="w-full rounded-xl p-4 text-sm resize-none"/>
+                                <input type="text" placeholder="Título" value={currentStep?.t || ""} onChange={e=>updateSlide('t',e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold"/>
+                                <textarea placeholder="Descripción..." rows={4} value={currentStep?.d || ""} onChange={e=>updateSlide('d',e.target.value)} className="w-full rounded-xl p-4 text-sm resize-none"/>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">FC (bpm)</label>
-                                        <input type="text" placeholder="--" value={currentStep.v?.hr||""} onChange={e=>updateSlide('hr',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-green-500 text-center"/>
+                                        <input type="text" placeholder="--" value={currentStep?.v?.hr||""} onChange={e=>updateSlide('hr',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-green-500 text-center"/>
                                     </div>
                                     <div>
                                         <label className="text-[9px] font-bold text-slate-600 uppercase ml-1 tracking-widest">SpO₂ (%)</label>
-                                        <input type="text" placeholder="--" value={currentStep.v?.sp||""} onChange={e=>updateSlide('sp',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-yellow-500 text-center"/>
+                                        <input type="text" placeholder="--" value={currentStep?.v?.sp||""} onChange={e=>updateSlide('sp',e.target.value)} className="w-full rounded-xl p-4 text-sm font-black text-yellow-500 text-center"/>
                                     </div>
                                 </div>
                             </div>
@@ -488,10 +498,13 @@ const App = () => {
                                 
                                 <div className="pt-4 border-t border-white/5 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Duración Diapositiva</label>
-                                        <select value={slideDuration} onChange={e=>setSlideDuration(parseInt(e.target.value))} className="bg-slate-950 rounded-lg px-2 py-1 text-xs font-bold border border-white/10">
-                                            {[2,3,4,5,6,8,10].map(v => <option key={v} value={v}>{v}s</option>)}
-                                        </select>
+                                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Velocidad Reel</label>
+                                        <div className="flex items-center gap-2">
+                                            <select value={slideDuration} onChange={e=>setSlideDuration(parseInt(e.target.value))} className="bg-slate-950 rounded-lg px-2 py-1 text-xs font-bold border border-white/10">
+                                                {[2,3,4,5,6,8,10].map(v => <option key={v} value={v}>{v}s</option>)}
+                                            </select>
+                                            <span className="text-[10px] text-slate-500 font-bold uppercase">por slide</span>
+                                        </div>
                                     </div>
                                     
                                     <button onClick={exportVideo} disabled={isGenerating || isExportingVideo}
@@ -519,7 +532,7 @@ const App = () => {
                                 ))}
                               </div>
                             : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
-                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Completa los campos y selecciona "Generar Carrusel" o "Exportar Reel".</p>
+                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Personaliza tu caso y elige el formato de exportación para tu red social preferida.</p>
                               </div>}
                     </div>
                 </div>
