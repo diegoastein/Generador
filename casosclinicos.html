@@ -72,7 +72,7 @@ const SCENARIOS_BASE = {
             {t:"Evaluación Rápida", d:"FC 90 lpm. Sin esfuerzo respiratorio. SpO₂ no detectable. Apnea primaria probable.", v:{hr:90,sp:null}},
             {t:"Pasos Iniciales",   d:"Calor, secar, estimular táctilmente (frotar espalda / golpear plantas). Posicionar vía aérea.", v:{hr:88,sp:null}},
             {t:"VPP Iniciada",      d:"Sin respuesta a estimulación. VPP con máscara-bolsa a 40-60 rpm, FiO₂ 21%. MR-SOPA.", v:{hr:110,sp:86}},
-            {t:"Clave NRP",        d:"Apnea primaria responde a estimulación. Si no: iniciar VPP dentro de los 60 segundos de vida.", v:null}
+            {t:"Clave NRP",        d:"Apnea primaria responde a las maniobras iniciales. Si no: iniciar VPP dentro de los 60 segundos de vida.", v:null}
         ]
     },
 
@@ -244,18 +244,18 @@ function renderSlideToCanvas(canvas, step, slideIndex) {
     wrapText(ctx, step.d||'', PAD+60, cardY+60, cardW-120, 58);
 
     if (step.v) {
-        const vy = cardY + cardH - 260;
+        const vy = cardY + cardH - 220; // Ajustado para dar más aire al texto
         if (step.v.hr !== null) {
-            ctx.fillStyle='#22c55e'; ctx.font='bold 26px Inter, sans-serif'; ctx.textBaseline='top';
+            ctx.fillStyle='#22c55e'; ctx.font='bold 22px Inter, sans-serif'; ctx.textBaseline='top';
             ctx.fillText('FRECUENCIA CARDIACA', PAD+60, vy);
-            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.hr), PAD+60, vy+30);
+            ctx.font='bold 110px Inter, sans-serif'; ctx.fillText(String(step.v.hr), PAD+60, vy+35);
         }
         if (step.v.sp !== null) {
-            ctx.fillStyle='#facc15'; ctx.font='bold 26px Inter, sans-serif';
+            ctx.fillStyle='#facc15'; ctx.font='bold 22px Inter, sans-serif';
             ctx.fillText('SATURACIÓN O₂', PAD+60+380, vy);
-            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.sp), PAD+60+380, vy+30);
-            ctx.font='bold 72px Inter, sans-serif';
-            ctx.fillText('%', PAD+60+380+ctx.measureText(String(step.v.sp)).width+8, vy+110);
+            ctx.font='bold 110px Inter, sans-serif'; ctx.fillText(String(step.v.sp), PAD+60+380, vy+35);
+            ctx.font='bold 50px Inter, sans-serif';
+            ctx.fillText('%', PAD+60+380+ctx.measureText(String(step.v.sp)).width+8, vy+85);
         }
     }
 
@@ -279,8 +279,8 @@ const SlidePreview = ({ step, index }) => (
             <p className="text-slate-300 text-xs leading-relaxed">{step.d}</p>
             {step.v && (
                 <div className="flex gap-6 mt-3">
-                    {step.v.hr !== null && <div><p className="text-green-500 text-[8px] font-black uppercase tracking-widest">FC</p><p className="text-green-500 font-black text-3xl leading-none">{step.v.hr}</p></div>}
-                    {step.v.sp !== null && <div><p className="text-yellow-400 text-[8px] font-black uppercase tracking-widest">SpO₂</p><p className="text-yellow-400 font-black text-3xl leading-none">{step.v.sp}<span className="text-base">%</span></p></div>}
+                    {step.v.hr !== null && <div><p className="text-green-500 text-[8px] font-black uppercase tracking-widest">FC</p><p className="text-green-500 font-black text-2xl leading-none">{step.v.hr}</p></div>}
+                    {step.v.sp !== null && <div><p className="text-yellow-400 text-[8px] font-black uppercase tracking-widest">SpO₂</p><p className="text-yellow-400 font-black text-2xl leading-none">{step.v.sp}<span className="text-base">%</span></p></div>}
                 </div>
             )}
         </div>
