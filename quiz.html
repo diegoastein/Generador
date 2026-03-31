@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMonitor | NeoQuiz Expert Generator</title>
+    <!-- Librerías Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020617; 
+            color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .medical-grid { 
+            background-image: radial-gradient(#1e293b 1px, transparent 1px); 
+            background-size: 60px 60px; 
+        }
+        /* Motor de renderizado optimizado para capturas */
+        #quiz-render-engine {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1080px;
+            height: 1920px;
+            z-index: -1000;
+            pointer-events: none;
+            opacity: 0.01;
+        }
+        input, textarea, select {
+            background: #0f172a !important;
+            border: 1px solid #1e293b !important;
+            color: white !important;
+            outline: none;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #f59e0b !important;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        const PRESETS = {
+            arritmia: {
+                title: "Desafío de Arritmias",
+                case: "Recién nacido de 36 semanas presenta frecuencia cardiaca persistente de 230 lpm. No responde a maniobras de estimulación.",
+                question: "¿Cuál es la primera línea de tratamiento recomendada?",
+                options: ["Adenosina (0.1 mg/kg)", "Amiodarona", "Maniobras Vagales (Hielo)"],
+                answer: "Maniobras Vagales: En pacientes estables, el hielo en la cara es la primera intervención antes de la farmacología."
+            },
+            cpap: {
+                title: "Fallo de CPAP",
+                case: "RNPT de 30 semanas en CPAP con PEEP de 6. Presenta quejido audaz y FiO2 requerida del 45%.",
+                question: "¿Cuál es el siguiente paso en la gestión respiratoria?",
+                options: ["Aumentar PEEP a 8", "Surfactante (LISA)", "Intubación Orotraqueal"],
+                answer: "Surfactante (LISA): El rescate temprano con surfactante mediante técnicas mínimamente invasivas reduce la necesidad de VMNI."
+            }
+        };
+
+        const App = () => {
+            const [activeStep, setActiveStep] = useState(0);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [gallery, setGallery] = useState([]);
+            const [quizData, setQuizData] = useState({
+                title: "Desafío Clínico",
+                case: "Describe aquí el escenario...",
+                question: "¿Qué conducta tomarías?",
+                options: ["Opción A", "Opción B", "Opción C"],
+                answer: "Respuesta: Explica aquí la resolución técnica..."
+            });
+
+            const renderRef = useRef(null);
+
+            // Refrescar iconos de Lucide
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+
+            const updateField = (field, value, index = null) => {
+                if (index !== null) {
+                    const newOptions = [...quizData.options];
+                    newOptions[index] = value;
+                    setQuizData(prev => ({ ...prev, options: newOptions }));
+                } else {
+                    setQuizData(prev => ({ ...prev, [field]: value }));
+                }
+            };
+
+            const loadPreset = (key) => {
+                if (PRESETS[key]) setQuizData(PRESETS[key]);
+            };
+
+            const captureQuiz = async () => {
+                setIsGenerating(true);
+                const newGallery = [];
+
+                for (let i = 0; i < 4; i++) {
+                    setActiveStep(i);
+                    await new Promise(r => setTimeout(r, 250)); // Buffer de renderizado
+
+                    const canvas = await html2canvas(renderRef.current, {
+                        scale: 1,
+                        width: 1080,
+                        height: 1920,
+                        backgroundColor: '#020617',
+                        useCORS: true
+                    });
+                    newGallery.push(canvas.toDataURL("image/png"));
+                }
+
+                setGallery(newGallery);
+                setIsGenerating(false);
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
+                    {/* Sidebar */}
+                    <aside className="w-full md:w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col items-center md:items-start shrink-0 backdrop-blur-xl">
+                        <div className="flex items-center gap-3 mb-12">
+                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
+                            <span className="font-black text-xl tracking-tighter uppercase">Expert Suite</span>
+                        </div>
+                        
+                        <nav className="space-y-3 w-full">
+                            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-4 text-amber-500">
+                                <i data-lucide="help-circle" className="w-5 h-5"></i>
+                                <span className="font-bold text-sm">Interactive Quiz</span>
+                            </div>
+                        </nav>
+                    </aside>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-6 md:p-12 overflow-y-auto">
+                        <header className="mb-10 max-w-6xl mx-auto">
+                            <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
+                            <p className="text-slate-400">Genera secuencias de 4 imágenes para Stories en formato 9:16.</p>
+                        </header>
+
+                        <div className="grid lg:grid-cols-12 gap-12 max-w-6xl mx-auto items-start">
+                            
+                            {/* Panel de Configuración */}
+                            <div className="lg:col-span-5 space-y-6">
+                                <div className="glass-card p-8 rounded-[32px] space-y-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Cargar Desafío Predefinido</label>
+                                            <select onChange={(e) => loadPreset(e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold cursor-pointer">
+                                                <option value="">-- Nuevo Desafío --</option>
+                                                <option value="arritmia">Arritmia Neonatal</option>
+                                                <option value="cpap">Fallo Respiratorio</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-3 pt-4 border-t border-white/5">
+                                            <input type="text" value={quizData.title} onChange={(e) => updateField('title', e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold" placeholder="Título del Quiz" />
+                                            <textarea value={quizData.case} onChange={(e) => updateField('case', e.target.value)} rows="3" className="w-full rounded-xl p-3 text-sm resize-none" placeholder="Descripción del caso clínico..." />
+                                            <input type="text" value={quizData.question} onChange={(e) => updateField('question', e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold text-amber-500" placeholder="La Pregunta" />
+                                            
+                                            <div className="space-y-2">
+                                                {quizData.options.map((opt, i) => (
+                                                    <input key={i} type="text" value={opt} onChange={(e) => updateField('options', e.target.value, i)} className="w-full rounded-xl p-3 text-[10px] font-bold" placeholder={`Opción ${i+1}`} />
+                                                ))}
+                                            </div>
+                                            
+                                            <textarea value={quizData.answer} onChange={(e) => updateField('answer', e.target.value)} rows="3" className="w-full rounded-xl p-3 text-sm resize-none border-green-900/50" placeholder="Respuesta y explicación técnica..." />
+                                        </div>
+                                    </div>
+
+                                    <button onClick={captureQuiz} disabled={isGenerating} className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2 transform active:scale-95">
+                                        {isGenerating ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <i data-lucide="download" className="w-5 h-5"></i>
+                                        )}
+                                        {isGenerating ? "Generando Secuencia..." : "Generar Pack de Stories"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Galería / Preview */}
+                            <div className="lg:col-span-7">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {gallery.length > 0 ? gallery.map((img, i) => (
+                                        <div key={i} className="fade-in relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                                            <img src={img} className="w-full aspect-[9/16] object-cover" />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                                <a href={img} download={`Quiz_NM_Paso_${i+1}.png`} className="bg-white text-black p-3 rounded-full hover:scale-110 transition-transform">
+                                                    <i data-lucide="download" className="w-5 h-5"></i>
+                                                </a>
+                                            </div>
+                                            <div className="absolute top-4 left-4 bg-amber-500 text-white text-[8px] font-black px-2 py-1 rounded">PASO {i+1}</div>
+                                        </div>
+                                    )) : (
+                                        <div className="col-span-full border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
+                                            <i data-lucide="smartphone" className="w-16 h-16 mb-4 opacity-20"></i>
+                                            <p className="text-xs font-bold uppercase tracking-widest">Las 4 diapositivas del Quiz aparecerán aquí para descargar</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* MOTOR DE RENDERIZADO 9:16 (OCULTO) */}
+                    <div id="quiz-render-engine" ref={renderRef} className="bg-slate-950 p-24 flex flex-col justify-center items-center text-center overflow-hidden">
+                        <div className="absolute inset-0 medical-grid opacity-30"></div>
+                        
+                        <div className="relative z-10 w-full flex flex-col items-center">
+                            <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center text-white font-black text-4xl mb-16 shadow-2xl shadow-blue-600/40">NM</div>
+                            
+                            <div className="bg-slate-900 border border-white/10 p-20 rounded-[100px] w-full shadow-2xl relative overflow-hidden">
+                                <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]"></div>
+                                
+                                {activeStep === 0 && (
+                                    <div>
+                                        <p className="text-amber-500 text-4xl font-black uppercase tracking-[0.4em] mb-8">NUEVO DESAFÍO</p>
+                                        <h1 className="text-[110px] font-black text-white leading-none uppercase tracking-tighter mb-10">{quizData.title}</h1>
+                                        <p className="text-4xl text-slate-400 font-medium">¿Estás listo para responder como un experto?</p>
+                                    </div>
+                                )}
+
+                                {activeStep === 1 && (
+                                    <div className="text-left">
+                                        <p className="text-blue-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
+                                            <i data-lucide="activity" className="w-10 h-10"></i> EL ESCENARIO
+                                        </p>
+                                        <p className="text-6xl text-white leading-tight font-bold">{quizData.case}</p>
+                                    </div>
+                                )}
+
+                                {activeStep === 2 && (
+                                    <div className="text-left">
+                                        <p className="text-amber-500 text-3xl font-black uppercase tracking-[0.2em] mb-10">LA PREGUNTA</p>
+                                        <h2 className="text-6xl text-white font-black leading-tight mb-16">{quizData.question}</h2>
+                                        <div className="space-y-6">
+                                            {quizData.options.map((opt, i) => (
+                                                <div key={i} className="bg-slate-950 border-2 border-slate-800 p-8 rounded-[40px] text-4xl font-bold text-slate-300">
+                                                    <span className="text-blue-600 mr-4">0{i+1}.</span> {opt}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeStep === 3 && (
+                                    <div className="text-left">
+                                        <p className="text-green-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
+                                            <i data-lucide="check-circle-2" className="w-10 h-10"></i> RESPUESTA TÉCNICA
+                                        </p>
+                                        <p className="text-6xl text-white leading-tight font-black mb-12 italic">"{quizData.answer.split(':')[0]}"</p>
+                                        <div className="h-2 w-32 bg-green-500 mb-12"></div>
+                                        <p className="text-5xl text-slate-400 leading-relaxed">{quizData.answer.split(':')[1] || ""}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-24 w-full flex justify-between items-center px-10">
+                                <p className="text-4xl font-black text-slate-700 tracking-[0.4em]">NEOMONITOR.PRO</p>
+                                <div className="flex gap-4">
+                                    {[0,1,2,3].map(dot => (
+                                        <div key={dot} className={`h-4 w-12 rounded-full ${activeStep === dot ? 'bg-amber-500' : 'bg-slate-800'}`} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
