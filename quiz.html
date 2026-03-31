@@ -4,300 +4,418 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeoMonitor | NeoQuiz Expert Generator</title>
-    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #020617; 
-            color: #f8fafc;
-            margin: 0;
-            overflow-x: hidden;
-        }
-        .medical-grid { 
-            background-image: radial-gradient(#1e293b 1px, transparent 1px); 
-            background-size: 60px 60px; 
-        }
-        /* Motor de renderizado optimizado: visible para el DOM pero oculto tras la UI */
-        #quiz-render-engine {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 1080px;
-            height: 1920px;
-            z-index: -5000;
-            pointer-events: none;
-            visibility: visible;
-        }
-        input, textarea, select {
-            background: #0f172a !important;
-            border: 1px solid #1e293b !important;
-            color: white !important;
-            outline: none;
-        }
-        input:focus, textarea:focus, select:focus {
-            border-color: #f59e0b !important;
-        }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
+        input, textarea, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; outline: none; }
+        input:focus, textarea:focus, select:focus { border-color: #f59e0b !important; }
+        .glass-card { background: rgba(15,23,42,0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
         .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#0f172a; } ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:3px; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-    <script type="text/babel">
-        const { useState, useRef, useEffect } = React;
+// ─── Presets ──────────────────────────────────────────────────────────────────
+const PRESETS = {
+    arritmia: {
+        title: "Desafío de Arritmias",
+        caseText: "Recién nacido de 36 semanas presenta frecuencia cardiaca persistente de 230 lpm. No responde a maniobras de estimulación.",
+        question: "¿Cuál es la primera línea de tratamiento recomendada?",
+        options: ["Adenosina (0.1 mg/kg)", "Amiodarona", "Maniobras Vagales (Hielo)"],
+        answer: "Maniobras Vagales",
+        explanation: "En pacientes estables, el hielo en la cara es la primera intervención antes de la farmacología."
+    },
+    cpap: {
+        title: "Fallo de CPAP",
+        caseText: "RNPT de 30 semanas en CPAP con PEEP de 6. Presenta quejido audaz y FiO2 requerida del 45%.",
+        question: "¿Cuál es el siguiente paso en la gestión respiratoria?",
+        options: ["Aumentar PEEP a 8", "Surfactante (LISA)", "Intubación Orotraqueal"],
+        answer: "Surfactante (LISA)",
+        explanation: "El rescate temprano con surfactante mediante técnicas mínimamente invasivas reduce la necesidad de VMNI."
+    }
+};
 
-        const PRESETS = {
-            arritmia: {
-                title: "Desafío de Arritmias",
-                case: "Recién nacido de 36 semanas presenta frecuencia cardiaca persistente de 230 lpm. No responde a maniobras de estimulación.",
-                question: "¿Cuál es la primera línea de tratamiento recomendada?",
-                options: ["Adenosina (0.1 mg/kg)", "Amiodarona", "Maniobras Vagales (Hielo)"],
-                answer: "Maniobras Vagales: En pacientes estables, el hielo en la cara es la primera intervención antes de la farmacología."
-            },
-            cpap: {
-                title: "Fallo de CPAP",
-                case: "RNPT de 30 semanas en CPAP con PEEP de 6. Presenta quejido audaz y FiO2 requerida del 45%.",
-                question: "¿Cuál es el siguiente paso en la gestión respiratoria?",
-                options: ["Aumentar PEEP a 8", "Surfactante (LISA)", "Intubación Orotraqueal"],
-                answer: "Surfactante (LISA): El rescate temprano con surfactante mediante técnicas mínimamente invasivas reduce la necesidad de VMNI."
-            }
-        };
+// ─── Canvas helpers ───────────────────────────────────────────────────────────
+function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.closePath();
+}
 
-        const App = () => {
-            const [activeStep, setActiveStep] = useState(0);
-            const [isGenerating, setIsGenerating] = useState(false);
-            const [gallery, setGallery] = useState([]);
-            const [quizData, setQuizData] = useState({
-                title: "Desafío Clínico",
-                case: "Describe aquí el escenario...",
-                question: "¿Qué conducta tomarías?",
-                options: ["Opción A", "Opción B", "Opción C"],
-                answer: "Respuesta: Explica aquí la resolución técnica..."
-            });
+function wrapText(ctx, text, x, y, maxW, lineH) {
+    if (!text) return 0;
+    const words = text.split(' ');
+    let line = '', lines = [];
+    for (const w of words) {
+        const test = line ? line+' '+w : w;
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+        else line = test;
+    }
+    if (line) lines.push(line);
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+    return lines.length;
+}
 
-            const renderRef = useRef(null);
+// ─── Renderizador principal ───────────────────────────────────────────────────
+function drawQuizSlide(canvas, step, data) {
+    const W = 1080, H = 1920;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
 
-            // Refrescar iconos de Lucide en cada renderizado
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            });
+    // Fondo
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(0, 0, W, H);
 
-            const updateField = (field, value, index = null) => {
-                if (index !== null) {
-                    const newOptions = [...quizData.options];
-                    newOptions[index] = value;
-                    setQuizData(prev => ({ ...prev, options: newOptions }));
-                } else {
-                    setQuizData(prev => ({ ...prev, [field]: value }));
-                }
-            };
+    // Dot grid
+    ctx.fillStyle = '#1e293b';
+    for (let gx = 30; gx < W; gx += 60)
+        for (let gy = 30; gy < H; gy += 60) {
+            ctx.beginPath(); ctx.arc(gx, gy, 1.2, 0, Math.PI*2); ctx.fill();
+        }
 
-            const loadPreset = (key) => {
-                if (PRESETS[key]) setQuizData(PRESETS[key]);
-            };
+    const P = 90; // padding
 
-            const captureQuiz = async () => {
-                setIsGenerating(true);
-                const newGallery = [];
+    // ── Logo NM ──
+    rrect(ctx, W/2 - 60, P, 120, 120, 28);
+    ctx.fillStyle = '#2563eb'; ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 52px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('NM', W/2, P + 60);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
 
-                for (let i = 0; i < 4; i++) {
-                    setActiveStep(i);
-                    // Esperamos a que React actualice el DOM y Lucide procese los iconos
-                    await new Promise(r => setTimeout(r, 400)); 
-                    if (window.lucide) window.lucide.createIcons();
+    // ── Tarjeta central ──
+    const cardY = P + 160, cardH = H - cardY - 180, cardW = W - P*2;
+    rrect(ctx, P, cardY, cardW, cardH, 72);
+    ctx.fillStyle = '#0f172a'; ctx.fill();
+    rrect(ctx, P, cardY, cardW, cardH, 72);
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2; ctx.stroke();
 
-                    try {
-                        const canvas = await html2canvas(renderRef.current, {
-                            scale: 1,
-                            width: 1080,
-                            height: 1920,
-                            backgroundColor: '#020617',
-                            useCORS: true,
-                            allowTaint: true,
-                            logging: false
-                        });
-                        newGallery.push(canvas.toDataURL("image/png"));
-                    } catch (err) {
-                        console.error("Error en captura:", err);
-                    }
-                }
+    // Glow accent
+    const grd = ctx.createRadialGradient(W-P, cardY+200, 0, W-P, cardY+200, 500);
+    grd.addColorStop(0, 'rgba(245,158,11,0.08)'); grd.addColorStop(1, 'transparent');
+    rrect(ctx, P, cardY, cardW, cardH, 72);
+    ctx.fillStyle = grd; ctx.fill();
 
-                setGallery(newGallery);
-                setIsGenerating(false);
-            };
+    const iX = P + 72, iW = cardW - 144; // inner x, inner width
+    let curY = cardY + 80;
 
-            return (
-                <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
-                    {/* Sidebar */}
-                    <aside className="w-full md:w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col items-center md:items-start shrink-0 backdrop-blur-xl">
-                        <div className="flex items-center gap-3 mb-12">
-                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
-                            <span className="font-black text-xl tracking-tighter uppercase">Expert Suite</span>
-                        </div>
-                        
-                        <nav className="space-y-3 w-full">
-                            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-4 text-amber-500">
-                                <i data-lucide="help-circle" className="w-5 h-5"></i>
-                                <span className="font-bold text-sm">Interactive Quiz</span>
-                            </div>
-                        </nav>
-                    </aside>
+    // ─────── PASO 0: Portada ───────────────────────────────────────────────────
+    if (step === 0) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 36px system-ui, sans-serif';
+        ctx.fillText('NUEVO DESAFÍO', iX, curY);
+        curY += 70;
 
-                    {/* Main Content */}
-                    <main className="flex-1 p-6 md:p-12 overflow-y-auto">
-                        <header className="mb-10 max-w-6xl mx-auto">
-                            <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
-                            <p className="text-slate-400">Genera secuencias de 4 imágenes para Stories en formato 9:16.</p>
-                        </header>
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 108px system-ui, sans-serif';
+        const tLines = wrapText(ctx, data.title.toUpperCase(), iX, curY, iW, 112);
+        curY += tLines * 112 + 60;
 
-                        <div className="grid lg:grid-cols-12 gap-12 max-w-6xl mx-auto items-start">
-                            
-                            {/* Panel de Configuración */}
-                            <div className="lg:col-span-5 space-y-6">
-                                <div className="glass-card p-8 rounded-[32px] space-y-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Cargar Desafío Predefinido</label>
-                                            <select onChange={(e) => loadPreset(e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold cursor-pointer">
-                                                <option value="">-- Nuevo Desafío --</option>
-                                                <option value="arritmia">Arritmia Neonatal</option>
-                                                <option value="cpap">Fallo Respiratorio</option>
-                                            </select>
-                                        </div>
+        ctx.fillStyle = '#64748b';
+        ctx.font = '400 46px system-ui, sans-serif';
+        wrapText(ctx, '¿Estás listo para responder como un experto?', iX, curY, iW, 58);
+    }
 
-                                        <div className="space-y-3 pt-4 border-t border-white/5">
-                                            <input type="text" value={quizData.title} onChange={(e) => updateField('title', e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold" placeholder="Título del Quiz" />
-                                            <textarea value={quizData.case} onChange={(e) => updateField('case', e.target.value)} rows="3" className="w-full rounded-xl p-3 text-sm resize-none" placeholder="Descripción del caso clínico..." />
-                                            <input type="text" value={quizData.question} onChange={(e) => updateField('question', e.target.value)} className="w-full rounded-xl p-3 text-sm font-bold text-amber-500" placeholder="La Pregunta" />
-                                            
-                                            <div className="space-y-2">
-                                                {quizData.options.map((opt, i) => (
-                                                    <input key={i} type="text" value={opt} onChange={(e) => updateField('options', e.target.value, i)} className="w-full rounded-xl p-3 text-[10px] font-bold" placeholder={`Opción ${i+1}`} />
-                                                ))}
-                                            </div>
-                                            
-                                            <textarea value={quizData.answer} onChange={(e) => updateField('answer', e.target.value)} rows="3" className="w-full rounded-xl p-3 text-sm resize-none border-green-900/50" placeholder="Respuesta y explicación técnica..." />
-                                        </div>
-                                    </div>
+    // ─────── PASO 1: El Escenario ──────────────────────────────────────────────
+    if (step === 1) {
+        // Badge
+        rrect(ctx, iX, curY, 280, 58, 29);
+        ctx.fillStyle = 'rgba(59,130,246,0.15)'; ctx.fill();
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = 'bold 28px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('EL ESCENARIO', iX + 24, curY + 29);
+        ctx.textBaseline = 'top';
+        curY += 90;
 
-                                    <button onClick={captureQuiz} disabled={isGenerating} className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2 transform active:scale-95">
-                                        {isGenerating ? (
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        ) : (
-                                            <i data-lucide="download" className="w-5 h-5"></i>
-                                        )}
-                                        {isGenerating ? "Generando Secuencia..." : "Generar Pack de Stories"}
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 56px system-ui, sans-serif';
+        wrapText(ctx, data.caseText, iX, curY, iW, 70);
+    }
+
+    // ─────── PASO 2: La Pregunta + Opciones ───────────────────────────────────
+    if (step === 2) {
+        // Badge
+        rrect(ctx, iX, curY, 280, 58, 29);
+        ctx.fillStyle = 'rgba(245,158,11,0.15)'; ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 28px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('LA PREGUNTA', iX + 24, curY + 29);
+        ctx.textBaseline = 'top';
+        curY += 90;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 56px system-ui, sans-serif';
+        const qLines = wrapText(ctx, data.question, iX, curY, iW, 68);
+        curY += qLines * 68 + 60;
+
+        // Opciones
+        const optColors = ['#2563eb', '#7c3aed', '#0891b2'];
+        for (let i = 0; i < data.options.length; i++) {
+            const oH = 110;
+            rrect(ctx, iX, curY, iW, oH, 36);
+            ctx.fillStyle = '#020617'; ctx.fill();
+            rrect(ctx, iX, curY, iW, oH, 36);
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Número
+            ctx.fillStyle = optColors[i] || '#3b82f6';
+            ctx.font = 'bold 36px system-ui, sans-serif';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`0${i+1}.`, iX + 30, curY + oH/2);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 36px system-ui, sans-serif';
+            ctx.fillText(data.options[i], iX + 120, curY + oH/2);
+            ctx.textBaseline = 'top';
+            curY += oH + 20;
+        }
+    }
+
+    // ─────── PASO 3: Respuesta ────────────────────────────────────────────────
+    if (step === 3) {
+        // Badge
+        rrect(ctx, iX, curY, 340, 58, 29);
+        ctx.fillStyle = 'rgba(34,197,94,0.15)'; ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 28px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('RESPUESTA TÉCNICA', iX + 24, curY + 29);
+        ctx.textBaseline = 'top';
+        curY += 90;
+
+        // Respuesta correcta
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 72px system-ui, sans-serif';
+        const aLines = wrapText(ctx, data.answer, iX, curY, iW, 82);
+        curY += aLines * 82 + 30;
+
+        // Línea separadora
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(iX, curY, 120, 6);
+        curY += 50;
+
+        // Explicación
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '400 46px system-ui, sans-serif';
+        wrapText(ctx, data.explanation, iX, curY, iW, 60);
+    }
+
+    // ── Footer ──
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('NEOMONITOR.PRO', W/2, H - P - 50);
+
+    // Dots indicadores
+    const dotW = 48, dotH = 12, dotGap = 16;
+    const totalDots = (dotW + dotGap) * 4 - dotGap;
+    let dotX = W/2 - totalDots/2;
+    for (let d = 0; d < 4; d++) {
+        rrect(ctx, dotX, H - P - 20, dotW, dotH, 6);
+        ctx.fillStyle = d === step ? '#f59e0b' : '#1e293b';
+        ctx.fill();
+        dotX += dotW + dotGap;
+    }
+
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+}
+
+// ─── Preview component ────────────────────────────────────────────────────────
+function SlidePreview({ step, data }) {
+    const ref = useRef(null);
+    useEffect(() => {
+        if (ref.current) drawQuizSlide(ref.current, step, data);
+    }, [step, data]);
+    return (
+        <canvas ref={ref} style={{ width:'100%', height:'auto', borderRadius:16, display:'block' }} />
+    );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+const App = () => {
+    const [activeStep, setActiveStep] = useState(0);
+    const [generating, setGenerating] = useState(false);
+    const [gallery, setGallery] = useState([]);
+    const [status, setStatus] = useState('');
+    const [data, setData] = useState({
+        title: "Desafío Clínico",
+        caseText: "Describe aquí el escenario...",
+        question: "¿Qué conducta tomarías?",
+        options: ["Opción A", "Opción B", "Opción C"],
+        answer: "Respuesta correcta",
+        explanation: "Explica aquí la resolución técnica..."
+    });
+
+    const loadPreset = (key) => {
+        if (PRESETS[key]) { setData(PRESETS[key]); setActiveStep(0); setGallery([]); }
+    };
+
+    const updateField = (field, value, idx = null) => {
+        if (idx !== null) {
+            const opts = [...data.options]; opts[idx] = value;
+            setData(prev => ({ ...prev, options: opts }));
+        } else {
+            setData(prev => ({ ...prev, [field]: value }));
+        }
+    };
+
+    const generate = async () => {
+        setGenerating(true); setGallery([]);
+        const imgs = [];
+        for (let i = 0; i < 4; i++) {
+            setStatus(`Generando paso ${i+1}/4…`);
+            await new Promise(r => setTimeout(r, 20));
+            const c = document.createElement('canvas');
+            drawQuizSlide(c, i, data);
+            imgs.push(c.toDataURL('image/png'));
+        }
+        setGallery(imgs); setStatus(''); setGenerating(false);
+    };
+
+    const inp = "w-full rounded-xl p-3 text-sm";
+
+    return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex overflow-hidden">
+
+            {/* Sidebar */}
+            <aside className="w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col shrink-0">
+                <div className="flex items-center gap-3 mb-12">
+                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
+                    <span className="font-black text-xl tracking-tighter uppercase">Expert Suite</span>
+                </div>
+                <nav>
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-4 text-amber-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                        <span className="font-bold text-sm">Interactive Quiz</span>
+                    </div>
+                </nav>
+                <div className="mt-auto pt-8 border-t border-white/5">
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Editor de Contenido v3.0</p>
+                </div>
+            </aside>
+
+            {/* Main */}
+            <main className="flex-1 p-12 overflow-y-auto">
+                <header className="mb-10 max-w-6xl mx-auto">
+                    <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
+                    <p className="text-slate-400 text-sm">Genera secuencias de 4 imágenes para Stories en formato 9:16.</p>
+                </header>
+
+                <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
+
+                    {/* Panel izquierdo */}
+                    <div className="lg:col-span-5 space-y-6">
+
+                        {/* Preview tabs */}
+                        <div className="glass-card p-3 rounded-2xl">
+                            <div className="flex gap-1 mb-3">
+                                {['Portada','Escenario','Pregunta','Respuesta'].map((label, i) => (
+                                    <button key={i} onClick={() => setActiveStep(i)}
+                                        className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${activeStep===i ? 'bg-amber-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                                        {label}
                                     </button>
-                                </div>
+                                ))}
                             </div>
-
-                            {/* Galería / Preview */}
-                            <div className="lg:col-span-7">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {gallery.length > 0 ? gallery.map((img, i) => (
-                                        <div key={i} className="fade-in relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-                                            <img src={img} className="w-full aspect-[9/16] object-cover" />
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
-                                                <a href={img} download={`Quiz_NM_Paso_${i+1}.png`} className="bg-white text-black p-3 rounded-full hover:scale-110 transition-transform">
-                                                    <i data-lucide="download" className="w-5 h-5"></i>
-                                                </a>
-                                            </div>
-                                            <div className="absolute top-4 left-4 bg-amber-500 text-white text-[8px] font-black px-2 py-1 rounded">PASO {i+1}</div>
-                                        </div>
-                                    )) : (
-                                        <div className="col-span-full border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
-                                            <i data-lucide="smartphone" className="w-16 h-16 mb-4 opacity-20"></i>
-                                            <p className="text-xs font-bold uppercase tracking-widest">Las 4 diapositivas aparecerán aquí listas para descargar</p>
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="rounded-xl overflow-hidden border border-white/5">
+                                <SlidePreview step={activeStep} data={data} />
                             </div>
                         </div>
-                    </main>
 
-                    {/* MOTOR DE RENDERIZADO 9:16 (OCULTO DETRÁS) */}
-                    <div id="quiz-render-engine" ref={renderRef} className="bg-slate-950 p-24 flex flex-col justify-center items-center text-center overflow-hidden">
-                        <div className="absolute inset-0 medical-grid opacity-30"></div>
-                        
-                        <div className="relative z-10 w-full flex flex-col h-full justify-between items-center">
-                            <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center text-white font-black text-4xl mb-16 shadow-2xl shadow-blue-600/40">NM</div>
-                            
-                            <div className="bg-slate-900 border border-white/10 p-20 rounded-[100px] w-full shadow-2xl relative overflow-hidden flex-grow flex flex-col justify-center">
-                                <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]"></div>
-                                
-                                {activeStep === 0 && (
-                                    <div className="w-full">
-                                        <p className="text-amber-500 text-4xl font-black uppercase tracking-[0.4em] mb-8">NUEVO DESAFÍO</p>
-                                        <h1 className="text-[110px] font-black text-white leading-none uppercase tracking-tighter mb-10">{quizData.title}</h1>
-                                        <p className="text-4xl text-slate-400 font-medium">¿Estás listo para responder como un experto?</p>
-                                    </div>
-                                )}
-
-                                {activeStep === 1 && (
-                                    <div className="text-left w-full">
-                                        <p className="text-blue-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
-                                            <i data-lucide="activity" className="w-10 h-10"></i> EL ESCENARIO
-                                        </p>
-                                        <p className="text-6xl text-white leading-tight font-bold">{quizData.case}</p>
-                                    </div>
-                                )}
-
-                                {activeStep === 2 && (
-                                    <div className="text-left w-full">
-                                        <p className="text-amber-500 text-3xl font-black uppercase tracking-[0.2em] mb-10">LA PREGUNTA</p>
-                                        <h2 className="text-6xl text-white font-black leading-tight mb-16">{quizData.question}</h2>
-                                        <div className="space-y-6">
-                                            {quizData.options.map((opt, i) => (
-                                                <div key={i} className="bg-slate-950 border-2 border-slate-800 p-8 rounded-[40px] text-4xl font-bold text-slate-300">
-                                                    <span className="text-blue-600 mr-4">0{i+1}.</span> {opt}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeStep === 3 && (
-                                    <div className="text-left w-full">
-                                        <p className="text-green-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
-                                            <i data-lucide="check-circle-2" className="w-10 h-10"></i> RESPUESTA TÉCNICA
-                                        </p>
-                                        <p className="text-6xl text-white leading-tight font-black mb-12 italic">"{quizData.answer.split(':')[0]}"</p>
-                                        <div className="h-2 w-32 bg-green-500 mb-12"></div>
-                                        <p className="text-5xl text-slate-400 leading-relaxed">{quizData.answer.split(':')[1] || ""}</p>
-                                    </div>
-                                )}
+                        {/* Editor */}
+                        <div className="glass-card p-6 rounded-[32px] space-y-4">
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset</label>
+                                <select onChange={e => loadPreset(e.target.value)} className={inp + " font-bold cursor-pointer"}>
+                                    <option value="">— Nuevo desafío —</option>
+                                    <option value="arritmia">Arritmia Neonatal</option>
+                                    <option value="cpap">Fallo Respiratorio</option>
+                                </select>
                             </div>
 
-                            <div className="mt-24 w-full flex justify-between items-center px-10">
-                                <p className="text-4xl font-black text-slate-700 tracking-[0.4em]">NEOMONITOR.PRO</p>
-                                <div className="flex gap-4">
-                                    {[0,1,2,3].map(dot => (
-                                        <div key={dot} className={`h-4 w-12 rounded-full ${activeStep === dot ? 'bg-amber-500' : 'bg-slate-800'}`} />
-                                    ))}
-                                </div>
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Título</label>
+                                <input className={inp + " font-bold"} value={data.title} onChange={e => updateField('title', e.target.value)} placeholder="Título del quiz" />
                             </div>
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Escenario</label>
+                                <textarea className={inp + " resize-none"} rows={3} value={data.caseText} onChange={e => updateField('caseText', e.target.value)} placeholder="Caso clínico..." />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 block">Pregunta</label>
+                                <input className={inp + " font-bold"} style={{color:'#f59e0b'}} value={data.question} onChange={e => updateField('question', e.target.value)} placeholder="¿Qué conducta tomarías?" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Opciones</label>
+                                {data.options.map((opt, i) => (
+                                    <input key={i} className={inp} value={opt} onChange={e => updateField('options', e.target.value, i)} placeholder={`Opción ${i+1}`} />
+                                ))}
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 block">Respuesta correcta</label>
+                                <input className={inp + " font-bold"} style={{color:'#22c55e'}} value={data.answer} onChange={e => updateField('answer', e.target.value)} placeholder="Respuesta" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Explicación</label>
+                                <textarea className={inp + " resize-none"} rows={3} value={data.explanation} onChange={e => updateField('explanation', e.target.value)} placeholder="Explicación técnica..." />
+                            </div>
+
+                            <button onClick={generate} disabled={generating}
+                                className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3">
+                                {generating
+                                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{status}</>
+                                    : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
+                            </button>
                         </div>
                     </div>
-                </div>
-            );
-        };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                    {/* Galería */}
+                    <div className="lg:col-span-7">
+                        {gallery.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-4 fade-in">
+                                {gallery.map((img, i) => (
+                                    <div key={i} className="group relative rounded-3xl overflow-hidden border border-white/5 shadow-2xl transition-all hover:scale-[1.02]">
+                                        <img src={img} className="w-full aspect-[9/16] object-cover block" />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
+                                            <a href={img} download={`NeoQuiz_Paso_${i+1}.png`} className="bg-white text-black p-4 rounded-full shadow-2xl active:scale-95">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                            </a>
+                                        </div>
+                                        <div className="absolute top-4 left-4 bg-amber-500 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">PASO {i+1}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
+                                <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
+                                    Completá el formulario<br/>y presioná <span className="text-amber-500">Generar Pack</span>
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
