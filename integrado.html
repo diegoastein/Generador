@@ -3,350 +3,680 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeoMonitor | Video Sync 9:16</title>
+    <title>NeoMonitor | Expert Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        * { box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; overflow: hidden; }
-        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:10px; }
-        input[type="text"] { background:#020617 !important; border:1px solid #1e293b !important; color:white !important; outline:none; transition:all .2s; }
-        input[type="text"]:focus { border-color:#f59e0b !important; }
-        .glass { background:rgba(15,23,42,0.8); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        input, textarea, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; outline: none; transition: border-color .2s; }
+        input:focus, textarea:focus, select:focus { border-color: #3b82f6 !important; }
+        .glass { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.06); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .nav-item { transition: all .2s; cursor: pointer; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .nav-item.active { background: rgba(37,99,235,0.2); border-left: 3px solid #2563eb; }
     </style>
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel">
-const { useState, useRef, useEffect, useCallback } = React;
 
-// ── Dibuja un video con contain (letterbox/pillarbox — sin crop, sin distorsión) ──
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+/* ═══════════════════════════════════════════
+   SHARED DATA
+═══════════════════════════════════════════ */
+const SCENARIOS = {
+    brady:  { title:"Bradicardia Severa",   steps:[{t:"Desafío Clínico",d:"Recién nacido con FC < 60 lpm tras pasos iniciales de estabilización en sala de partos.",v:null},{t:"Monitor en Alerta",d:"Se detecta caída sostenida de la frecuencia y saturación pre-ductal crítica.",v:{hr:55,sp:72}},{t:"Conducta (NRP)",d:"Inicio inmediato de VPP efectiva. Evaluación de técnica MR. SOPA.",v:{hr:58,sp:70}},{t:"Evolución",d:"Mejora de la ventilación resulta en ascenso de la frecuencia cardiaca por encima de 100.",v:{hr:115,sp:88}},{t:"Entrenamiento",d:"Domina la reanimación neonatal con los escenarios de NeoMonitor Expert.",v:null}]},
+    pneumo: { title:"Neumotórax a Tensión", steps:[{t:"Deterioro Súbito",d:"Bebé en asistencia respiratoria mecánica presenta desaturación brusca y cianosis.",v:null},{t:"Signos Críticos",d:"Taquicardia compensatoria con caída de la saturación de oxígeno.",v:{hr:185,sp:74}},{t:"Diagnóstico",d:"Sospechar ante ruidos asimétricos y tórax abombado.",v:{hr:190,sp:72}},{t:"Intervención",d:"Descompresión inmediata con aguja en segundo espacio intercostal.",v:{hr:160,sp:85}},{t:"Simulación",d:"NeoMonitor: Alta fidelidad para decisiones en segundos críticos.",v:null}]},
+    sepsis: { title:"Shock Séptico",         steps:[{t:"Caso Infeccioso",d:"RN con factores de riesgo de sepsis presenta inestabilidad térmica y taquipnea.",v:null},{t:"Inestabilidad",d:"Taquicardia sostenida y perfusión periférica disminuida (relleno > 3 seg).",v:{hr:188,sp:94}},{t:"Monitorización",d:"Tendencia a la hipotensión y necesidad de soporte inotrópico.",v:{hr:195,sp:90}},{t:"Conducta",d:"Carga de fluidos (10 ml/kg) y cobertura antibiótica de amplio espectro.",v:{hr:175,sp:92}},{t:"Optimización",d:"Mejora tus protocolos de respuesta con simulación avanzada.",v:null}]},
+};
+
+/* ═══════════════════════════════════════════
+   CANVAS HELPERS
+═══════════════════════════════════════════ */
+function wrapText(ctx, text, x, y, maxW, lineH) {
+    if (!text) return 0;
+    const words = text.split(' ');
+    let line = '', lines = [];
+    for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+        else line = test;
+    }
+    if (line) lines.push(line);
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+    return lines.length;
+}
+
+function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+    ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+    ctx.closePath();
+}
+
+function dotGrid(ctx, w, h, gap, r) {
+    gap = gap || 40; r = r || 1;
+    ctx.fillStyle = '#1e293b';
+    for (let gx = gap/2; gx < w; gx += gap)
+        for (let gy = gap/2; gy < h; gy += gap) {
+            ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI*2); ctx.fill();
+        }
+}
+
+/* ═══════════════════════════════════════════
+   TOOL 1 — VIDEO SYNC
+═══════════════════════════════════════════ */
 function drawVideoCover(ctx, video, dx, dy, dw, dh) {
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#000';
     ctx.fillRect(dx, dy, dw, dh);
     if (!video || video.readyState < 2) {
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(dx, dy, dw, dh);
-        ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 40px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Sin video', dx + dw/2, dy + dh/2);
-        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        return;
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(dx, dy, dw, dh);
+        ctx.fillStyle = '#334155'; ctx.font = 'bold 36px Inter, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('Sin video', dx+dw/2, dy+dh/2);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top'; return;
     }
-    const vw = video.videoWidth  || 1;
-    const vh = video.videoHeight || 1;
-    const vRatio = vw / vh;
-    const dRatio = dw / dh;
+    const vw = video.videoWidth||1, vh = video.videoHeight||1;
+    const vR = vw/vh, dR = dw/dh;
     let rw, rh;
-    if (vRatio > dRatio) {
-        rw = dw;
-        rh = dw / vRatio;
-    } else {
-        rh = dh;
-        rw = dh * vRatio;
-    }
-    const rx = dx + (dw - rw) / 2;
-    const ry = dy + (dh - rh) / 2;
-    ctx.drawImage(video, 0, 0, vw, vh, rx, ry, rw, rh);
+    if (vR > dR) { rw=dw; rh=dw/vR; } else { rh=dh; rw=dh*vR; }
+    ctx.drawImage(video, 0,0,vw,vh, dx+(dw-rw)/2, dy+(dh-rh)/2, rw, rh);
 }
 
-// ── Badge redondeado ──────────────────────────────────────────────────────────
 function drawBadge(ctx, text, x, y) {
-    ctx.font = 'bold 40px system-ui, sans-serif';
+    ctx.font = 'bold 38px Inter, sans-serif';
     const tw = ctx.measureText(text).width;
-    const bw = tw + 56, bh = 76;
-    ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(x, y, bw, bh, 18) : ctx.rect(x, y, bw, bh);
-    ctx.fillStyle = 'rgba(37,99,235,0.92)'; ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, x + 28, y + bh/2);
-    ctx.textBaseline = 'top';
+    const bw = tw+56, bh=72;
+    rrect(ctx, x, y, bw, bh, 18);
+    ctx.fillStyle='rgba(37,99,235,0.92)'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle';
+    ctx.fillText(text, x+28, y+bh/2);
+    ctx.textBaseline='top';
 }
 
-// ── Render frame al canvas 1080×1920 ─────────────────────────────────────────
-function renderFrame(ctx, monVid, ctrlVid, labels) {
-    const W = 1080, H = 1920, HALF = H / 2;
-
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(0, 0, W, H);
-
-    // Mitad superior — monitor
+function renderSyncFrame(ctx, monVid, ctrlVid, labels) {
+    const W=1080, H=1920, HALF=H/2;
+    ctx.fillStyle='#020617'; ctx.fillRect(0,0,W,H);
     drawVideoCover(ctx, monVid, 0, 0, W, HALF);
-
-    // Mitad inferior — control
     drawVideoCover(ctx, ctrlVid, 0, HALF, W, HALF);
-
-    // Línea divisoria
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(0, HALF - 2, W, 4);
-
-    // Badges
-    drawBadge(ctx, labels.top,    40, 40);
-    drawBadge(ctx, labels.bottom, 40, HALF + 40);
-
-    // Marca de agua
-    ctx.font = 'bold 28px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText('NEOMONITOR.PRO', W - 40, H - 40);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(0,HALF-2,W,4);
+    drawBadge(ctx, labels.top, 40, 40);
+    drawBadge(ctx, labels.bottom, 40, HALF+40);
+    ctx.font='bold 26px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,0.12)';
+    ctx.textAlign='right'; ctx.textBaseline='bottom';
+    ctx.fillText('NEOMONITOR.PRO', W-40, H-40);
+    ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
-// ── App ───────────────────────────────────────────────────────────────────────
-const App = () => {
-    const [monitorSrc, setMonitorSrc]   = useState(null);
-    const [controlSrc, setControlSrc]   = useState(null);
-    const [isPlaying,  setIsPlaying]    = useState(false);
-    const [isRecording,setIsRecording]  = useState(false);
-    const [recStatus,  setRecStatus]    = useState('');
-    const [labels, setLabels] = useState({ top: 'VISTA MONITOR', bottom: 'VISTA CONTROL' });
+const VideoSync = () => {
+    const [monitorSrc, setMonitorSrc] = useState(null);
+    const [controlSrc, setControlSrc] = useState(null);
+    const [isPlaying, setIsPlaying]   = useState(false);
+    const [isRec, setIsRec]           = useState(false);
+    const [recStatus, setRecStatus]   = useState('');
+    const [labels, setLabels]         = useState({ top:'VISTA MONITOR', bottom:'VISTA CONTROL' });
+    const canvasRef = useRef(null);
+    const monRef    = useRef(null);
+    const ctrlRef   = useRef(null);
+    const rafRef    = useRef(null);
+    const recRef    = useRef(null);
+    const chunksRef = useRef([]);
 
-    const canvasRef  = useRef(null);
-    const monRef     = useRef(null);
-    const ctrlRef    = useRef(null);
-    const rafRef     = useRef(null);
-    const recRef     = useRef(null);
-    const chunksRef  = useRef([]);
-
-    // ── Loop de render ────────────────────────────────────────────────────────
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-
         const loop = () => {
-            renderFrame(ctx, monRef.current, ctrlRef.current, labels);
+            renderSyncFrame(ctx, monRef.current, ctrlRef.current, labels);
             rafRef.current = requestAnimationFrame(loop);
         };
         rafRef.current = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(rafRef.current);
     }, [labels]);
 
-    // ── Play / Pause ──────────────────────────────────────────────────────────
     const togglePlay = () => {
-        const mon  = monRef.current;
-        const ctrl = ctrlRef.current;
-        if (!mon || !ctrl) return;
-        if (isPlaying) {
-            mon.pause(); ctrl.pause();
-            setIsPlaying(false);
-        } else {
-            // Sincronizar desde 0
-            mon.currentTime  = 0;
-            ctrl.currentTime = 0;
-            Promise.all([mon.play(), ctrl.play()])
-                .catch(e => console.warn('play error:', e));
-            setIsPlaying(true);
-        }
+        const m = monRef.current, c = ctrlRef.current;
+        if (!m || !c) return;
+        if (isPlaying) { m.pause(); c.pause(); setIsPlaying(false); }
+        else { m.currentTime=0; c.currentTime=0; Promise.all([m.play(),c.play()]).catch(function(){}); setIsPlaying(true); }
     };
 
-    // ── Grabación ─────────────────────────────────────────────────────────────
-    const startRecording = () => {
-        const canvas = canvasRef.current;
-        const mon    = monRef.current;
-        const ctrl   = ctrlRef.current;
-        if (!canvas || !mon || !ctrl) return;
-
-        chunksRef.current = [];
-
-        // Stream desde canvas a 30fps
+    const startRec = () => {
+        const canvas = canvasRef.current, m = monRef.current, c = ctrlRef.current;
+        if (!canvas||!m||!c) return;
+        chunksRef.current=[];
         const stream = canvas.captureStream(30);
-
-        // Elegir codec disponible
-        const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
-            .find(m => MediaRecorder.isTypeSupported(m)) || '';
-
-        try {
-            recRef.current = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
-        } catch(e) {
-            recRef.current = new MediaRecorder(stream);
-        }
-
-        recRef.current.ondataavailable = e => {
-            if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-        };
-
-        recRef.current.onstop = () => {
+        const mimes = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+        const mime = mimes.find(function(x){return MediaRecorder.isTypeSupported(x);}) || '';
+        try { recRef.current = new MediaRecorder(stream, mime ? {mimeType:mime} : {}); }
+        catch(e) { recRef.current = new MediaRecorder(stream); }
+        recRef.current.ondataavailable = function(e) { if(e.data && e.data.size>0) chunksRef.current.push(e.data); };
+        recRef.current.onstop = function() {
             setRecStatus('Preparando descarga…');
-            const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+            const blob = new Blob(chunksRef.current,{type:'video/webm'});
             const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            a.download = `NM_Sync_${Date.now()}.webm`;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-            setRecStatus('');
-            setIsRecording(false);
-            setIsPlaying(false);
+            const a    = document.createElement('a'); a.href=url; a.download='NM_Sync_'+Date.now()+'.webm'; a.click();
+            setTimeout(function(){URL.revokeObjectURL(url);},5000);
+            setRecStatus(''); setIsRec(false); setIsPlaying(false);
         };
-
-        // Sincronizar y arrancar
-        mon.currentTime  = 0;
-        ctrl.currentTime = 0;
-        Promise.all([mon.play(), ctrl.play()])
-            .then(() => {
-                recRef.current.start(100); // chunk cada 100ms
-                setIsRecording(true);
-                setIsPlaying(true);
-                setRecStatus('Grabando…');
-            })
-            .catch(e => {
-                console.error('Error iniciando grabación:', e);
-                setRecStatus('Error al iniciar.');
-            });
+        m.currentTime=0; c.currentTime=0;
+        Promise.all([m.play(),c.play()]).then(function(){
+            recRef.current.start(100); setIsRec(true); setIsPlaying(true); setRecStatus('Grabando…');
+        }).catch(function(e){ setRecStatus('Error al iniciar.'); console.error(e); });
     };
 
-    const stopRecording = () => {
+    const stopRec = () => {
         if (recRef.current && recRef.current.state !== 'inactive') {
-            monRef.current?.pause();
-            ctrlRef.current?.pause();
-            recRef.current.stop(); // dispara onstop → descarga
-            setRecStatus('Procesando…');
+            if(monRef.current) monRef.current.pause();
+            if(ctrlRef.current) ctrlRef.current.pause();
+            recRef.current.stop(); setRecStatus('Procesando…');
         }
     };
 
     const handleFile = (e, type) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const file = e.target.files[0]; if (!file) return;
         const url = URL.createObjectURL(file);
-        if (type === 'monitor') setMonitorSrc(url);
-        else setControlSrc(url);
-        setIsPlaying(false);
-        setIsRecording(false);
+        if (type==='monitor') setMonitorSrc(url); else setControlSrc(url);
+        setIsPlaying(false); setIsRec(false);
     };
 
-    // ── UI ────────────────────────────────────────────────────────────────────
-    const FileZone = ({ label, loaded, type, icon }) => (
-        <div className="space-y-2">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
-            <label className={`relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed cursor-pointer transition-all
-                ${loaded ? 'border-amber-500/60 bg-amber-500/5' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}>
-                <input type="file" accept="video/*" onChange={e => handleFile(e, type)} className="absolute inset-0 opacity-0 cursor-pointer" />
-                {icon}
-                <span className={`text-xs font-bold uppercase mt-2 ${loaded ? 'text-amber-400' : 'text-slate-600'}`}>
-                    {loaded ? '✓ Cargado' : 'Subir video'}
-                </span>
-            </label>
-        </div>
-    );
-
-    const canRecord = !!monitorSrc && !!controlSrc && !isRecording;
-    const canPlay   = !!monitorSrc && !!controlSrc;
+    const canPlay = !!monitorSrc && !!controlSrc;
+    const canRec  = canPlay && !isRec;
 
     return (
-        <div className="min-h-screen flex" style={{height:'100vh',overflow:'hidden'}}>
-
-            {/* Sidebar */}
-            <aside className="w-64 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col shrink-0">
-                <div className="flex items-center gap-3 mb-10">
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
-                    <span className="font-black text-xl tracking-tighter uppercase">Expert Suite</span>
+        <div className="flex gap-8 w-full h-full overflow-hidden">
+            <div className="w-72 shrink-0 flex flex-col gap-5 overflow-y-auto pb-4">
+                <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Demos <span className="text-amber-500">Sync</span></h2>
+                    <p className="text-slate-400 text-xs mt-1">Combina dos videos en formato 9:16 vertical.</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 text-amber-400">
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span className="font-bold text-sm">Video Sync 9:16</span>
+                <div className="glass p-5 rounded-[24px] space-y-4">
+                    {[['monitor','Video superior (Monitor)'],['control','Video inferior (Control)']].map(function(item){
+                        const type = item[0], label = item[1];
+                        const loaded = type==='monitor' ? !!monitorSrc : !!controlSrc;
+                        return (
+                            <div key={type} className="space-y-2">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+                                <label className={'relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed cursor-pointer transition-all ' + (loaded ? 'border-amber-500/60 bg-amber-500/5' : 'border-slate-800 hover:border-slate-600')}>
+                                    <input type="file" accept="video/*" onChange={function(e){handleFile(e,type);}} className="absolute inset-0 opacity-0 cursor-pointer"/>
+                                    <svg className={'w-8 h-8 ' + (loaded ? 'text-amber-400' : 'text-slate-700')} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                        <path d="M15 10l4.553-2.277A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                    <span className={'text-xs font-bold uppercase mt-2 ' + (loaded ? 'text-amber-400' : 'text-slate-600')}>
+                                        {loaded ? '✓ Cargado' : 'Subir video'}
+                                    </span>
+                                </label>
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="mt-auto pt-8 border-t border-white/5">
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">v3.0 Stable</p>
-                </div>
-            </aside>
 
-            {/* Main */}
-            <main className="flex-1 flex gap-8 p-10 overflow-hidden">
-
-                {/* Panel izquierdo */}
-                <div className="w-80 shrink-0 flex flex-col gap-5 overflow-y-auto">
+                <div className="glass p-5 rounded-[24px] space-y-3">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Etiquetas</p>
                     <div>
-                        <h2 className="text-3xl font-black uppercase tracking-tight mb-1">
-                            Demos <span className="text-amber-500">Sync</span>
-                        </h2>
-                        <p className="text-slate-400 text-xs">Combina dos videos en formato 9:16 vertical.</p>
+                        <label className="text-[9px] text-slate-600 uppercase tracking-widest font-bold block mb-1">Superior</label>
+                        <input type="text" value={labels.top} onChange={function(e){setLabels(function(l){return Object.assign({},l,{top:e.target.value.toUpperCase()});});}} className="w-full rounded-xl px-3 py-2 text-xs font-bold"/>
                     </div>
-
-                    <div className="glass p-5 rounded-[24px] space-y-4">
-                        <FileZone label="Video superior (Monitor)" loaded={!!monitorSrc} type="monitor"
-                            icon={<svg className={`w-8 h-8 ${monitorSrc ? 'text-amber-400' : 'text-slate-700'}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>} />
-
-                        <FileZone label="Video inferior (Control remoto)" loaded={!!controlSrc} type="control"
-                            icon={<svg className={`w-8 h-8 ${controlSrc ? 'text-amber-400' : 'text-slate-700'}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M12 18.5a6.5 6.5 0 100-13 6.5 6.5 0 000 13z"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>} />
-                    </div>
-
-                    {/* Etiquetas */}
-                    <div className="glass p-5 rounded-[24px] space-y-3">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Etiquetas</p>
-                        <div className="space-y-2">
-                            <div>
-                                <label className="text-[9px] text-slate-600 uppercase tracking-widest font-bold block mb-1">Superior</label>
-                                <input type="text" value={labels.top}
-                                    onChange={e => setLabels(l => ({...l, top: e.target.value.toUpperCase()}))}
-                                    className="w-full rounded-xl px-3 py-2 text-xs font-bold" />
-                            </div>
-                            <div>
-                                <label className="text-[9px] text-slate-600 uppercase tracking-widest font-bold block mb-1">Inferior</label>
-                                <input type="text" value={labels.bottom}
-                                    onChange={e => setLabels(l => ({...l, bottom: e.target.value.toUpperCase()}))}
-                                    className="w-full rounded-xl px-3 py-2 text-xs font-bold" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Controles */}
-                    <div className="space-y-3">
-                        <button onClick={togglePlay} disabled={!canPlay}
-                            className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed p-4 rounded-2xl font-bold text-sm transition-all active:scale-95">
-                            {isPlaying
-                                ? <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pausar</>
-                                : <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Previsualizar</>}
-                        </button>
-
-                        {!isRecording ? (
-                            <button onClick={startRecording} disabled={!canRecord}
-                                className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-30 disabled:cursor-not-allowed p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-amber-600/20">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                Exportar video
-                            </button>
-                        ) : (
-                            <button onClick={stopRecording}
-                                className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-600/20">
-                                <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                                Detener y descargar
-                            </button>
-                        )}
-
-                        {recStatus && (
-                            <p className="text-center text-[10px] text-amber-400 font-bold uppercase tracking-widest">{recStatus}</p>
-                        )}
-                    </div>
-
-                    <p className="text-[9px] text-slate-700 font-bold uppercase tracking-widest text-center leading-relaxed">
-                        Exporta en WebM 1080×1920.<br/>Convertible a MP4 con FFmpeg.
-                    </p>
-                </div>
-
-                {/* Preview canvas */}
-                <div className="flex-1 flex items-center justify-center">
-                    <div style={{ position:'relative', borderRadius:32, overflow:'hidden', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 30px 80px rgba(0,0,0,0.6)' }}>
-                        {/* Glow superior */}
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(245,158,11,0.08), transparent 40%)', pointerEvents:'none', zIndex:1, borderRadius:32 }} />
-                        <canvas ref={canvasRef} width={1080} height={1920}
-                            style={{ width: 'auto', height: 'calc(100vh - 80px)', maxHeight: 800, aspectRatio:'9/16', display:'block', borderRadius:32 }} />
+                    <div>
+                        <label className="text-[9px] text-slate-600 uppercase tracking-widest font-bold block mb-1">Inferior</label>
+                        <input type="text" value={labels.bottom} onChange={function(e){setLabels(function(l){return Object.assign({},l,{bottom:e.target.value.toUpperCase()});});}} className="w-full rounded-xl px-3 py-2 text-xs font-bold"/>
                     </div>
                 </div>
-            </main>
 
-            {/* Videos ocultos como fuente */}
-            <video ref={monRef}  src={monitorSrc || ''} loop muted playsInline crossOrigin="anonymous" style={{display:'none'}} />
-            <video ref={ctrlRef} src={controlSrc  || ''} loop muted playsInline crossOrigin="anonymous" style={{display:'none'}} />
+                <div className="space-y-3">
+                    <button onClick={togglePlay} disabled={!canPlay}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed p-4 rounded-2xl font-bold text-sm transition-all">
+                        {isPlaying ? 'Pausar' : 'Previsualizar'}
+                    </button>
+                    {!isRec
+                        ? <button onClick={startRec} disabled={!canRec}
+                            className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-30 disabled:cursor-not-allowed p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-600/20">
+                            Exportar video
+                          </button>
+                        : <button onClick={stopRec}
+                            className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">
+                            <div className="w-3 h-3 bg-white rounded-full animate-pulse"/>Detener y descargar
+                          </button>}
+                    {recStatus && <p className="text-center text-[10px] text-amber-400 font-bold uppercase tracking-widest">{recStatus}</p>}
+                </div>
+                <p className="text-[9px] text-slate-700 font-bold uppercase tracking-widest text-center leading-relaxed">
+                    Exporta en WebM 1080×1920.<br/>Convertible a MP4 con FFmpeg.
+                </p>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center overflow-hidden">
+                <div style={{borderRadius:32,overflow:'hidden',border:'1px solid rgba(255,255,255,0.06)',boxShadow:'0 30px 80px rgba(0,0,0,0.6)'}}>
+                    <canvas ref={canvasRef} width={1080} height={1920}
+                        style={{width:'auto',height:'calc(100vh - 140px)',maxHeight:760,aspectRatio:'9/16',display:'block'}}/>
+                </div>
+            </div>
+
+            <video ref={monRef}  src={monitorSrc||''} loop muted playsInline crossOrigin="anonymous" style={{display:'none'}}/>
+            <video ref={ctrlRef} src={controlSrc||''} loop muted playsInline crossOrigin="anonymous" style={{display:'none'}}/>
         </div>
     );
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+/* ═══════════════════════════════════════════
+   TOOL 2 — CASOS CLÍNICOS
+═══════════════════════════════════════════ */
+function renderCasoSlide(canvas, step, slideIndex) {
+    const S = 1080;
+    canvas.width = S; canvas.height = S;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle='#020617'; ctx.fillRect(0,0,S,S);
+    dotGrid(ctx, S, S, 40, 1);
+    const PAD=80;
+
+    ctx.font='bold 28px Inter, sans-serif';
+    const badgeText='CASO CLÍNICO';
+    const bw = ctx.measureText(badgeText).width+60;
+    rrect(ctx, PAD, PAD, bw, 60, 30); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(badgeText, PAD+30, PAD+30); ctx.textBaseline='top';
+
+    const titleY = PAD+90;
+    ctx.fillStyle='#fff'; ctx.font='bold 88px Inter, sans-serif'; ctx.textBaseline='top';
+    const tl = wrapText(ctx, (step.t||'Sin título').toUpperCase(), PAD, titleY, S-PAD*2, 92);
+
+    const cardY = titleY+tl*92+32;
+    const cardH = step.v ? 460 : 320;
+    const cardW = S-PAD*2;
+    rrect(ctx, PAD, cardY, cardW, cardH, 60);
+    ctx.fillStyle='#0f172a'; ctx.fill();
+    rrect(ctx, PAD, cardY, cardW, cardH, 60);
+    ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    const grd = ctx.createRadialGradient(PAD+100,cardY+100,0,PAD+100,cardY+100,400);
+    grd.addColorStop(0,'rgba(37,99,235,0.12)'); grd.addColorStop(1,'transparent');
+    rrect(ctx, PAD, cardY, cardW, cardH, 60); ctx.fillStyle=grd; ctx.fill();
+
+    ctx.fillStyle='#e2e8f0'; ctx.font='400 42px Inter, sans-serif'; ctx.textBaseline='top';
+    wrapText(ctx, step.d||'', PAD+60, cardY+60, cardW-120, 58);
+
+    if (step.v) {
+        const vy = cardY+cardH-260;
+        ctx.fillStyle='#22c55e'; ctx.font='bold 26px Inter, sans-serif'; ctx.textBaseline='top';
+        ctx.fillText('FRECUENCIA CARDIACA', PAD+60, vy);
+        ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.hr||'--'), PAD+60, vy+30);
+        ctx.fillStyle='#facc15'; ctx.font='bold 26px Inter, sans-serif';
+        ctx.fillText('SATURACIÓN O₂', PAD+60+380, vy);
+        ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.sp||'--'), PAD+60+380, vy+30);
+        ctx.font='bold 72px Inter, sans-serif';
+        ctx.fillText('%', PAD+60+380+ctx.measureText(String(step.v.sp||'--')).width+8, vy+110);
+    }
+
+    const fy = S-PAD-60;
+    ctx.fillStyle='#475569'; ctx.font='bold 28px Inter, sans-serif'; ctx.textBaseline='top';
+    ctx.fillText('neomonitor.pro', PAD+10, fy);
+    ctx.fillStyle='#1e293b'; ctx.font='bold 18px Inter, sans-serif';
+    ctx.fillText('SIMULACIÓN MÉDICA AVANZADA', PAD+10, fy+38);
+    ctx.fillStyle='#1e293b'; ctx.font='bold 120px Inter, sans-serif';
+    ctx.textBaseline='bottom'; ctx.textAlign='right';
+    ctx.fillText((slideIndex+1)+'/5', S-PAD, S-PAD+20);
+    ctx.textAlign='left'; ctx.textBaseline='top';
+}
+
+const SlidePreviewCaso = function(props) {
+    var step = props.step; var index = props.index;
+    return (
+        <div className="w-full aspect-square rounded-2xl overflow-hidden border border-white/5 flex flex-col p-5" style={{background:'#020617'}}>
+            <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit mb-2">Caso Clínico</div>
+            <h2 className="text-white font-black uppercase leading-none mb-2 text-sm">{step.t||'Sin título'}</h2>
+            <div className="flex-1 bg-slate-900 rounded-xl p-3 border border-white/5 flex flex-col justify-center">
+                <p className="text-slate-300 text-xs leading-relaxed">{step.d}</p>
+                {step.v && (
+                    <div className="flex gap-4 mt-2">
+                        <div><p className="text-green-500 text-[8px] font-black uppercase">FC</p><p className="text-green-500 font-black text-2xl">{step.v.hr}</p></div>
+                        <div><p className="text-yellow-400 text-[8px] font-black uppercase">SpO₂</p><p className="text-yellow-400 font-black text-2xl">{step.v.sp}<span className="text-sm">%</span></p></div>
+                    </div>
+                )}
+            </div>
+            <div className="mt-2 flex justify-between"><p className="text-slate-600 text-[8px] font-bold uppercase">neomonitor.pro</p><p className="text-slate-800 font-black">{index+1}/5</p></div>
+        </div>
+    );
+};
+
+const CasosClinicos = () => {
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [scenario, setScenario] = useState({ title:"Nuevo Escenario", steps: Array(5).fill(null).map(function(){return {t:"",d:"",v:null};}) });
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [gallery, setGallery] = useState([]);
+    const [status, setStatus] = useState('');
+
+    const loadScenario = function(key) {
+        if (!key) return;
+        setScenario({ title: SCENARIOS[key].title, steps: JSON.parse(JSON.stringify(SCENARIOS[key].steps)) });
+        setActiveSlide(0); setGallery([]);
+    };
+
+    const updateSlide = function(field, value) {
+        setScenario(function(prev) {
+            const s = JSON.parse(JSON.stringify(prev.steps));
+            if (field==='hr'||field==='sp') { if(!s[activeSlide].v) s[activeSlide].v={hr:"",sp:""}; s[activeSlide].v[field]=value; }
+            else s[activeSlide][field]=value;
+            return Object.assign({}, prev, {steps:s});
+        });
+    };
+
+    const generate = async function() {
+        setIsGenerating(true); setGallery([]);
+        const imgs=[];
+        for(let i=0;i<5;i++) {
+            setStatus('Generando diapositiva '+(i+1)+'/5…');
+            await new Promise(function(r){setTimeout(r,30);});
+            const c=document.createElement('canvas');
+            renderCasoSlide(c, scenario.steps[i], i);
+            imgs.push(c.toDataURL('image/png'));
+        }
+        setGallery(imgs); setStatus(''); setIsGenerating(false);
+    };
+
+    const cur = scenario.steps[activeSlide];
+    return (
+        <div className="flex gap-8 w-full overflow-y-auto pb-4">
+            <div className="w-72 shrink-0 space-y-4">
+                <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Casos <span className="text-blue-500">Clínicos</span></h2>
+                    <p className="text-slate-400 text-xs mt-1">Imágenes 1:1 para posts en redes.</p>
+                </div>
+                <div className="rounded-[20px] overflow-hidden border border-white/5 shadow-xl">
+                    <SlidePreviewCaso step={cur} index={activeSlide}/>
+                </div>
+                <div className="glass p-5 rounded-[24px] space-y-3">
+                    <select onChange={function(e){loadScenario(e.target.value);}} className="w-full rounded-xl p-3 text-sm font-bold cursor-pointer">
+                        <option value="">-- Nuevo --</option>
+                        <option value="brady">Bradicardia NRP</option>
+                        <option value="pneumo">Neumotórax UCIN</option>
+                        <option value="sepsis">Shock Séptico</option>
+                    </select>
+                    <div className="flex bg-slate-950 rounded-xl p-1">
+                        {[0,1,2,3,4].map(function(i){return (
+                            <button key={i} onClick={function(){setActiveSlide(i);}}
+                                className={'flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ' + (activeSlide===i ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300')}>S{i+1}</button>
+                        );}) }
+                    </div>
+                    <input type="text" placeholder="Título" value={cur.t} onChange={function(e){updateSlide('t',e.target.value);}} className="w-full rounded-xl px-3 py-2 text-sm font-bold"/>
+                    <textarea placeholder="Descripción..." rows={3} value={cur.d} onChange={function(e){updateSlide('d',e.target.value);}} className="w-full rounded-xl px-3 py-2 text-sm resize-none"/>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[9px] font-bold text-slate-600 uppercase block mb-1">FC (bpm)</label>
+                            <input type="text" placeholder="--" value={cur.v&&cur.v.hr||""} onChange={function(e){updateSlide('hr',e.target.value);}} className="w-full rounded-xl px-3 py-2 text-sm font-black text-green-500 text-center"/>
+                        </div>
+                        <div>
+                            <label className="text-[9px] font-bold text-slate-600 uppercase block mb-1">SpO₂ (%)</label>
+                            <input type="text" placeholder="--" value={cur.v&&cur.v.sp||""} onChange={function(e){updateSlide('sp',e.target.value);}} className="w-full rounded-xl px-3 py-2 text-sm font-black text-yellow-500 text-center"/>
+                        </div>
+                    </div>
+                    <button onClick={generate} disabled={isGenerating}
+                        className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20">
+                        {isGenerating ? status||'Generando…' : 'Renderizar Imágenes'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+                {gallery.length>0
+                    ? <div className="grid grid-cols-2 gap-4 fade-in">
+                        {gallery.map(function(img,i){return (
+                            <div key={i} className="group relative rounded-3xl border border-white/5 overflow-hidden shadow-2xl hover:scale-[1.02] transition-all">
+                                <img src={img} className="w-full aspect-square object-cover"/>
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                    <a href={img} download={'NeoMonitor_Caso_Slide_'+(i+1)+'.png'} className="bg-white text-black p-4 rounded-full shadow-2xl">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </a>
+                                </div>
+                                <div className="absolute top-4 right-4 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full">SLIDE {i+1}</div>
+                            </div>
+                        );}) }
+                      </div>
+                    : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 text-center p-12">
+                        <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="10"/><path d="M12 8v8M8 12h8"/></svg>
+                        <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Completá los campos y presioná<br/><span className="text-blue-500">Renderizar Imágenes</span></p>
+                      </div>}
+            </div>
+        </div>
+    );
+};
+
+/* ═══════════════════════════════════════════
+   TOOL 3 — NEOQUIZ
+═══════════════════════════════════════════ */
+const QUIZ_PRESETS = {
+    arritmia: { title:"Desafío de Arritmias", caseText:"Recién nacido de 36 semanas presenta FC persistente de 230 lpm. No responde a maniobras de estimulación.", question:"¿Cuál es la primera línea de tratamiento?", options:["Adenosina (0.1 mg/kg)","Amiodarona","Maniobras Vagales (Hielo)"], answer:"Maniobras Vagales", explanation:"En pacientes estables, el hielo en la cara es la primera intervención antes de la farmacología." },
+    cpap: { title:"Fallo de CPAP", caseText:"RNPT de 30 semanas en CPAP con PEEP de 6. Presenta quejido audaz y FiO2 requerida del 45%.", question:"¿Cuál es el siguiente paso en la gestión respiratoria?", options:["Aumentar PEEP a 8","Surfactante (LISA)","Intubación Orotraqueal"], answer:"Surfactante (LISA)", explanation:"El rescate temprano con surfactante mediante técnicas mínimamente invasivas reduce la necesidad de VMNI." }
+};
+
+function drawQuizSlide(canvas, step, data) {
+    const W=1080, H=1920;
+    canvas.width=W; canvas.height=H;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle='#020617'; ctx.fillRect(0,0,W,H);
+    dotGrid(ctx,W,H,60,1.2);
+    const P=90;
+
+    rrect(ctx,W/2-60,P,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 52px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('NM',W/2,P+60); ctx.textAlign='left'; ctx.textBaseline='top';
+
+    const cY=P+160, cH=H-cY-180, cW=W-P*2;
+    rrect(ctx,P,cY,cW,cH,72); ctx.fillStyle='#0f172a'; ctx.fill();
+    rrect(ctx,P,cY,cW,cH,72); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=2; ctx.stroke();
+    const grd=ctx.createRadialGradient(W-P,cY+200,0,W-P,cY+200,500);
+    grd.addColorStop(0,'rgba(245,158,11,0.08)'); grd.addColorStop(1,'transparent');
+    rrect(ctx,P,cY,cW,cH,72); ctx.fillStyle=grd; ctx.fill();
+
+    const iX=P+72, iW=cW-144;
+    let y=cY+80;
+
+    if (step===0) {
+        ctx.fillStyle='#f59e0b'; ctx.font='bold 36px system-ui'; ctx.fillText('NUEVO DESAFÍO',iX,y); y+=70;
+        ctx.fillStyle='#fff'; ctx.font='bold 108px system-ui';
+        const tl=wrapText(ctx,data.title.toUpperCase(),iX,y,iW,112); y+=tl*112+60;
+        ctx.fillStyle='#64748b'; ctx.font='400 46px system-ui';
+        wrapText(ctx,'¿Estás listo para responder como un experto?',iX,y,iW,58);
+    }
+    if (step===1) {
+        rrect(ctx,iX,y,280,58,29); ctx.fillStyle='rgba(59,130,246,0.15)'; ctx.fill();
+        ctx.fillStyle='#3b82f6'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('EL ESCENARIO',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#fff'; ctx.font='bold 56px system-ui'; wrapText(ctx,data.caseText,iX,y,iW,70);
+    }
+    if (step===2) {
+        rrect(ctx,iX,y,280,58,29); ctx.fillStyle='rgba(245,158,11,0.15)'; ctx.fill();
+        ctx.fillStyle='#f59e0b'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('LA PREGUNTA',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#fff'; ctx.font='bold 56px system-ui';
+        const ql=wrapText(ctx,data.question,iX,y,iW,68); y+=ql*68+60;
+        const oc=['#2563eb','#7c3aed','#0891b2'];
+        for(let i=0;i<data.options.length;i++) {
+            rrect(ctx,iX,y,iW,110,36); ctx.fillStyle='#020617'; ctx.fill();
+            rrect(ctx,iX,y,iW,110,36); ctx.strokeStyle='#1e293b'; ctx.lineWidth=2; ctx.stroke();
+            ctx.fillStyle=oc[i]||'#3b82f6'; ctx.font='bold 36px system-ui'; ctx.textBaseline='middle';
+            ctx.fillText('0'+(i+1)+'.',iX+30,y+55);
+            ctx.fillStyle='#cbd5e1'; ctx.fillText(data.options[i],iX+120,y+55);
+            ctx.textBaseline='top'; y+=130;
+        }
+    }
+    if (step===3) {
+        rrect(ctx,iX,y,340,58,29); ctx.fillStyle='rgba(34,197,94,0.15)'; ctx.fill();
+        ctx.fillStyle='#22c55e'; ctx.font='bold 28px system-ui'; ctx.textBaseline='middle'; ctx.fillText('RESPUESTA TÉCNICA',iX+24,y+29); ctx.textBaseline='top'; y+=90;
+        ctx.fillStyle='#22c55e'; ctx.font='bold 72px system-ui';
+        const al=wrapText(ctx,data.answer,iX,y,iW,82); y+=al*82+30;
+        ctx.fillStyle='#22c55e'; ctx.fillRect(iX,y,120,6); y+=50;
+        ctx.fillStyle='#94a3b8'; ctx.font='400 46px system-ui'; wrapText(ctx,data.explanation,iX,y,iW,60);
+    }
+
+    ctx.fillStyle='#1e293b'; ctx.font='bold 30px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('NEOMONITOR.PRO',W/2,H-P-50);
+    const dW=48,dH=12,dG=16,total=(dW+dG)*4-dG;
+    let dx=W/2-total/2;
+    for(let d=0;d<4;d++){
+        rrect(ctx,dx,H-P-20,dW,dH,6); ctx.fillStyle=d===step?'#f59e0b':'#1e293b'; ctx.fill(); dx+=dW+dG;
+    }
+    ctx.textAlign='left'; ctx.textBaseline='top';
+}
+
+const QuizPreview = function(props) {
+    var step = props.step; var data = props.data;
+    const ref = useRef(null);
+    useEffect(function(){if(ref.current) drawQuizSlide(ref.current,step,data);},[step,data]);
+    return <canvas ref={ref} style={{width:'100%',height:'auto',borderRadius:12,display:'block'}}/>;
+};
+
+const NeoQuiz = () => {
+    const [activeStep, setActiveStep] = useState(0);
+    const [generating, setGenerating] = useState(false);
+    const [gallery, setGallery] = useState([]);
+    const [status, setStatus] = useState('');
+    const [data, setData] = useState({
+        title:"Desafío Clínico", caseText:"Describe aquí el escenario...",
+        question:"¿Qué conducta tomarías?", options:["Opción A","Opción B","Opción C"],
+        answer:"Respuesta correcta", explanation:"Explica aquí la resolución técnica..."
+    });
+
+    const loadPreset = function(key) { if(QUIZ_PRESETS[key]){setData(QUIZ_PRESETS[key]);setActiveStep(0);setGallery([]);} };
+    const upd = function(field, value, idx) {
+        if(typeof idx === 'number'){
+            setData(function(p){ const o=[].concat(p.options); o[idx]=value; return Object.assign({},p,{options:o}); });
+        } else {
+            setData(function(p){ return Object.assign({},p,{[field]:value}); });
+        }
+    };
+    const generate = async function() {
+        setGenerating(true); setGallery([]);
+        const imgs=[];
+        for(let i=0;i<4;i++){
+            setStatus('Generando paso '+(i+1)+'/4…');
+            await new Promise(function(r){setTimeout(r,20);});
+            const c=document.createElement('canvas'); drawQuizSlide(c,i,data);
+            imgs.push(c.toDataURL('image/png'));
+        }
+        setGallery(imgs); setStatus(''); setGenerating(false);
+    };
+
+    return (
+        <div className="flex gap-8 w-full overflow-y-auto pb-4">
+            <div className="w-72 shrink-0 space-y-4">
+                <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">NeoQuiz <span className="text-amber-500">Expert</span></h2>
+                    <p className="text-slate-400 text-xs mt-1">Pack de 4 stories 9:16 para Instagram.</p>
+                </div>
+
+                <div className="glass p-3 rounded-2xl">
+                    <div className="flex gap-1 mb-3">
+                        {['Portada','Escenario','Pregunta','Respuesta'].map(function(l,i){return (
+                            <button key={i} onClick={function(){setActiveStep(i);}}
+                                className={'flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ' + (activeStep===i ? 'bg-amber-500 text-white' : 'text-slate-500 hover:text-slate-300')}>{l}</button>
+                        );}) }
+                    </div>
+                    <div className="rounded-xl overflow-hidden border border-white/5">
+                        <QuizPreview step={activeStep} data={data}/>
+                    </div>
+                </div>
+
+                <div className="glass p-5 rounded-[24px] space-y-3">
+                    <select onChange={function(e){loadPreset(e.target.value);}} className="w-full rounded-xl p-3 text-sm font-bold cursor-pointer">
+                        <option value="">— Nuevo desafío —</option>
+                        <option value="arritmia">Arritmia Neonatal</option>
+                        <option value="cpap">Fallo Respiratorio</option>
+                    </select>
+                    <input className="w-full rounded-xl px-3 py-2 text-sm font-bold" value={data.title} onChange={function(e){upd('title',e.target.value);}} placeholder="Título"/>
+                    <textarea className="w-full rounded-xl px-3 py-2 text-sm resize-none" rows={3} value={data.caseText} onChange={function(e){upd('caseText',e.target.value);}} placeholder="Escenario..."/>
+                    <input className="w-full rounded-xl px-3 py-2 text-sm font-bold" style={{color:'#f59e0b'}} value={data.question} onChange={function(e){upd('question',e.target.value);}} placeholder="Pregunta"/>
+                    {data.options.map(function(o,i){return <input key={i} className="w-full rounded-xl px-3 py-2 text-sm" value={o} onChange={function(e){upd('options',e.target.value,i);}} placeholder={'Opción '+(i+1)}/>;}) }
+                    <input className="w-full rounded-xl px-3 py-2 text-sm font-bold" style={{color:'#22c55e'}} value={data.answer} onChange={function(e){upd('answer',e.target.value);}} placeholder="Respuesta correcta"/>
+                    <textarea className="w-full rounded-xl px-3 py-2 text-sm resize-none" rows={3} value={data.explanation} onChange={function(e){upd('explanation',e.target.value);}} placeholder="Explicación..."/>
+                    <button onClick={generate} disabled={generating}
+                        className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-600/20">
+                        {generating ? status||'Generando…' : 'Generar Pack Stories'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+                {gallery.length>0
+                    ? <div className="grid grid-cols-2 gap-4 fade-in">
+                        {gallery.map(function(img,i){return (
+                            <div key={i} className="group relative rounded-3xl overflow-hidden border border-white/5 shadow-2xl hover:scale-[1.02] transition-all">
+                                <img src={img} className="w-full aspect-[9/16] object-cover block"/>
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                    <a href={img} download={'NeoQuiz_Paso_'+(i+1)+'.png'} className="bg-white text-black p-4 rounded-full shadow-2xl">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </a>
+                                </div>
+                                <div className="absolute top-4 left-4 bg-amber-500 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase">PASO {i+1}</div>
+                            </div>
+                        );}) }
+                      </div>
+                    : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
+                        <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+                        <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Completá el formulario<br/>y presioná <span className="text-amber-500">Generar Pack</span></p>
+                      </div>}
+            </div>
+        </div>
+    );
+};
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+const TOOLS = [
+    { id:'sync',  label:'Demos Sync',     sub:'Video 9:16',   activeColor:'text-amber-400' },
+    { id:'casos', label:'Casos Clínicos', sub:'Post 1:1',      activeColor:'text-blue-400' },
+    { id:'quiz',  label:'NeoQuiz',        sub:'Stories 9:16', activeColor:'text-amber-400' },
+];
+
+const App = () => {
+    const [activeTool, setActiveTool] = useState('sync');
+
+    return (
+        <div className="flex h-screen overflow-hidden">
+            <aside className="w-60 shrink-0 bg-slate-900/60 border-r border-white/5 flex flex-col py-8 px-4">
+                <div className="flex items-center gap-3 mb-10 px-2">
+                    <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-600/40">NM</div>
+                    <div>
+                        <p className="font-black text-sm uppercase tracking-tighter leading-none">NeoMonitor</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Expert Suite</p>
+                    </div>
+                </div>
+                <nav className="flex-1 space-y-1">
+                    {TOOLS.map(function(t){return (
+                        <button key={t.id} onClick={function(){setActiveTool(t.id);}}
+                            className={'nav-item w-full p-4 rounded-2xl flex items-center gap-3 text-left ' + (activeTool===t.id ? 'active' : '')}>
+                            <div>
+                                <p className={'font-bold text-sm leading-none ' + (activeTool===t.id ? 'text-white' : 'text-slate-400')}>{t.label}</p>
+                                <p className={'text-[9px] uppercase tracking-widest font-bold mt-1 ' + (activeTool===t.id ? t.activeColor : 'text-slate-700')}>{t.sub}</p>
+                            </div>
+                        </button>
+                    );}) }
+                </nav>
+                <div className="border-t border-white/5 pt-6 px-2">
+                    <p className="text-[10px] text-slate-700 font-bold uppercase tracking-widest">v3.0 Fixed</p>
+                </div>
+            </aside>
+
+            <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+                <div className="flex-1 overflow-hidden px-8 py-6">
+                    {activeTool==='sync'  && <VideoSync/>}
+                    {activeTool==='casos' && <CasosClinicos/>}
+                    {activeTool==='quiz'  && <NeoQuiz/>}
+                </div>
+            </main>
+        </div>
+    );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
