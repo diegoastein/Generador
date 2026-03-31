@@ -25,16 +25,16 @@
             background-image: radial-gradient(#1e293b 1px, transparent 1px); 
             background-size: 60px 60px; 
         }
-        /* Motor de renderizado optimizado para capturas */
+        /* Motor de renderizado optimizado: visible para el DOM pero oculto tras la UI */
         #quiz-render-engine {
             position: fixed;
             top: 0;
             left: 0;
             width: 1080px;
             height: 1920px;
-            z-index: -1000;
+            z-index: -5000;
             pointer-events: none;
-            opacity: 0.01;
+            visibility: visible;
         }
         input, textarea, select {
             background: #0f172a !important;
@@ -91,7 +91,7 @@
 
             const renderRef = useRef(null);
 
-            // Refrescar iconos de Lucide
+            // Refrescar iconos de Lucide en cada renderizado
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
             });
@@ -116,16 +116,24 @@
 
                 for (let i = 0; i < 4; i++) {
                     setActiveStep(i);
-                    await new Promise(r => setTimeout(r, 250)); // Buffer de renderizado
+                    // Esperamos a que React actualice el DOM y Lucide procese los iconos
+                    await new Promise(r => setTimeout(r, 400)); 
+                    if (window.lucide) window.lucide.createIcons();
 
-                    const canvas = await html2canvas(renderRef.current, {
-                        scale: 1,
-                        width: 1080,
-                        height: 1920,
-                        backgroundColor: '#020617',
-                        useCORS: true
-                    });
-                    newGallery.push(canvas.toDataURL("image/png"));
+                    try {
+                        const canvas = await html2canvas(renderRef.current, {
+                            scale: 1,
+                            width: 1080,
+                            height: 1920,
+                            backgroundColor: '#020617',
+                            useCORS: true,
+                            allowTaint: true,
+                            logging: false
+                        });
+                        newGallery.push(canvas.toDataURL("image/png"));
+                    } catch (err) {
+                        console.error("Error en captura:", err);
+                    }
                 }
 
                 setGallery(newGallery);
@@ -203,7 +211,7 @@
                                     {gallery.length > 0 ? gallery.map((img, i) => (
                                         <div key={i} className="fade-in relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
                                             <img src={img} className="w-full aspect-[9/16] object-cover" />
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
                                                 <a href={img} download={`Quiz_NM_Paso_${i+1}.png`} className="bg-white text-black p-3 rounded-full hover:scale-110 transition-transform">
                                                     <i data-lucide="download" className="w-5 h-5"></i>
                                                 </a>
@@ -213,7 +221,7 @@
                                     )) : (
                                         <div className="col-span-full border-2 border-dashed border-slate-800 rounded-[40px] aspect-[9/10] flex flex-col items-center justify-center text-slate-700 text-center p-12">
                                             <i data-lucide="smartphone" className="w-16 h-16 mb-4 opacity-20"></i>
-                                            <p className="text-xs font-bold uppercase tracking-widest">Las 4 diapositivas del Quiz aparecerán aquí para descargar</p>
+                                            <p className="text-xs font-bold uppercase tracking-widest">Las 4 diapositivas aparecerán aquí listas para descargar</p>
                                         </div>
                                     )}
                                 </div>
@@ -221,18 +229,18 @@
                         </div>
                     </main>
 
-                    {/* MOTOR DE RENDERIZADO 9:16 (OCULTO) */}
+                    {/* MOTOR DE RENDERIZADO 9:16 (OCULTO DETRÁS) */}
                     <div id="quiz-render-engine" ref={renderRef} className="bg-slate-950 p-24 flex flex-col justify-center items-center text-center overflow-hidden">
                         <div className="absolute inset-0 medical-grid opacity-30"></div>
                         
-                        <div className="relative z-10 w-full flex flex-col items-center">
+                        <div className="relative z-10 w-full flex flex-col h-full justify-between items-center">
                             <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center text-white font-black text-4xl mb-16 shadow-2xl shadow-blue-600/40">NM</div>
                             
-                            <div className="bg-slate-900 border border-white/10 p-20 rounded-[100px] w-full shadow-2xl relative overflow-hidden">
+                            <div className="bg-slate-900 border border-white/10 p-20 rounded-[100px] w-full shadow-2xl relative overflow-hidden flex-grow flex flex-col justify-center">
                                 <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]"></div>
                                 
                                 {activeStep === 0 && (
-                                    <div>
+                                    <div className="w-full">
                                         <p className="text-amber-500 text-4xl font-black uppercase tracking-[0.4em] mb-8">NUEVO DESAFÍO</p>
                                         <h1 className="text-[110px] font-black text-white leading-none uppercase tracking-tighter mb-10">{quizData.title}</h1>
                                         <p className="text-4xl text-slate-400 font-medium">¿Estás listo para responder como un experto?</p>
@@ -240,7 +248,7 @@
                                 )}
 
                                 {activeStep === 1 && (
-                                    <div className="text-left">
+                                    <div className="text-left w-full">
                                         <p className="text-blue-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
                                             <i data-lucide="activity" className="w-10 h-10"></i> EL ESCENARIO
                                         </p>
@@ -249,7 +257,7 @@
                                 )}
 
                                 {activeStep === 2 && (
-                                    <div className="text-left">
+                                    <div className="text-left w-full">
                                         <p className="text-amber-500 text-3xl font-black uppercase tracking-[0.2em] mb-10">LA PREGUNTA</p>
                                         <h2 className="text-6xl text-white font-black leading-tight mb-16">{quizData.question}</h2>
                                         <div className="space-y-6">
@@ -263,7 +271,7 @@
                                 )}
 
                                 {activeStep === 3 && (
-                                    <div className="text-left">
+                                    <div className="text-left w-full">
                                         <p className="text-green-500 text-3xl font-black uppercase tracking-[0.2em] mb-10 flex items-center gap-4">
                                             <i data-lucide="check-circle-2" className="w-10 h-10"></i> RESPUESTA TÉCNICA
                                         </p>
