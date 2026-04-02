@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMonitor | Novedades Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; overflow: hidden; height: 100vh; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        input, textarea, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; outline: none; transition: border-color .2s; font-family: 'Inter', sans-serif; }
+        input:focus, textarea:focus, select:focus { border-color: #f59e0b !important; box-shadow: 0 0 0 2px rgba(245,158,11,0.1) !important; }
+        .glass { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.06); }
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        .slide-item { transition: all .2s; cursor: pointer; border-left: 3px solid transparent; }
+        .slide-item:hover { background: rgba(255,255,255,0.04); }
+        .slide-item.active { background: rgba(245,158,11,0.12); border-left-color: #f59e0b; }
+        .btn { transition: all .2s; cursor: pointer; font-weight: 700; letter-spacing: .05em; font-size: .7rem; text-transform: uppercase; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .recording-dot { animation: recPulse 1s infinite; }
+        @keyframes recPulse { 0%,100% { opacity:1; } 50% { opacity:.2; } }
+        canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback } = React;
+
+/* ─── PALETAS DE COLOR ───────────────────────────────────────────────────── */
+const PALETTES = {
+    azul:    { name: "NeoBlue",    bg: "#020617", accent: "#2563eb", text: "#f8fafc", sub: "#94a3b8", tag: "#1d4ed8" },
+    ambar:   { name: "NeoAmber",   bg: "#0c0a00", accent: "#f59e0b", text: "#fffbeb", sub: "#a3a375", tag: "#b45309" },
+    verde:   { name: "NeoGreen",   bg: "#011003", accent: "#22c55e", text: "#f0fdf4", sub: "#86efac", tag: "#15803d" },
+    violeta: { name: "NeoPurple",  bg: "#07000f", accent: "#a855f7", text: "#faf5ff", sub: "#c4b5fd", tag: "#7e22ce" },
+    rojo:    { name: "NeoRed",     bg: "#0f0203", accent: "#ef4444", text: "#fff5f5", sub: "#fca5a5", tag: "#b91c1c" },
+    oscuro:  { name: "NeoDark",    bg: "#0f172a", accent: "#e2e8f0", text: "#f8fafc", sub: "#64748b", tag: "#334155" },
+};
+
+const FORMATS = {
+    carousel: { label: "Carrusel 1:1",   w: 1080, h: 1080, icon: "⬜" },
+    reel:     { label: "Reel/Historia 9:16", w: 1080, h: 1920, icon: "📱" },
+};
+
+const DEFAULT_SLIDES = [
+    { id: 1, title: "Nueva Funcionalidad", subtitle: "NeoMonitor v2.0", body: "Descripción de la nueva característica del software. Explicá brevemente el beneficio para el usuario.", tag: "NUEVO", palette: "azul" },
+    { id: 2, title: "Mejora de Rendimiento", subtitle: "Procesamiento en tiempo real", body: "El motor de cálculo fue optimizado para reducir la latencia en escenarios de alta demanda clínica.", tag: "MEJORA", palette: "verde" },
+    { id: 3, title: "Disponible Ahora", subtitle: "Actualización gratuita", body: "Descargá la última versión de NeoMonitor desde el panel de administración de tu institución.", tag: "UPDATE", palette: "ambar" },
+];
+
+/* ─── CANVAS HELPERS ─────────────────────────────────────────────────────── */
+function wrapText(ctx, text, x, y, maxW, lineH, maxLines) {
+    if (!text) return 0;
+    const words = text.split(' ');
+    let line = '', lines = [];
+    for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+        else line = test;
+    }
+    if (line) lines.push(line);
+    if (maxLines) lines = lines.slice(0, maxLines);
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+    return lines.length;
+}
+
+function dotGrid(ctx, w, h, gap, r, color) {
+    gap = gap || 50; r = r || 1.5;
+    ctx.fillStyle = color || 'rgba(255,255,255,0.06)';
+    for (let gx = gap / 2; gx < w; gx += gap)
+        for (let gy = gap / 2; gy < h; gy += gap) {
+            ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.fill();
+        }
+}
+
+function drawSlideCarousel(ctx, slide, W, H) {
+    const pal = PALETTES[slide.palette] || PALETTES.azul;
+
+    // Fondo
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(0, 0, W, H);
+    dotGrid(ctx, W, H, 60, 1.8);
+
+    // Franja decorativa lateral
+    const stripW = 12;
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(0, 0, stripW, H);
+
+    // Gradiente sutil
+    const grad = ctx.createLinearGradient(stripW, 0, W, H);
+    grad.addColorStop(0, pal.accent + '18');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(stripW, 0, W - stripW, H);
+
+    const PAD = 90;
+
+    // TAG
+    if (slide.tag) {
+        ctx.font = `900 28px Inter, sans-serif`;
+        const tagW = ctx.measureText(slide.tag).width + 40;
+        ctx.fillStyle = pal.accent;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(PAD, PAD, tagW, 48, 8);
+        else ctx.rect(PAD, PAD, tagW, 48);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(slide.tag, PAD + 20, PAD + 24);
+        ctx.textBaseline = 'top';
+    }
+
+    // TÍTULO
+    const titleY = slide.tag ? PAD + 90 : PAD;
+    ctx.fillStyle = pal.text;
+    ctx.font = `900 ${W === 1080 ? 86 : 72}px Inter, sans-serif`;
+    ctx.textBaseline = 'top';
+    const titleLines = wrapText(ctx, slide.title, PAD, titleY, W - PAD * 2 - stripW, 100, 3);
+
+    // SUBTÍTULO
+    const subY = titleY + titleLines * 100 + 28;
+    ctx.fillStyle = pal.accent;
+    ctx.font = `700 32px Inter, sans-serif`;
+    ctx.fillText(slide.subtitle || '', PAD, subY);
+
+    // Línea separadora
+    const lineY = subY + 56;
+    ctx.strokeStyle = pal.accent + '50';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(PAD, lineY);
+    ctx.lineTo(W - PAD, lineY);
+    ctx.stroke();
+
+    // CUERPO
+    const bodyY = lineY + 40;
+    ctx.fillStyle = pal.sub;
+    ctx.font = `400 38px Inter, sans-serif`;
+    wrapText(ctx, slide.body, PAD, bodyY, W - PAD * 2 - stripW, 54, 8);
+
+    // LOGO / MARCA
+    const logoY = H - PAD - 36;
+    ctx.fillStyle = pal.accent;
+    ctx.font = `900 36px Inter, sans-serif`;
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('NeoMonitor', PAD, logoY + 36);
+    ctx.fillStyle = pal.sub + '80';
+    ctx.font = `400 24px Inter, sans-serif`;
+    ctx.fillText('Expert Suite', PAD + ctx.measureText('NeoMonitor').width + 16, logoY + 36);
+    ctx.textBaseline = 'top';
+}
+
+function drawSlideReel(ctx, slide, W, H) {
+    const pal = PALETTES[slide.palette] || PALETTES.azul;
+
+    // Fondo
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(0, 0, W, H);
+    dotGrid(ctx, W, H, 70, 2);
+
+    // Gradiente vertical dramático
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, pal.accent + '28');
+    grad.addColorStop(0.5, 'transparent');
+    grad.addColorStop(1, pal.accent + '18');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Franja superior
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(0, 0, W, 14);
+
+    // Franja inferior
+    ctx.fillRect(0, H - 14, W, 14);
+
+    const PAD = 80;
+    const centerY = H / 2;
+
+    // TAG centrado arriba del centro
+    if (slide.tag) {
+        ctx.font = `900 32px Inter, sans-serif`;
+        const tagW = ctx.measureText(slide.tag).width + 48;
+        const tagX = (W - tagW) / 2;
+        const tagY = centerY - 340;
+        ctx.fillStyle = pal.accent;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(tagX, tagY, tagW, 56, 10);
+        else ctx.rect(tagX, tagY, tagW, 56);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(slide.tag, W / 2, tagY + 28);
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+    }
+
+    // TÍTULO centrado
+    ctx.fillStyle = pal.text;
+    ctx.font = `900 92px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const titleStartY = centerY - 260;
+    const tWords = (slide.title || '').split(' ');
+    let tLine = '', tLines = [];
+    for (const w of tWords) {
+        const test = tLine ? tLine + ' ' + w : w;
+        if (ctx.measureText(test).width > W - PAD * 2 && tLine) { tLines.push(tLine); tLine = w; }
+        else tLine = test;
+    }
+    if (tLine) tLines.push(tLine);
+    tLines.slice(0, 3).forEach((l, i) => ctx.fillText(l, W / 2, titleStartY + i * 108));
+    const titleEndY = titleStartY + Math.min(tLines.length, 3) * 108;
+
+    // SUBTÍTULO
+    ctx.fillStyle = pal.accent;
+    ctx.font = `700 36px Inter, sans-serif`;
+    ctx.fillText(slide.subtitle || '', W / 2, titleEndY + 24);
+
+    // Línea
+    ctx.strokeStyle = pal.accent + '60';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(PAD * 2, titleEndY + 90);
+    ctx.lineTo(W - PAD * 2, titleEndY + 90);
+    ctx.stroke();
+
+    // CUERPO
+    ctx.fillStyle = pal.sub;
+    ctx.font = `400 42px Inter, sans-serif`;
+    ctx.textBaseline = 'top';
+    const bodyWords = (slide.body || '').split(' ');
+    let bLine = '', bLines = [];
+    for (const w of bodyWords) {
+        const test = bLine ? bLine + ' ' + w : w;
+        if (ctx.measureText(test).width > W - PAD * 2 && bLine) { bLines.push(bLine); bLine = w; }
+        else bLine = test;
+    }
+    if (bLine) bLines.push(bLine);
+    bLines.slice(0, 6).forEach((l, i) => ctx.fillText(l, W / 2, titleEndY + 110 + i * 58));
+
+    // LOGO
+    ctx.fillStyle = pal.text;
+    ctx.font = `900 42px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('NeoMonitor', W / 2, H - 80);
+    ctx.fillStyle = pal.sub + '80';
+    ctx.font = `400 28px Inter, sans-serif`;
+    ctx.fillText('Expert Suite', W / 2, H - 40);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+}
+
+/* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
+function App() {
+    const [slides, setSlides] = useState(DEFAULT_SLIDES);
+    const [activeIdx, setActiveIdx] = useState(0);
+    const [format, setFormat] = useState('carousel');
+    const [recording, setRecording] = useState(false);
+    const [recProgress, setRecProgress] = useState(0);
+    const [tab, setTab] = useState('editor'); // 'editor' | 'preview'
+    const canvasRef = useRef(null);
+    const mediaRecRef = useRef(null);
+    const chunksRef = useRef([]);
+
+    const fmt = FORMATS[format];
+    const slide = slides[activeIdx] || slides[0];
+
+    /* ─── Render canvas ─── */
+    const renderCanvas = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        canvas.width = fmt.w;
+        canvas.height = fmt.h;
+        const ctx = canvas.getContext('2d');
+        if (format === 'carousel') drawSlideCarousel(ctx, slide, fmt.w, fmt.h);
+        else drawSlideReel(ctx, slide, fmt.w, fmt.h);
+    }, [slide, format, fmt]);
+
+    useEffect(() => { renderCanvas(); }, [renderCanvas]);
+
+    /* ─── Slide helpers ─── */
+    const updateSlide = (field, val) => {
+        setSlides(prev => prev.map((s, i) => i === activeIdx ? { ...s, [field]: val } : s));
+    };
+
+    const addSlide = () => {
+        const newSlide = { id: Date.now(), title: "Nueva Diapositiva", subtitle: "NeoMonitor", body: "Describí la novedad aquí.", tag: "NUEVO", palette: "azul" };
+        setSlides(prev => [...prev, newSlide]);
+        setActiveIdx(slides.length);
+    };
+
+    const removeSlide = (idx) => {
+        if (slides.length === 1) return;
+        setSlides(prev => prev.filter((_, i) => i !== idx));
+        setActiveIdx(prev => Math.min(prev, slides.length - 2));
+    };
+
+    const moveSlide = (idx, dir) => {
+        const newSlides = [...slides];
+        const target = idx + dir;
+        if (target < 0 || target >= newSlides.length) return;
+        [newSlides[idx], newSlides[target]] = [newSlides[target], newSlides[idx]];
+        setSlides(newSlides);
+        setActiveIdx(target);
+    };
+
+    /* ─── Descarga PNG ─── */
+    const downloadPNG = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const a = document.createElement('a');
+        a.download = `neomonitor-slide-${activeIdx + 1}-${format}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    };
+
+    /* ─── Descarga todas las diapositivas ─── */
+    const downloadAll = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = fmt.w;
+        canvas.height = fmt.h;
+        const ctx = canvas.getContext('2d');
+
+        for (let i = 0; i < slides.length; i++) {
+            if (format === 'carousel') drawSlideCarousel(ctx, slides[i], fmt.w, fmt.h);
+            else drawSlideReel(ctx, slides[i], fmt.w, fmt.h);
+            const a = document.createElement('a');
+            a.download = `neomonitor-slide-${i + 1}-${format}.png`;
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+            await new Promise(r => setTimeout(r, 200));
+        }
+    };
+
+    /* ─── Generar Video (slides con transición) ─── */
+    const generateVideo = async () => {
+        if (recording) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = fmt.w;
+        canvas.height = fmt.h;
+        const ctx = canvas.getContext('2d');
+
+        const stream = canvas.captureStream(30);
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+            ? 'video/webm;codecs=vp9'
+            : 'video/webm';
+        mediaRecRef.current = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+        chunksRef.current = [];
+        mediaRecRef.current.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+        mediaRecRef.current.onstop = () => {
+            const blob = new Blob(chunksRef.current, { type: mimeType });
+            const a = document.createElement('a');
+            a.download = `neomonitor-novedades-${format}.webm`;
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            setRecording(false);
+            setRecProgress(0);
+        };
+
+        setRecording(true);
+        mediaRecRef.current.start();
+
+        const SLIDE_DURATION = 2500; // ms por slide
+        const FADE_FRAMES = 18;       // frames de fade
+        const FPS_INTERVAL = 1000 / 30;
+
+        for (let s = 0; s < slides.length; s++) {
+            // Fade in
+            for (let f = 0; f <= FADE_FRAMES; f++) {
+                ctx.globalAlpha = f / FADE_FRAMES;
+                if (format === 'carousel') drawSlideCarousel(ctx, slides[s], fmt.w, fmt.h);
+                else drawSlideReel(ctx, slides[s], fmt.w, fmt.h);
+                await new Promise(r => setTimeout(r, FPS_INTERVAL));
+            }
+            ctx.globalAlpha = 1;
+            // Pausa en el slide
+            const holdStart = Date.now();
+            while (Date.now() - holdStart < SLIDE_DURATION) {
+                if (format === 'carousel') drawSlideCarousel(ctx, slides[s], fmt.w, fmt.h);
+                else drawSlideReel(ctx, slides[s], fmt.w, fmt.h);
+                setRecProgress(Math.round(((s + (Date.now() - holdStart) / SLIDE_DURATION) / slides.length) * 100));
+                await new Promise(r => setTimeout(r, FPS_INTERVAL));
+            }
+            // Fade out (excepto último)
+            if (s < slides.length - 1) {
+                for (let f = FADE_FRAMES; f >= 0; f--) {
+                    ctx.globalAlpha = f / FADE_FRAMES;
+                    if (format === 'carousel') drawSlideCarousel(ctx, slides[s], fmt.w, fmt.h);
+                    else drawSlideReel(ctx, slides[s], fmt.w, fmt.h);
+                    await new Promise(r => setTimeout(r, FPS_INTERVAL));
+                }
+            }
+        }
+        mediaRecRef.current.stop();
+    };
+
+    return (
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+
+            {/* ─── HEADER ─── */}
+            <header className="glass flex-shrink-0 px-6 py-4 flex items-center justify-between border-b border-white/5">
+                <div className="flex items-center gap-4">
+                    <a href="index.html" className="w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 transition-colors" title="Volver al inicio">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
+                    </a>
+                    <div className="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center font-black text-sm text-black">NM</div>
+                    <div>
+                        <h1 className="text-sm font-black uppercase tracking-widest leading-none">Novedades Generator</h1>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">NeoMonitor Expert Suite</p>
+                    </div>
+                </div>
+
+                {/* FORMAT SWITCHER */}
+                <div className="flex items-center gap-2 glass rounded-xl p-1">
+                    {Object.entries(FORMATS).map(([key, f]) => (
+                        <button key={key} onClick={() => setFormat(key)}
+                            className={`btn px-4 py-2 rounded-lg text-[10px] ${format === key ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white'}`}>
+                            {f.icon} {f.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* MOBILE TAB */}
+                <div className="md:hidden flex gap-2">
+                    <button onClick={() => setTab('editor')} className={`btn px-3 py-2 rounded-lg text-[10px] ${tab === 'editor' ? 'bg-amber-500 text-black' : 'text-slate-400'}`}>Editor</button>
+                    <button onClick={() => setTab('preview')} className={`btn px-3 py-2 rounded-lg text-[10px] ${tab === 'preview' ? 'bg-amber-500 text-black' : 'text-slate-400'}`}>Preview</button>
+                </div>
+            </header>
+
+            {/* ─── BODY ─── */}
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+                {/* ══ PANEL IZQUIERDO — Slides + Editor ══ */}
+                <div className={`${tab === 'preview' ? 'hidden' : 'flex'} md:flex flex-col border-r border-white/5`} style={{ width: '380px', flexShrink: 0 }}>
+
+                    {/* Lista de slides */}
+                    <div className="border-b border-white/5 p-4 flex-shrink-0">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Diapositivas ({slides.length})</span>
+                            <button onClick={addSlide} className="btn px-3 py-1.5 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg border border-amber-500/20">+ Agregar</button>
+                        </div>
+                        <div className="space-y-1 max-h-44 overflow-y-auto">
+                            {slides.map((s, i) => (
+                                <div key={s.id} onClick={() => setActiveIdx(i)}
+                                    className={`slide-item flex items-center gap-3 px-3 py-2 rounded-lg ${i === activeIdx ? 'active' : ''}`}>
+                                    <div className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black flex-shrink-0"
+                                        style={{ background: PALETTES[s.palette]?.accent + '30', color: PALETTES[s.palette]?.accent }}>
+                                        {i + 1}
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-300 truncate flex-1">{s.title}</span>
+                                    <div className="flex gap-1">
+                                        <button onClick={e => { e.stopPropagation(); moveSlide(i, -1); }} className="text-slate-600 hover:text-slate-300 p-0.5" title="Subir">↑</button>
+                                        <button onClick={e => { e.stopPropagation(); moveSlide(i, 1); }} className="text-slate-600 hover:text-slate-300 p-0.5" title="Bajar">↓</button>
+                                        <button onClick={e => { e.stopPropagation(); removeSlide(i); }} className="text-slate-700 hover:text-red-400 p-0.5" title="Eliminar">✕</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Editor de slide activo */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 fade-in" key={activeIdx}>
+                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                            Editando Diapositiva {activeIdx + 1}
+                        </div>
+
+                        {/* Paleta */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Paleta de Color</label>
+                            <div className="flex flex-wrap gap-2">
+                                {Object.entries(PALETTES).map(([key, pal]) => (
+                                    <button key={key} onClick={() => updateSlide('palette', key)}
+                                        className={`w-7 h-7 rounded-lg border-2 transition-all ${slide.palette === key ? 'border-white scale-110' : 'border-transparent'}`}
+                                        style={{ background: pal.accent }} title={pal.name} />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tag */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">Etiqueta (tag)</label>
+                            <input type="text" value={slide.tag} onChange={e => updateSlide('tag', e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg text-sm" placeholder="NUEVO, UPDATE, MEJORA..." />
+                        </div>
+
+                        {/* Título */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">Título</label>
+                            <textarea value={slide.title} onChange={e => updateSlide('title', e.target.value)} rows={2}
+                                className="w-full px-3 py-2 rounded-lg text-sm resize-none" placeholder="Título principal de la novedad" />
+                        </div>
+
+                        {/* Subtítulo */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">Subtítulo</label>
+                            <input type="text" value={slide.subtitle} onChange={e => updateSlide('subtitle', e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg text-sm" placeholder="Contexto o versión" />
+                        </div>
+
+                        {/* Cuerpo */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">Texto Principal</label>
+                            <textarea value={slide.body} onChange={e => updateSlide('body', e.target.value)} rows={5}
+                                className="w-full px-3 py-2 rounded-lg text-sm resize-none leading-relaxed"
+                                placeholder="Describí la novedad, mejora o característica en detalle..." />
+                        </div>
+                    </div>
+
+                    {/* Acciones de exportación */}
+                    <div className="border-t border-white/5 p-4 space-y-2 flex-shrink-0">
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={downloadPNG}
+                                className="btn py-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-xl border border-blue-600/30 text-[10px]">
+                                ⬇ PNG (esta)
+                            </button>
+                            <button onClick={downloadAll}
+                                className="btn py-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-xl border border-blue-600/30 text-[10px]">
+                                ⬇ Todas ({slides.length})
+                            </button>
+                        </div>
+                        <button onClick={generateVideo} disabled={recording}
+                            className={`w-full btn py-3 rounded-xl text-[10px] border ${recording ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border-amber-500/30'}`}>
+                            {recording ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span className="recording-dot w-2 h-2 rounded-full bg-red-400 inline-block" />
+                                    Grabando video... {recProgress}%
+                                </span>
+                            ) : (
+                                '▶ Generar Video (Reel/Historia)'
+                            )}
+                        </button>
+                        {recording && (
+                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-500 transition-all" style={{ width: `${recProgress}%` }} />
+                            </div>
+                        )}
+                        <p className="text-[9px] text-slate-600 text-center leading-relaxed">
+                            El video incluye todas las diapositivas con transición.<br/>
+                            Se descarga en formato .webm (compatible con Instagram)
+                        </p>
+                    </div>
+                </div>
+
+                {/* ══ PANEL DERECHO — Preview Canvas ══ */}
+                <div className={`${tab === 'editor' ? 'hidden' : 'flex'} md:flex flex-1 flex-col items-center justify-center bg-slate-950/50 p-6 gap-4`}>
+
+                    {/* Info formato */}
+                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        <span>{fmt.icon} {fmt.label}</span>
+                        <span className="text-slate-700">·</span>
+                        <span>{fmt.w} × {fmt.h}px</span>
+                        <span className="text-slate-700">·</span>
+                        <span style={{ color: PALETTES[slide.palette]?.accent }}>{PALETTES[slide.palette]?.name}</span>
+                    </div>
+
+                    {/* Canvas preview */}
+                    <div className="relative flex items-center justify-center"
+                        style={{
+                            width: format === 'carousel' ? 'min(480px, 90vw)' : 'min(270px, 50vw)',
+                            height: format === 'carousel' ? 'min(480px, 90vw)' : 'min(480px, 90vh)',
+                            background: 'rgba(0,0,0,0.4)',
+                            borderRadius: '16px',
+                            overflow: 'hidden',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                        }}>
+                        <canvas ref={canvasRef}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                    </div>
+
+                    {/* Navegación rápida */}
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setActiveIdx(i => Math.max(0, i - 1))} disabled={activeIdx === 0}
+                            className="btn w-9 h-9 glass rounded-xl flex items-center justify-center text-slate-400 disabled:opacity-30">←</button>
+                        <div className="flex gap-1.5">
+                            {slides.map((_, i) => (
+                                <button key={i} onClick={() => setActiveIdx(i)}
+                                    className={`w-2 h-2 rounded-full transition-all ${i === activeIdx ? 'bg-amber-500 scale-125' : 'bg-slate-700 hover:bg-slate-500'}`} />
+                            ))}
+                        </div>
+                        <button onClick={() => setActiveIdx(i => Math.min(slides.length - 1, i + 1))} disabled={activeIdx === slides.length - 1}
+                            className="btn w-9 h-9 glass rounded-xl flex items-center justify-center text-slate-400 disabled:opacity-30">→</button>
+                    </div>
+
+                    {/* Tip */}
+                    <p className="text-[10px] text-slate-700 text-center max-w-sm">
+                        Editá el contenido en el panel izquierdo. El preview se actualiza en tiempo real.
+                        Descargá como PNG para carruseles o generá el video para reels e historias.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
