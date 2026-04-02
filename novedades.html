@@ -267,6 +267,7 @@ function App() {
     const [slides, setSlides] = useState(DEFAULT_SLIDES);
     const [activeIdx, setActiveIdx] = useState(0);
     const [format, setFormat] = useState('carousel');
+    const [slideDuration, setSlideDuration] = useState(3000);
     const [recording, setRecording] = useState(false);
     const [recProgress, setRecProgress] = useState(0);
     const [tab, setTab] = useState('editor'); // 'editor' | 'preview'
@@ -372,7 +373,7 @@ function App() {
         setRecording(true);
         mediaRecRef.current.start();
 
-        const SLIDE_DURATION = 2500; // ms por slide
+        const SLIDE_DURATION = slideDuration;
         const FADE_FRAMES = 18;       // frames de fade
         const FPS_INTERVAL = 1000 / 30;
 
@@ -529,6 +530,17 @@ function App() {
                                 className="btn py-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-xl border border-blue-600/30 text-[10px]">
                                 ⬇ Todas ({slides.length})
                             </button>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">Duración por imagen</label>
+                            <div className="flex gap-1.5">
+                                {[1500, 2000, 3000, 4000, 5000].map(ms => (
+                                    <button key={ms} onClick={() => setSlideDuration(ms)} disabled={recording}
+                                        className={`btn flex-1 py-2 rounded-lg text-[10px] border ${slideDuration === ms ? 'bg-amber-500 text-black border-amber-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-amber-500/40'}`}>
+                                        {ms / 1000}s
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                         <button onClick={generateVideo} disabled={recording}
                             className={`w-full btn py-3 rounded-xl text-[10px] border ${recording ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border-amber-500/30'}`}>
