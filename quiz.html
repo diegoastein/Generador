@@ -147,8 +147,226 @@ const PRESETS = {
         options: ["Antes de las 12 horas de vida", "Antes de las 6 horas de vida", "Cualquier momento dentro de las 24 horas"],
         answer: "Antes de las 6 horas de vida",
         explanation: "La hipotermia terapéutica (33-34°C por 72h) es neuroprotectora solo si se inicia ANTES de las 6 horas del insulto hipóxico. Pasada esta ventana, el beneficio se pierde."
+    },
+
+    /* ── PEDIÁTRICOS ── */
+
+    /* 13 */
+    pedi_epinefrina_anafilaxia: {
+        title: "Epinefrina en Anafilaxia Pediátrica",
+        caseText: "Niña de 9 años con urticaria generalizada, angioedema y broncoespasmo severo minutos después de ingerir maní. PA 70/40 mmHg. Sin acceso IV.",
+        question: "¿Cuál es la vía y dosis correcta de adrenalina como primera línea en anafilaxia pediátrica?",
+        options: ["IM en vasto lateral 0.01 mg/kg (máx 0.5 mg) de 1:1.000", "IV 0.1 mg/kg de 1:10.000", "SC 0.01 mg/kg de 1:1.000"],
+        answer: "IM en vasto lateral 0.01 mg/kg (máx 0.5 mg) de 1:1.000",
+        explanation: "La adrenalina IM en el músculo vasto lateral es la primera y única línea en anafilaxia. La vía SC es menos predecible. IV solo en PCR o shock refractario. Dosis: 0.01 mg/kg de solución 1:1.000 (máx 0.5 mg)."
+    },
+
+    /* 14 */
+    pedi_croup_epiglotitis: {
+        title: "Croup vs Epiglotitis",
+        caseText: "Niño de 2 años con tos perruna, estridor inspiratorio y disfonía de inicio nocturno agudo. Fiebre 38°C. Aspecto no tóxico, puede beber.",
+        question: "¿Cuál es el diagnóstico más probable y el signo radiológico característico?",
+        options: ["Epiglotitis — signo del pulgar en Rx lateral", "Croup viral — signo de la aguja subglótica en Rx AP", "Traqueítis bacteriana — Rx con irregularidad traqueal"],
+        answer: "Croup viral — signo de la aguja subglótica en Rx AP",
+        explanation: "Croup (laringotraqueítis viral): inicio nocturno, tos perruna, estridor inspiratorio, niño no tóxico. Signo de la aguja o torre en la Rx AP. La epiglotitis se presenta con fiebre alta, aspecto tóxico, disfagia severa y postura en trípode."
+    },
+
+    /* 15 */
+    pedi_convulsion_primera: {
+        title: "Primera Línea en Convulsión Pediátrica",
+        caseText: "Niño de 4 años con convulsión tónico-clónica generalizada de 7 minutos. Sin acceso IV disponible. Fiebre 39°C. Monitor muestra SpO₂ 88%.",
+        question: "¿Cuál es la conducta inmediata más correcta según las guías actuales?",
+        options: ["Esperar hasta 10 min antes de medicar", "Midazolam IM/nasal 0.2 mg/kg + O₂ suplementario", "Diazepam IV 0.3 mg/kg"],
+        answer: "Midazolam IM/nasal 0.2 mg/kg + O₂ suplementario",
+        explanation: "Ante una convulsión > 5 min, las guías actuales recomiendan benzodiacepinas en < 5 min. Sin IV: midazolam IM (0.2 mg/kg, máx 10 mg) o intranasal es la primera opción. El diazepam rectal (0.5 mg/kg) es alternativa si no hay midazolam."
+    },
+
+    /* 16 */
+    pedi_shock_reconocimiento: {
+        title: "Reconocimiento de Shock Pediátrico",
+        caseText: "Niño de 6 años. Fiebre 40°C, taquicardia FC 168 lpm, piel caliente y rubicunda. Relleno capilar central 1.5 seg. PA 90/55 mmHg (normal para la edad).",
+        question: "¿Cuál es la interpretación clínica correcta de este cuadro?",
+        options: ["Niño sin shock porque la PA es normal para la edad", "Shock frío compensado: PA mantenida a expensas de vasoconstricción", "Shock caliente compensado: taquicardia y vasodilatación sin hipotensión"],
+        answer: "Shock caliente compensado: taquicardia y vasodilatación con PA aún mantenida",
+        explanation: "En pediatría la PA se mantiene hasta fases avanzadas del shock. La taquicardia es el primer signo. El shock caliente (distributivo/séptico) cursa con vasodilatación, piel caliente y relleno capilar normal o rápido. Actuar sin esperar hipotensión."
+    },
+
+    /* 17 */
+    pedi_asma_gravedad: {
+        title: "Gravedad de la Crisis Asmática",
+        caseText: "Niño de 10 años con asma. PEFR 35% del teórico. FR 40/min, tiraje intercostal severo, sibilancias escasas en base derecha. SpO₂ 86%.",
+        question: "¿Cuál de los siguientes signos indica la mayor gravedad en esta crisis asmática?",
+        options: ["PEFR 35% del teórico", "Sibilancias escasas o ausentes (silent chest)", "FR 40/min con tiraje"],
+        answer: "Sibilancias escasas o ausentes (silent chest)",
+        explanation: "El 'silent chest' (ausencia de murmullo vesicular y sibilancias por limitación extrema del flujo aéreo) es el signo de mayor gravedad en la crisis asmática: indica colapso inminente. NO significa mejoría."
+    },
+
+    /* 18 */
+    pedi_cad_complicacion: {
+        title: "Complicación más grave de la CAD Pediátrica",
+        caseText: "Niño de 7 años con CAD severa (pH 7.05, glucemia 580 mg/dl). Durante la hidratación IV, presenta cefalea intensa, confusión y midriasis unilateral.",
+        question: "¿Cuál es la complicación más probable y su mecanismo principal?",
+        options: ["Hipoglucemia por insulina → glucosa baja", "Edema cerebral → hidratación excesivamente rápida", "Hipokalemia → arritmia cardíaca"],
+        answer: "Edema cerebral → hidratación excesivamente rápida",
+        explanation: "El edema cerebral es la complicación más grave de la CAD pediátrica (mortalidad 20-25%). Se produce por descenso brusco de la osmolaridad plasmática. Factores de riesgo: edad < 5 años, CAD severa, bicarbonato IV, hidratación rápida."
+    },
+
+    /* 19 */
+    pedi_sepsis_bolo: {
+        title: "Volumen de Expansión en Sepsis Pediátrica",
+        caseText: "Lactante de 8 meses. Fiebre 39°C, taquicardia FC 195 lpm, relleno capilar 3.5 seg, letargia. Diagnóstico: sepsis con shock compensado.",
+        question: "¿Cuál es el volumen inicial de cristaloides recomendado y la vía de administración?",
+        options: ["10 ml/kg en 30 minutos IV", "20 ml/kg en 5-10 minutos IV", "40 ml/kg en bolus rápido IV"],
+        answer: "20 ml/kg en 5-10 minutos IV",
+        explanation: "Las guías pediátricas de sepsis recomiendan bolos de 20 ml/kg de cristaloides isotónicos (SF o Ringer) en 5-10 min. Repetir hasta 3 veces evaluando respuesta. Si no responde a 3 bolos → vasopresores (noradrenalina). Evitar bolos de 40 ml/kg sin evaluación."
+    },
+
+    /* 20 */
+    pedi_bronquiolitis_tto: {
+        title: "Manejo de Bronquiolitis Grave",
+        caseText: "Lactante de 2 meses con bronquiolitis VSR. FR 68/min, SpO₂ 87%, quejido espiratorio y aleteo nasal. Sin respuesta a salbutamol nebulizado.",
+        question: "¿Cuál es el soporte respiratorio de primera línea ante fallo del O₂ convencional en bronquiolitis grave?",
+        options: ["Repetir salbutamol + adrenalina nebulizada", "Cánula nasal de alto flujo (CNAF)", "Intubación y ventilación mecánica"],
+        answer: "Cánula nasal de alto flujo (CNAF)",
+        explanation: "La CNAF (High Flow Nasal Cannula) reduce significativamente la tasa de intubación en bronquiolitis grave y es el soporte de segunda línea ante fallo de O₂ convencional. Los broncodilatadores no tienen evidencia en bronquiolitis. IOT se reserva para fracaso de CNAF."
+    },
+
+    /* 21 */
+    pedi_tce_indicacion_tc: {
+        title: "Indicación de TC en TCE Pediátrico",
+        caseText: "Niño de 5 años. Golpe en cabeza al caer de una silla (altura ~60 cm). Llora inmediatamente, sin pérdida de consciencia, vómito único, GCS 15, sin signos focales.",
+        question: "Según la regla PECARN, ¿cuál es la conducta más apropiada?",
+        options: ["TC craneal urgente obligatoria en todo TCE", "Observación clínica 4-6h sin TC si cumple criterios de bajo riesgo", "Alta inmediata sin observación"],
+        answer: "Observación clínica 4-6h sin TC si cumple criterios de bajo riesgo",
+        explanation: "La regla PECARN identifica niños de muy bajo riesgo que no requieren TC rutinaria. Criterios de bajo riesgo < 2 años: mecanismo menor, sin signos de fractura, GCS 15, comportamiento normal. La observación 4-6h permite detectar deterioro sin irradiar."
+    },
+
+    /* 22 */
+    pedi_rcp_ratio: {
+        title: "RCP en Lactantes — Ratio y Técnica",
+        caseText: "Lactante de 3 meses. PCR en sala de urgencias. Dos reanimadores presentes con equipo completo. Monitor muestra asistolia.",
+        question: "¿Cuál es el ratio y la técnica de compresiones correcta para RCP pediátrica avanzada con 2 reanimadores?",
+        options: ["30:2 con técnica bimanual como en adultos", "15:2 con técnica de los dos pulgares rodeando el tórax", "15:1 con técnica de dos dedos"],
+        answer: "15:2 con técnica de los dos pulgares rodeando el tórax",
+        explanation: "En RCP avanzada pediátrica (2 reanimadores): ratio 15:2. Técnica preferida en lactantes: dos pulgares sobre el tercio inferior del esternón con las manos rodeando el tórax. Profundidad: 4 cm en lactantes, 5 cm en niños. Frecuencia: 100-120/min."
+    },
+
+    /* ── ADULTOS ── */
+
+    /* 23 */
+    adult_sdra_berlin: {
+        title: "SDRA — Criterios de Berlín",
+        caseText: "Paciente de 55 años, ventilado por neumonía bilateral. FiO₂ 70%, PEEP 10 cmH₂O, PaO₂ 84 mmHg. Rx: opacidades bilaterales no explicadas por falla cardíaca.",
+        question: "¿Cómo se clasifica este SDRA según los criterios de Berlín (2012)?",
+        options: ["SDRA leve: P/F 200-300 con PEEP ≥ 5", "SDRA moderado: P/F 100-200 con PEEP ≥ 5", "SDRA grave: P/F < 100 con PEEP ≥ 5"],
+        answer: "SDRA moderado: P/F 100-200 con PEEP ≥ 5",
+        explanation: "P/F = PaO₂/FiO₂ = 84/0.70 = 120 mmHg con PEEP ≥ 5. Según Berlín: leve (200-300), moderado (100-200), grave (< 100). El manejo del SDRA moderado-grave incluye ventilación protectora (Vt 6 ml/kg PIB) y decúbito prono si P/F < 150."
+    },
+
+    /* 24 */
+    adult_killip: {
+        title: "Clasificación Killip-Kimball en IAM",
+        caseText: "Hombre de 68 años con IAM anterior extenso. Presenta disnea con esfuerzo moderado. A la auscultación: crepitantes en bases pulmonares bilaterales. Sin hipotensión.",
+        question: "¿Cuál es la clasificación Killip de este paciente y su implicancia pronóstica?",
+        options: ["Killip I — sin evidencia de fallo cardíaco", "Killip II — IC leve: crepitantes en < 50% del campo pulmonar", "Killip III — EAP franco con crepitantes en > 50%"],
+        answer: "Killip II — IC leve: crepitantes en < 50% del campo pulmonar",
+        explanation: "Killip II: crepitantes en menos de 50% del campo pulmonar, posible S3 y/o distensión venosa yugular. Mortalidad ~17% vs ~3% en Killip I. Implica inicio de tratamiento de IC (diuréticos, vasodilatadores) además del manejo del IAM."
+    },
+
+    /* 25 */
+    adult_sepsis_bundle: {
+        title: "Bundle Sepsis — Hora 1",
+        caseText: "Mujer de 74 años, diabética, con fiebre, confusión y taquicardia. PA 88/52 mmHg. Lactato 4.8 mmol/L. Sospechan sepsis con shock. Hora 0: llegó a urgencias.",
+        question: "Según el bundle Surviving Sepsis Campaign (actualización 2018), ¿cuál NO forma parte de las acciones de la primera hora?",
+        options: ["Administrar cristaloides 30 ml/kg", "Iniciar antibióticos de amplio espectro", "Obtener TC abdominal para confirmar el foco infeccioso"],
+        answer: "Obtener TC abdominal para confirmar el foco infeccioso",
+        explanation: "El bundle de la hora 1 incluye: medir lactato, hemocultivos × 2, ATB de amplio espectro, cristaloides 30 ml/kg si lactato ≥ 4 ó hipotensión, vasopresores si PAM < 65 tras fluidos. El TC puede hacerse pero no es parte del bundle prioritario."
+    },
+
+    /* 26 */
+    adult_tep_trombolisis: {
+        title: "Trombólisis en TEP — Indicación",
+        caseText: "Mujer de 62 años. TEP bilateral confirmado por angio-TC. PA 78/45 mmHg a pesar de 2L de cristaloides. FC 128 lpm. ECO: disfunción VD severa. Sin antecedente de cirugía reciente.",
+        question: "¿Cuál es la conducta más apropiada según las guías ESC/AHA para el TEP masivo?",
+        options: ["Anticoagulación sola con heparina IV", "Trombólisis sistémica (Alteplase 100 mg en 2h)", "Embolectomía quirúrgica como primera línea"],
+        answer: "Trombólisis sistémica (Alteplase 100 mg en 2h)",
+        explanation: "TEP masivo = inestabilidad hemodinámica (hipotensión o shock). Sin contraindicaciones, la trombólisis sistémica (Alteplase 100 mg IV en 2h) es la primera línea. La embolectomía quirúrgica o la tromboaspiración percutánea se reservan para contraindicación o fracaso de trombólisis."
+    },
+
+    /* 27 */
+    adult_stroke_ventana: {
+        title: "Ventana Trombolítica en ACV Isquémico",
+        caseText: "Hombre de 72 años. Afasia + hemiparesia derecha de inicio brusco. TC sin contraste: sin hemorragia. NIHSS 16. Tiempo desde onset: 3 horas 20 minutos.",
+        question: "¿Cuál es la ventana terapéutica para rt-PA IV en ACV isquémico y hasta cuándo puede indicarse la trombectomía mecánica?",
+        options: ["rt-PA hasta 3h. Trombectomía hasta 6h", "rt-PA hasta 4.5h. Trombectomía hasta 24h según imagen", "rt-PA hasta 6h. Trombectomía sin límite de tiempo"],
+        answer: "rt-PA hasta 4.5h. Trombectomía hasta 24h según imagen",
+        explanation: "rt-PA IV está indicado hasta 4.5h del onset en pacientes seleccionados. La trombectomía mecánica puede realizarse hasta 24h en oclusiones de gran vaso con penumbra isquémica viable en imagen (perfusión-TC o RM). Este paciente es candidato a rt-PA IV ahora."
+    },
+
+    /* 28 */
+    adult_pcr_adrenalina: {
+        title: "Adrenalina en PCR — Timing",
+        caseText: "Hombre de 55 años. PCR con ritmo inicial FV. 1er choque administrado. RCP en curso. Acceso IV logrado. Han pasado 3 minutos desde el inicio de la RCP.",
+        question: "¿Cuándo y cuál es la dosis correcta de adrenalina según AHA/ERC 2020?",
+        options: ["Adrenalina 1 mg IV inmediatamente tras el 1er choque", "Adrenalina 1 mg IV tras el 3er choque (FV/TV refractaria), luego cada 3-5 min", "Adrenalina 3 mg IV en la primera dosis para FV"],
+        answer: "Adrenalina 1 mg IV tras el 3er choque (FV/TV refractaria), luego cada 3-5 min",
+        explanation: "AHA 2020: en FV/TV sin pulso, adrenalina 1mg IV se administra después del 3er choque sin respuesta, junto con amiodarona 300 mg. Luego cada 3-5 min. En ritmos no desfibrilables (AESP/Asistolia): adrenalina lo antes posible. Dosis siempre 1 mg."
+    },
+
+    /* 29 */
+    adult_isr_secuencia: {
+        title: "ISR — Secuencia de Fármacos",
+        caseText: "Hombre de 48 años. Trauma craneoencefálico moderado. Agitado, SpO₂ 88% con O₂ 15L. Vía aérea comprometida. Decisión de ISR. Acceso IV disponible.",
+        question: "¿Cuál es la combinación farmacológica más apropiada para ISR en un paciente con TCE y agitación?",
+        options: ["Propofol 2 mg/kg + Succinilcolina 1.5 mg/kg", "Ketamina 1.5 mg/kg + Rocuronio 1.2 mg/kg", "Midazolam 0.3 mg/kg + Vecuronio 0.1 mg/kg"],
+        answer: "Ketamina 1.5 mg/kg + Rocuronio 1.2 mg/kg",
+        explanation: "Ketamina es el inductor de elección en TCE/trauma: mantiene PAM, no produce hipotensión, tiene efecto analgésico y broncodilatador. Rocuronio 1.2 mg/kg a dosis intubadora (equivalente a succinilcolina) es la alternativa en contraindicaciones de succinilcolina (hipercalemia, TCE con posible lesión espinal)."
+    },
+
+    /* 30 */
+    adult_epoc_spo2: {
+        title: "Objetivo de SpO₂ en EPOC Agudizado",
+        caseText: "Mujer de 70 años, EPOC severo. Agudización por infección respiratoria. Gasometría basal: pH 7.38, PaCO₂ 55, PaO₂ 58. Actualmente con O₂ 4L/min, SpO₂ 97%.",
+        question: "¿Cuál es el objetivo de SpO₂ correcto en este paciente con EPOC agudizado y riesgo de hipercapnia?",
+        options: ["SpO₂ ≥ 95% como en cualquier paciente", "SpO₂ 88-92% para evitar supresión del drive hipóxico", "SpO₂ 85-88% para estimular la respiración"],
+        answer: "SpO₂ 88-92% para evitar supresión del drive hipóxico",
+        explanation: "En pacientes con EPOC y retención crónica de CO₂, el objetivo de SpO₂ es 88-92%. La hiperoxia suprime el drive hipóxico, provoca el efecto Haldane y puede desencadenar retención de CO₂ e IRA hipercápnica. Nunca privar O₂ a un hipóxico, pero titular al objetivo."
+    },
+
+    /* 31 */
+    adult_hta_reduccion: {
+        title: "Crisis HTA — Cuánto y Cuán Rápido Bajar",
+        caseText: "Hombre de 58 años. PA 230/140 mmHg. Cefalea intensa, visión borrosa, fondo de ojo con papiledema. Creatinina 2.8 mg/dl (basal 0.9). Emergencia hipertensiva.",
+        question: "¿Cuánto y en cuánto tiempo debe reducirse la PA en una emergencia hipertensiva con daño de órgano blanco?",
+        options: ["Normalizar la PA en < 1 hora con nitroprusiato", "Reducir la PAM máximo 20-25% en la primera hora, luego gradual", "Reducir la PA sistólica a < 140 en las primeras 6 horas"],
+        answer: "Reducir la PAM máximo 20-25% en la primera hora, luego gradual",
+        explanation: "Emergencia hipertensiva: reducir PAM no más del 20-25% en la primera hora, luego llegar a ~160/100 en las siguientes 2-6h, y normalización en 24-48h. La reducción brusca puede causar isquemia cerebral, coronaria o renal por pérdida de autorregulación."
+    },
+
+    /* 32 */
+    adult_estado_epi_segunda: {
+        title: "Estado Epiléptico — Segunda Línea",
+        caseText: "Hombre de 40 años. Estado epiléptico tónico-clónico. Recibió midazolam IV 10 mg sin respuesta. Crisis continúa a los 8 minutos. Acceso IV disponible. Sin alergias conocidas.",
+        question: "¿Cuál es el fármaco de segunda línea más recomendado según las guías actuales (AHA/ILAE 2022)?",
+        options: ["Diazepam IV 10 mg adicionales", "Levetiracetam IV 60 mg/kg (máx 4.500 mg) en 10 min", "Fenobarbital IV 20 mg/kg"],
+        answer: "Levetiracetam IV 60 mg/kg (máx 4.500 mg) en 10 min",
+        explanation: "Tras fallo de benzodiacepinas en estado epiléptico establecido (> 5 min post BZD), las opciones de segunda línea son: Levetiracetam IV 60 mg/kg, Valproato IV 40 mg/kg o Fenitoína IV 20 mg/kg (con monitoreo cardíaco). Levetiracetam tiene mejor perfil de seguridad y sin interacciones relevantes."
     }
 };
+
+// ─── CTA Pool ────────────────────────────────────────────────────────────────
+const CTA_POOL = [
+    { tag:"PARA TUS CLASES Y RESIDENTES", headline:"Visitá NeoMonitor", sub:"Ingresá a www.neomonitor.pro y usá los casos presets para tus clases o tus residentes. Gratis." },
+    { tag:"HERRAMIENTA DOCENTE GRATUITA", headline:"www.neomonitor.pro", sub:"Casos clínicos presets listos para usar en tus clases, ateneos o con tus residentes." },
+    { tag:"IDEAL PARA DOCENTES Y RESIDENTES", headline:"Probá NeoMonitor", sub:"Visitá www.neomonitor.pro y explorá los casos disponibles para tu práctica clínica." },
+    { tag:"CASOS PRESETS LISTOS PARA USAR", headline:"Entrá a NeoMonitor", sub:"Ingresá a www.neomonitor.pro y usá los escenarios presets en tus clases o residencias." },
+    { tag:"GRATIS · SIN REGISTRO", headline:"NeoMonitor.pro", sub:"Visitá la web y aprovechá los casos clínicos presets para enseñar y aprender medicina." },
+    { tag:"PARA TUS ATENEOS Y CLASES", headline:"Visitá la web app", sub:"www.neomonitor.pro — casos presets para neonatología, pediatría y adultos. Sin costo." },
+    { tag:"USALO CON TUS RESIDENTES", headline:"NeoMonitor es gratis", sub:"Ingresá a www.neomonitor.pro y usá los casos disponibles en tus actividades docentes." },
+    { tag:"DOCENCIA MÉDICA SIN COSTO", headline:"Ingresá a NeoMonitor", sub:"Visitá www.neomonitor.pro y descubrí los casos presets para tus clases y residentes." },
+    { tag:"CASOS CLÍNICOS PARA ENSEÑAR", headline:"www.neomonitor.pro", sub:"Ingresá gratis y usá los escenarios presets para enriquecer tus clases y ateneos." },
+    { tag:"PARA PROFESIONALES DE LA SALUD", headline:"Visitá NeoMonitor", sub:"Explorá los casos presets en www.neomonitor.pro. Ideal para docentes y residentes." },
+];
 
 // ─── Canvas helpers ───────────────────────────────────────────────────────────
 function rrect(ctx, x, y, w, h, r) {
@@ -268,6 +486,39 @@ function drawQuizSlide(canvas, step, data) {
     ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
+function drawQuizCTASlide(canvas, cta) {
+    const W=1080, H=1920;
+    canvas.width=W; canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#020617'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#1e293b';
+    for(let gx=30;gx<W;gx+=60) for(let gy=30;gy<H;gy+=60){
+        ctx.beginPath(); ctx.arc(gx,gy,1.2,0,Math.PI*2); ctx.fill();
+    }
+    const grd=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,900);
+    grd.addColorStop(0,'rgba(245,158,11,0.14)'); grd.addColorStop(1,'transparent');
+    ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+    const P=90, cx=W/2;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    rrect(ctx,cx-60,P,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 48px system-ui';
+    ctx.textBaseline='middle'; ctx.fillText('NM',cx,P+60); ctx.textBaseline='top';
+    ctx.fillStyle='#f59e0b'; ctx.font='bold 34px system-ui';
+    ctx.fillText(cta.tag,cx,P+168);
+    ctx.fillStyle='#fff'; ctx.font='bold 124px system-ui';
+    const hl=wrapText(ctx,cta.headline.toUpperCase(),cx,P+238,W-P*2,132);
+    const subY=P+238+hl*132+52;
+    ctx.fillStyle='#94a3b8'; ctx.font='400 50px system-ui';
+    wrapText(ctx,cta.sub,cx,subY,W-P*2,68);
+    const urlY=H-250;
+    rrect(ctx,P,urlY,W-P*2,128,64); ctx.fillStyle='#f59e0b'; ctx.fill();
+    ctx.fillStyle='#000'; ctx.font='bold 54px system-ui';
+    ctx.textBaseline='middle'; ctx.fillText('WWW.NEOMONITOR.PRO',cx,urlY+64);
+    ctx.fillStyle='#334155'; ctx.font='bold 28px system-ui';
+    ctx.textBaseline='top'; ctx.fillText('NEOMONITOR EXPERT SUITE · v5.0',cx,H-106);
+    ctx.textAlign='left'; ctx.textBaseline='top';
+}
+
 // ─── Preview component ────────────────────────────────────────────────────────
 function SlidePreview({ step, data }) {
     const ref=useRef(null);
@@ -308,6 +559,11 @@ const App = () => {
             const c=document.createElement('canvas'); drawQuizSlide(c,i,data);
             imgs.push(c.toDataURL('image/png'));
         }
+        setStatus('Generando llamada a la acción…');
+        await new Promise(r=>setTimeout(r,20));
+        const ctaC=document.createElement('canvas');
+        drawQuizCTASlide(ctaC, CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)]);
+        imgs.push(ctaC.toDataURL('image/png'));
         setGallery(imgs); setStatus(''); setGenerating(false);
     };
 
@@ -330,14 +586,14 @@ const App = () => {
                     <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">Basado en NRP<br/>AHA/AAP 8ª Ed. 2021<br/>+ Actualización 2023</p>
                 </div>
                 <div className="mt-auto pt-8 border-t border-white/5">
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">12 Presets NRP · v3.1</p>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">32 Presets Clínicos · v4.0</p>
                 </div>
             </aside>
 
             <main className="flex-1 p-12 overflow-y-auto">
                 <header className="mb-10 max-w-6xl mx-auto">
                     <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
-                    <p className="text-slate-400 text-sm">12 presets NRP · Genera secuencias de 4 imágenes para Stories 9:16.</p>
+                    <p className="text-slate-400 text-sm">32 presets · Neonatología, Pediatría y Adultos · Pack de 5 imágenes Stories 9:16 + CTA.</p>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
@@ -361,11 +617,11 @@ const App = () => {
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset NRP</label>
                                 <select onChange={e=>loadPreset(e.target.value)} className={inp+" font-bold cursor-pointer"}>
                                     <option value="">— Nuevo desafío —</option>
-                                    <optgroup label="─ Originales ─">
+                                    <optgroup label="─ Neonatología — Originales ─">
                                         <option value="arritmia">Arritmia Neonatal (TSV)</option>
                                         <option value="cpap">Fallo Respiratorio / CPAP</option>
                                     </optgroup>
-                                    <optgroup label="─ Nuevos NRP 8ª Ed. ─">
+                                    <optgroup label="─ Neonatología — NRP 8ª Ed. ─">
                                         <option value="vpp_inicio">¿Cuándo Iniciar VPP?</option>
                                         <option value="fio2_termino">FiO₂ Inicial — RN de Término</option>
                                         <option value="fio2_prematuro">FiO₂ Inicial — Prematuro</option>
@@ -376,6 +632,30 @@ const App = () => {
                                         <option value="meconio_nrp8">Meconio Espeso — NRP 8ª Ed.</option>
                                         <option value="clampe_cordon">Pinzamiento del Cordón</option>
                                         <option value="hipotermia_ehi">Hipotermia Terapéutica — EHI</option>
+                                    </optgroup>
+                                    <optgroup label="─ Pediatría ─">
+                                        <option value="pedi_epinefrina_anafilaxia">Epinefrina en Anafilaxia Pediátrica</option>
+                                        <option value="pedi_croup_epiglotitis">Croup vs Epiglotitis</option>
+                                        <option value="pedi_convulsion_primera">Primera Línea en Convulsión</option>
+                                        <option value="pedi_shock_reconocimiento">Reconocimiento de Shock Pediátrico</option>
+                                        <option value="pedi_asma_gravedad">Gravedad de Crisis Asmática</option>
+                                        <option value="pedi_cad_complicacion">Complicación más grave de CAD</option>
+                                        <option value="pedi_sepsis_bolo">Volumen en Sepsis Pediátrica</option>
+                                        <option value="pedi_bronquiolitis_tto">Manejo de Bronquiolitis Grave</option>
+                                        <option value="pedi_tce_indicacion_tc">Indicación TC en TCE Pediátrico</option>
+                                        <option value="pedi_rcp_ratio">RCP en Lactantes — Ratio y Técnica</option>
+                                    </optgroup>
+                                    <optgroup label="─ Adultos ─">
+                                        <option value="adult_sdra_berlin">SDRA — Criterios de Berlín</option>
+                                        <option value="adult_killip">Clasificación Killip-Kimball</option>
+                                        <option value="adult_sepsis_bundle">Bundle Sepsis — Hora 1</option>
+                                        <option value="adult_tep_trombolisis">Trombólisis en TEP Masivo</option>
+                                        <option value="adult_stroke_ventana">Ventana Trombolítica en ACV</option>
+                                        <option value="adult_pcr_adrenalina">Adrenalina en PCR — Timing</option>
+                                        <option value="adult_isr_secuencia">ISR — Secuencia de Fármacos</option>
+                                        <option value="adult_epoc_spo2">Objetivo SpO₂ en EPOC Agudizado</option>
+                                        <option value="adult_hta_reduccion">Crisis HTA — Cuánto y Cuán Rápido</option>
+                                        <option value="adult_estado_epi_segunda">Estado Epiléptico — Segunda Línea</option>
                                     </optgroup>
                                 </select>
                             </div>
