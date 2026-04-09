@@ -40,11 +40,21 @@ const { useState, useRef, useEffect, useCallback } = React;
 /* ─── PALETAS DE COLOR ───────────────────────────────────────────────────── */
 const PALETTES = {
     azul:    { name: "NeoBlue",    bg: "#020617", accent: "#2563eb", text: "#f8fafc", sub: "#94a3b8", tag: "#1d4ed8" },
+    azulClaro: { name: "NeoBlue Light", bg: "#f0f7ff", accent: "#1d4ed8", text: "#0f172a", sub: "#475569", tag: "#1e40af" },
     ambar:   { name: "NeoAmber",   bg: "#0c0a00", accent: "#f59e0b", text: "#fffbeb", sub: "#a3a375", tag: "#b45309" },
+    ambarClaro: { name: "NeoAmber Light", bg: "#fffbf0", accent: "#b45309", text: "#0f0202", sub: "#92400e", tag: "#92400e" },
     verde:   { name: "NeoGreen",   bg: "#011003", accent: "#22c55e", text: "#f0fdf4", sub: "#86efac", tag: "#15803d" },
+    verdeClaro: { name: "NeoGreen Light", bg: "#f0fdf4", accent: "#15803d", text: "#020f02", sub: "#16a34a", tag: "#166534" },
     violeta: { name: "NeoPurple",  bg: "#07000f", accent: "#a855f7", text: "#faf5ff", sub: "#c4b5fd", tag: "#7e22ce" },
+    violetaClaro: { name: "NeoPurple Light", bg: "#faf5ff", accent: "#7e22ce", text: "#0f0018", sub: "#9370db", tag: "#6b21a8" },
     rojo:    { name: "NeoRed",     bg: "#0f0203", accent: "#ef4444", text: "#fff5f5", sub: "#fca5a5", tag: "#b91c1c" },
+    rojoClaro: { name: "NeoRed Light", bg: "#fff5f5", accent: "#b91c1c", text: "#0f0203", sub: "#f87171", tag: "#991b1b" },
     oscuro:  { name: "NeoDark",    bg: "#0f172a", accent: "#e2e8f0", text: "#f8fafc", sub: "#64748b", tag: "#334155" },
+    claro:   { name: "NeoClear",   bg: "#ffffff", accent: "#6366f1", text: "#0f172a", sub: "#64748b", tag: "#4f46e5" },
+    rosado:  { name: "NeoPink",    bg: "#ff077d", accent: "#ec4899", text: "#fff5f8", sub: "#f472b6", tag: "#be185d" },
+    rosadoClaro: { name: "NeoPink Light", bg: "#fff5f8", accent: "#be185d", text: "#0f0207", sub: "#f472b6", tag: "#831843" },
+    cian:    { name: "NeoCyan",    bg: "#001f2f", accent: "#06b6d4", text: "#f0f9fa", sub: "#67e8f9", tag: "#0891b2" },
+    cianClaro: { name: "NeoCyan Light", bg: "#f0f9fa", accent: "#0891b2", text: "#001f2f", sub: "#06b6d4", tag: "#164e63" },
 };
 
 const FORMATS = {
@@ -53,9 +63,9 @@ const FORMATS = {
 };
 
 const DEFAULT_SLIDES = [
-    { id: 1, title: "Nueva Funcionalidad", subtitle: "NeoMonitor v2.0", body: "Descripción de la nueva característica del software. Explicá brevemente el beneficio para el usuario.", tag: "NUEVO", palette: "azul" },
-    { id: 2, title: "Mejora de Rendimiento", subtitle: "Procesamiento en tiempo real", body: "El motor de cálculo fue optimizado para reducir la latencia en escenarios de alta demanda clínica.", tag: "MEJORA", palette: "verde" },
-    { id: 3, title: "Disponible Ahora", subtitle: "Actualización gratuita", body: "Descargá la última versión de NeoMonitor desde el panel de administración de tu institución.", tag: "UPDATE", palette: "ambar" },
+    { id: 1, title: "Nueva Funcionalidad", subtitle: "NeoMonitor v2.0", body: "Descripción de la nueva característica del software. Explicá brevemente el beneficio para el usuario.", tag: "NUEVO", palette: "azul", audioUrl: null },
+    { id: 2, title: "Mejora de Rendimiento", subtitle: "Procesamiento en tiempo real", body: "El motor de cálculo fue optimizado para reducir la latencia en escenarios de alta demanda clínica.", tag: "MEJORA", palette: "verde", audioUrl: null },
+    { id: 3, title: "Disponible Ahora", subtitle: "Actualización gratuita", body: "Descargá la última versión de NeoMonitor desde el panel de administración de tu institución.", tag: "UPDATE", palette: "ambar", audioUrl: null },
 ];
 
 /* ─── CANVAS HELPERS ─────────────────────────────────────────────────────── */
@@ -158,6 +168,21 @@ function drawSlideCarousel(ctx, slide, W, H) {
     ctx.font = `400 24px Inter, sans-serif`;
     ctx.fillText('Expert Suite', PAD + ctx.measureText('NeoMonitor').width + 16, logoY + 36);
     ctx.textBaseline = 'top';
+
+    // AUDIO INDICATOR
+    if (slide.audioUrl) {
+        const audioIconSize = 32;
+        const audioX = W - PAD - audioIconSize;
+        const audioY = logoY - audioIconSize;
+        ctx.fillStyle = pal.accent + '20';
+        ctx.fillRect(audioX, audioY, audioIconSize, audioIconSize);
+        ctx.fillStyle = pal.accent;
+        ctx.font = `900 24px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔊', audioX + audioIconSize / 2, audioY + audioIconSize / 2);
+        ctx.textAlign = 'left';
+    }
 }
 
 function drawSlideReel(ctx, slide, W, H) {
@@ -260,6 +285,21 @@ function drawSlideReel(ctx, slide, W, H) {
     ctx.fillText('Expert Suite', W / 2, H - 40);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
+
+    // AUDIO INDICATOR
+    if (slide.audioUrl) {
+        const audioIconSize = 40;
+        const audioX = W - 60;
+        const audioY = 40;
+        ctx.fillStyle = pal.accent + '30';
+        ctx.fillRect(audioX, audioY, audioIconSize, audioIconSize);
+        ctx.fillStyle = pal.accent;
+        ctx.font = `900 32px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔊', audioX + audioIconSize / 2, audioY + audioIconSize / 2);
+        ctx.textAlign = 'left';
+    }
 }
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
@@ -274,6 +314,8 @@ function App() {
     const canvasRef = useRef(null);
     const mediaRecRef = useRef(null);
     const chunksRef = useRef([]);
+    const audioRef = useRef(null);
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
     const fmt = FORMATS[format];
     const slide = slides[activeIdx] || slides[0];
@@ -516,6 +558,25 @@ function App() {
                             <textarea value={slide.body} onChange={e => updateSlide('body', e.target.value)} rows={5}
                                 className="w-full px-3 py-2 rounded-lg text-sm resize-none leading-relaxed"
                                 placeholder="Describí la novedad, mejora o característica en detalle..." />
+                        </div>
+
+                        {/* Audio */}
+                        <div>
+                            <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5">🔊 Audio (opcional)</label>
+                            <input type="file" accept="audio/*" onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (ev) => updateSlide('audioUrl', ev.target?.result);
+                                    reader.readAsDataURL(file);
+                                }
+                            }} className="w-full px-3 py-2 rounded-lg text-sm" />
+                            {slide.audioUrl && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <audio ref={audioRef} src={slide.audioUrl} className="w-full" controls />
+                                    <button onClick={() => updateSlide('audioUrl', null)} className="text-red-400 hover:text-red-500 text-sm">✕</button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

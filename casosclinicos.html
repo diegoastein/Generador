@@ -182,6 +182,230 @@ const SCENARIOS_BASE = {
             {t:"Tratamiento",       d:"FiO₂ 100%, alcalosis suave, sedación. Óxido Nítrico inhalado 20 ppm si disponible. OMEC si falla.", v:{hr:140,sp:88}},
             {t:"Clave NRP",        d:"Hiperoxia controlada y ventilación óptima antes del iNO. La hipotensión empeora el shunt D-I.", v:null}
         ]
+    },
+
+    /* ── CASOS PEDIÁTRICOS ── */
+
+    pedi_asma: {
+        title: "Crisis Asmática Severa",
+        steps: [
+            {t:"Presentación",      d:"Niño de 8 años con asma conocida. Disnea progresiva 2h. Broncodilatador inhalado sin respuesta.", v:null},
+            {t:"Monitor en Alerta", d:"FR 38/min, tiraje intercostal y subcostal marcado. Sibilancias espiratorias difusas bilaterales.", v:{hr:138,sp:88}},
+            {t:"Evaluación",        d:"PEFR < 50% teórico. Entrada de aire disminuida en base derecha. Silent chest: máxima gravedad.", v:{hr:142,sp:84}},
+            {t:"Conducta",          d:"O₂ alto flujo + Salbutamol contínuo + Ipratropio nebulizado + Metilprednisolona 2 mg/kg IV. MgSO₄.", v:{hr:118,sp:93}},
+            {t:"Clave Pediátrica",  d:"Silent chest = broncoespasmo crítico. Ausencia de sibilancias NO implica mejoría: indica colapso.", v:null}
+        ]
+    },
+
+    pedi_croup: {
+        title: "Croup — Laringotraqueítis",
+        steps: [
+            {t:"Escenario",         d:"Lactante 18 meses con tos perruna, estridor inspiratorio y disfonía. Inicio nocturno agudo.", v:null},
+            {t:"Signos Clínicos",   d:"Score de Westley 7 puntos (grave). Tiraje supraesternal y subcostal. Cianosis peroral incipiente.", v:{hr:152,sp:91}},
+            {t:"Diagnóstico",       d:"Croup viral (Parainfluenza). Rx: signo de la aguja subglótica. Descartar epiglotitis.", v:{hr:150,sp:90}},
+            {t:"Tratamiento",       d:"Dexametasona 0.6 mg/kg IM/VO. Adrenalina racémica nebulizada 0.5 ml en 2.5 ml SF. O₂ húmedo.", v:{hr:128,sp:96}},
+            {t:"Clave Pediátrica",  d:"Dexametasona + Adrenalina nebulizada es el estándar en croup moderado-grave. Vigilar rebote.", v:null}
+        ]
+    },
+
+    pedi_convulsion: {
+        title: "Estado Convulsivo Febril",
+        steps: [
+            {t:"Inicio",            d:"Niño de 3 años. Convulsión tónico-clónica generalizada > 5 min con fiebre 39.5°C. Sin antecedentes.", v:null},
+            {t:"Monitorización",    d:"SpO₂ en caída por apnea posictal. Sin recuperación del sensorio a los 10 min de la crisis.", v:{hr:148,sp:85}},
+            {t:"Primera Línea",     d:"Midazolam IM/nasal 0.2 mg/kg ó Diazepam rectal 0.5 mg/kg. O₂ con mascarilla. Acceso IV urgente.", v:{hr:140,sp:90}},
+            {t:"Segunda Línea",     d:"Si refractario: Levetiracetam IV 40 mg/kg ó Fenitoína IV 20 mg/kg. Preparar intubación de RSI.", v:{hr:110,sp:96}},
+            {t:"Clave Pediátrica",  d:"Estado epiléptico: crisis > 5 min sin ceder. BZD en < 5 min. Si falla → antiepiléptico IV.", v:null}
+        ]
+    },
+
+    pedi_bronquiolitis: {
+        title: "Bronquiolitis Grave — VSR",
+        steps: [
+            {t:"Presentación",      d:"Lactante 3 meses. Rinorrea, tos y dificultad respiratoria progresiva 48h. Epidemia invernal VSR.", v:null},
+            {t:"Gravedad",          d:"FR 70/min, quejido espiratorio, aleteo nasal, head bobbing. Saturación crítica sin O₂.", v:{hr:168,sp:86}},
+            {t:"Evaluación",        d:"Score Wood-Downes 7 (grave). Hiperinsuflación bilateral. Crepitantes finos difusos.", v:{hr:170,sp:84}},
+            {t:"Conducta",          d:"O₂ humidificado objetivo SpO₂ ≥ 92%. CNAF si persiste hipoxemia. No beta2 de rutina. Soporte.", v:{hr:148,sp:93}},
+            {t:"Clave Pediátrica",  d:"CNAF reduce intubación en bronquiolitis grave. Evitar broncodilatadores sin respuesta probada.", v:null}
+        ]
+    },
+
+    pedi_shock: {
+        title: "Shock Distributivo Pediátrico",
+        steps: [
+            {t:"Presentación",      d:"Niño 5 años. Fiebre 40°C, taquicardia extrema, piel caliente-rubicunda. No bebe hace 12h.", v:null},
+            {t:"Signos",            d:"PA limítrofe para la edad. Relleno capilar central normal, periférico 2 seg. Lactato > 2 mmol/L.", v:{hr:162,sp:96}},
+            {t:"Clasificación",     d:"Shock caliente distributivo (probable séptico). Acceso IV urgente. Cultivos antes de ATB.", v:{hr:165,sp:94}},
+            {t:"Reanimación",       d:"SF o Ringer 20 ml/kg en bolo en 5-10 min IV. Repetir si no hay respuesta clínica.", v:{hr:132,sp:97}},
+            {t:"Clave Pediátrica",  d:"Sepsis pediátrica: 2-3 bolos de 20 ml/kg. Si no responde → vasopresores (noradrenalina).", v:null}
+        ]
+    },
+
+    pedi_sepsis: {
+        title: "Sepsis Grave Pediátrica",
+        steps: [
+            {t:"Caso",              d:"Lactante 6 meses. Fiebre 39°C, irritabilidad, rechazo del alimento. Sin foco clínico aparente.", v:null},
+            {t:"Alerta",            d:"Taquicardia marcada. Fontanela abombada. Petequias en MMII. Sospecha meningocóccica.", v:{hr:188,sp:95}},
+            {t:"Laboratorio",       d:"PCR 220, PCT 48 ng/ml, GB 22.000 con desviación izq. Hemocultivos × 2 extraídos.", v:{hr:192,sp:93}},
+            {t:"Conducta",          d:"Ceftriaxona 100 mg/kg IV. Dexametasona si sospecha meningitis. Expansión SF 20 ml/kg.", v:{hr:158,sp:96}},
+            {t:"Clave Pediátrica",  d:"Rash purpúrico + fiebre = meningococcemia hasta demostrar lo contrario. ATB en < 1 hora.", v:null}
+        ]
+    },
+
+    pedi_cad: {
+        title: "Cetoacidosis Diabética Pediátrica",
+        steps: [
+            {t:"Presentación",      d:"Niño 10 años, DM1. Vómitos 24h, dolor abdominal, aliento cetónico, respiración de Kussmaul.", v:null},
+            {t:"Laboratorio",       d:"Glucemia 540 mg/dl, pH 7.09, HCO₃ 6 mEq/L, Cetonemia 8 mmol/L. K+ sérico normal-alto.", v:{hr:130,sp:98}},
+            {t:"Riesgo Crítico",    d:"Mayor riesgo de edema cerebral en < 5 años. Hidratación lenta y controlada es fundamental.", v:{hr:128,sp:98}},
+            {t:"Tratamiento",       d:"SF 10-20 ml/kg/1h. Insulina regular 0.1 UI/kg/h. KCl 40 mEq/L cuando haya diuresis.", v:{hr:108,sp:99}},
+            {t:"Clave Pediátrica",  d:"Reponer en 48h. Sin bicarbonato de rutina. Vigilar neurológico: edema cerebral = mortalidad.", v:null}
+        ]
+    },
+
+    pedi_tce: {
+        title: "TCE Grave Pediátrico",
+        steps: [
+            {t:"Mecanismo",         d:"Niño 7 años. Caída de bicicleta sin casco. Pérdida de consciencia 5 min. Amnesia postraumática.", v:null},
+            {t:"Evaluación",        d:"GCS 10 (O3V3M4). Anisocoria izquierda. Vómitos repetidos. Sospecha de HTEC incipiente.", v:{hr:58,sp:96}},
+            {t:"Triada de Cushing", d:"Bradicardia + HTA + irregularidad respiratoria: herniación inminente. TAC urgente.", v:{hr:54,sp:94}},
+            {t:"Conducta",          d:"Posición 30°. Manitol 0.5-1 g/kg ó SSH 3%. Evitar hipotensión e hipoxemia. Neurocirugía.", v:{hr:72,sp:97}},
+            {t:"Clave Pediátrica",  d:"Triada de Cushing es tardía. Actuar antes. Proteger PPC ≥ 40-50 mmHg en pediatría.", v:null}
+        ]
+    },
+
+    pedi_anafilaxia: {
+        title: "Anafilaxia Grave Pediátrica",
+        steps: [
+            {t:"Desencadenante",    d:"Niña 9 años. Minutos tras ingesta de maní: urticaria generalizada, angioedema, estridor.", v:null},
+            {t:"Colapso",           d:"PA 60/30 mmHg. Broncoespasmo severo. Pérdida de consciencia inminente.", v:{hr:152,sp:84}},
+            {t:"Prioridad",         d:"Adrenalina IM en músculo vasto lateral: 0.01 mg/kg (máx 0.5 mg). Repetir a los 5-15 min.", v:{hr:148,sp:83}},
+            {t:"Soporte",           d:"O₂ alto flujo, decúbito supino + MMII elevados, SF 20 ml/kg IV, difenhidramina + corticoides.", v:{hr:118,sp:95}},
+            {t:"Clave Pediátrica",  d:"Adrenalina IM es la ÚNICA primera línea. Antihistamínicos NO reemplazan la adrenalina.", v:null}
+        ]
+    },
+
+    pedi_intox_pcm: {
+        title: "Intoxicación por Paracetamol",
+        steps: [
+            {t:"Contexto",          d:"Adolescente 14 años. Ingesta ~8g de paracetamol hace 3h en contexto de intento autolítico.", v:null},
+            {t:"Laboratorio",       d:"Paracetamolemia 280 mcg/ml a las 4h (zona de riesgo elevado en nomograma Rumack-Matthew).", v:{hr:98,sp:99}},
+            {t:"Fases",             d:"1) Síntomas GI, 2) Latencia asintomática, 3) Hepatotoxicidad (máx 72h), 4) Recuperación.", v:{hr:96,sp:99}},
+            {t:"Antídoto",          d:"N-Acetilcisteína IV: 150 mg/kg en 60 min → 50 mg/kg en 4h → 100 mg/kg en 16h. Inmediato.", v:{hr:88,sp:99}},
+            {t:"Clave Pediátrica",  d:"Iniciar NAC si paracetamolemia en zona de riesgo. No esperar a ver hepatotoxicidad.", v:null}
+        ]
+    },
+
+    /* ── CASOS DE ADULTOS ── */
+
+    adult_sdra: {
+        title: "SDRA — Adulto",
+        steps: [
+            {t:"Contexto",          d:"Paciente 52 años, neumonía bilateral. FiO₂ 60%, SpO₂ 85%. P/F = 120 mmHg.", v:null},
+            {t:"Diagnóstico",       d:"Criterios de Berlín: inicio < 1 sem, opacidades bilaterales, PaFiO₂ < 200 (SDRA grave).", v:{hr:118,sp:85}},
+            {t:"Estrategia",        d:"Ventilación protectora: Vt 6 ml/kg peso ideal. PEEP titulado. Plateau < 30 cmH₂O.", v:{hr:112,sp:89}},
+            {t:"Prono",             d:"Decúbito prono 16-18h si P/F < 150 con FiO₂ ≥ 60% y PEEP ≥ 5. Mejora relación V/Q.", v:{hr:96,sp:94}},
+            {t:"Clave Adulto",      d:"SDRA: ventilación protectora + prono precoz + PEEP óptimo. Evitar barotrauma e hiperoxia.", v:null}
+        ]
+    },
+
+    adult_iam_shock: {
+        title: "IAM + Shock Cardiogénico",
+        steps: [
+            {t:"Presentación",      d:"Hombre 64 años. Dolor precordial irradiado a brazo izq. 2h de evolución. Diaforesis y frialdad.", v:null},
+            {t:"Monitor",           d:"SDST > 2 mm en DII-DIII-aVF. PA 80/50 mmHg. Estertor pulmonar bilateral. Killip IV.", v:{hr:105,sp:86}},
+            {t:"Shock Cardiogénico",d:"IAM inferior + shock. Lactato 6 mmol/L. Noradrenalina para sostener PAM > 65 mmHg.", v:{hr:108,sp:84}},
+            {t:"Reperfusión",       d:"ATC primaria urgente: objetivo puerta-balón < 90 min. Heparina + AAS + P2Y12 inhibidor.", v:{hr:88,sp:93}},
+            {t:"Clave Adulto",      d:"IAM + shock: reperfusión mecánica urgente. Los inotrópicos no reemplazan la revascularización.", v:null}
+        ]
+    },
+
+    adult_sepsis: {
+        title: "Sepsis Severa — Adulto",
+        steps: [
+            {t:"Presentación",      d:"Mujer 71 años, diabética. Confusión aguda, fiebre 38.9°C, FR 24/min. ITU como foco.", v:null},
+            {t:"qSOFA",             d:"Score qSOFA: 3 puntos (FR ≥ 22, estado mental alterado, PAS < 100). Alta probabilidad sepsis.", v:{hr:112,sp:94}},
+            {t:"Lactato y Cultivos",d:"Lactato 4.2 mmol/L. Hemocultivos × 2 y urocultivo antes de antibióticos.", v:{hr:118,sp:92}},
+            {t:"Bundle Hora 1",     d:"Cristaloides 30 ml/kg + Meropenem 1g IV + Noradrenalina si PAM < 65 tras fluidos.", v:{hr:98,sp:96}},
+            {t:"Clave Adulto",      d:"Surviving Sepsis: ATB + fluidos + cultivos en < 1 hora. Lactato orienta la reanimación.", v:null}
+        ]
+    },
+
+    adult_tep: {
+        title: "TEP Masivo — Adulto",
+        steps: [
+            {t:"Presentación",      d:"Mujer 58 años, postquirúrgica. Disnea brusca, hemoptisis, inestabilidad hemodinámica.", v:null},
+            {t:"Monitor",           d:"PA 85/50 mmHg. FC 128 lpm. SpO₂ 82% con O₂ 6L. ECG: S1Q3T3, BCRD.", v:{hr:128,sp:82}},
+            {t:"Diagnóstico",       d:"Angio-TC: trombo en silla de montar en bifurcación pulmonar. Disfunción VD en ECO.", v:{hr:130,sp:80}},
+            {t:"Tratamiento",       d:"TEP masivo + shock: trombólisis Alteplase 100 mg IV en 2h si sin contraindicación.", v:{hr:102,sp:92}},
+            {t:"Clave Adulto",      d:"TEP masivo = inestabilidad hemodinámica. Trombólisis sistémica urgente. ATB posterior.", v:null}
+        ]
+    },
+
+    adult_estado_epi: {
+        title: "Estado Epiléptico — Adulto",
+        steps: [
+            {t:"Caso",              d:"Hombre 45 años, epiléptico conocido. Crisis tónico-clónica generalizada > 10 min sin ceder.", v:null},
+            {t:"Monitor",           d:"SpO₂ 88% por hipoventilación. Cianosis peroral. Acidosis metabólica. Sin acceso IV.", v:{hr:132,sp:88}},
+            {t:"Primera Línea",     d:"Midazolam IM 10 mg (sin IV) ó Diazepam rectal 0.2 mg/kg. O₂ mascarilla. Posición lateral.", v:{hr:128,sp:90}},
+            {t:"Segunda Línea",     d:"Si persiste > 5 min post BZD: Levetiracetam IV 60 mg/kg (máx 4.5g) ó Valproato IV.", v:{hr:100,sp:95}},
+            {t:"Clave Adulto",      d:"Estado epiléptico: BZD en < 5 min. Si falla → antiepiléptico IV. Si falla → anestesia + IOT.", v:null}
+        ]
+    },
+
+    adult_stroke: {
+        title: "Stroke Isquémico Agudo",
+        steps: [
+            {t:"Onset",             d:"Mujer 68 años. Paresia facial izquierda + afasia de inicio brusco hace 90 min. NIHSS 14.", v:null},
+            {t:"Monitor",           d:"PA 185/100. Glucemia 142. TC sin contraste: sin sangrado. Activar código ACV.", v:{hr:88,sp:97}},
+            {t:"Ventana",           d:"Dentro de ventana 4.5h para rt-PA. Angio-TC: oclusión M1 izquierda. Candidata a trombólisis.", v:{hr:86,sp:97}},
+            {t:"Reperfusión",       d:"rt-PA IV 0.9 mg/kg (máx 90 mg): 10% bolo + 90% en 60 min. Trombectomía si oclusión grande.", v:{hr:80,sp:97}},
+            {t:"Clave Adulto",      d:"Time is brain: cada minuto sin reperfusión = 1.9 millones de neuronas perdidas. Actuar ya.", v:null}
+        ]
+    },
+
+    adult_pcr: {
+        title: "PCR — RCP Avanzada Adulto",
+        steps: [
+            {t:"Colapso",           d:"Hombre 57 años. Colapso súbito en sala de espera. Sin pulso, sin respiración. FV en monitor.", v:null},
+            {t:"RCP Básica",        d:"Compresiones: 5-6 cm profundidad, 100-120/min. Ratio 30:2. DEA en < 2 min.", v:{hr:0,sp:null}},
+            {t:"Desfibrilación",    d:"FV: desfibrilar inmediatamente (200 J bifásico). Reiniciar RCP tras choque sin demora.", v:{hr:0,sp:null}},
+            {t:"Farmacología",      d:"Adrenalina 1mg IV cada 3-5 min. Amiodarona 300 mg IV si FV/TV refractaria tras 3er choque.", v:{hr:68,sp:88}},
+            {t:"Clave Adulto",      d:"Compresiones de alta calidad + desfibrilación precoz = únicos determinantes de sobrevida.", v:null}
+        ]
+    },
+
+    adult_isr: {
+        title: "Intubación de Secuencia Rápida",
+        steps: [
+            {t:"Indicación",        d:"Hombre 42 años. Trauma facial, agitado, SpO₂ 82% con O₂ 15L. Vía aérea comprometida.", v:null},
+            {t:"Preparación",       d:"SOAPMME: Succión, O₂, Aspirador, Posición, Monitorización, Medicamentos, Material extra.", v:{hr:125,sp:82}},
+            {t:"Fármacos",          d:"Fentanilo 3 mcg/kg + Ketamina 1.5 mg/kg (inducción) + Succinilcolina 1.5 mg/kg IV.", v:{hr:118,sp:86}},
+            {t:"Intubación",        d:"Videolaringoscopio. TET apropiado. Confirmar capnografía + RX. Fijar. Sedoanalgesia.", v:{hr:98,sp:97}},
+            {t:"Clave Adulto",      d:"ISR: apnea tras fármacos, sin bolseo previo. Preoxigenar 3-5 min. BVM solo si SpO₂ < 88%.", v:null}
+        ]
+    },
+
+    adult_insuf_resp: {
+        title: "Insuficiencia Respiratoria Aguda",
+        steps: [
+            {t:"Presentación",      d:"Mujer 66 años, EPOC severo. Disnea en reposo, tos purulenta. Sin mejoría con O₂ convencional.", v:null},
+            {t:"Gasometría",        d:"pH 7.22, PaCO₂ 78, PaO₂ 48 con FiO₂ 28%. IRA hipercápnica aguda sobre crónica.", v:{hr:108,sp:82}},
+            {t:"VNI",               d:"BIPAP: IPAP 14 / EPAP 5 cmH₂O. FiO₂ para SpO₂ 88-92% (evitar suprimir drive).", v:{hr:102,sp:89}},
+            {t:"Respuesta",         d:"Mejoría en 1h: pH 7.32, PaCO₂ 60. Continuar VNI. Si falla → IOT con ventilación protectora.", v:{hr:88,sp:92}},
+            {t:"Clave Adulto",      d:"EPOC agudizado: VNI de primera línea. SpO₂ objetivo 88-92%, nunca hiperoxia.", v:null}
+        ]
+    },
+
+    adult_crisis_hta: {
+        title: "Crisis Hipertensiva con DOB",
+        steps: [
+            {t:"Presentación",      d:"Hombre 54 años. Cefalea en trueno, PA 220/130 mmHg. Edema de papila. Sin tratamiento previo.", v:null},
+            {t:"DOB",               d:"Daño de órgano blanco: fondo de ojo con hemorragias, creatinina 3.2 mg/dl, troponina elevada.", v:{hr:96,sp:98}},
+            {t:"Emergencia",        d:"Emergencia hipertensiva con DOB: reducir PAM máximo 20-25% en la 1ª hora. UCI requerida.", v:{hr:92,sp:98}},
+            {t:"Tratamiento",       d:"Labetalol IV 20 mg en bolo (máx 300 mg) ó Nicardipina IV 5 mg/h titulable. Monitoreo contínuo.", v:{hr:84,sp:98}},
+            {t:"Clave Adulto",      d:"Emergencia HTA: descenso gradual IV. Reducción brusca → isquemia cerebral o coronaria.", v:null}
+        ]
     }
 };
 
@@ -270,6 +494,53 @@ function renderSlideToCanvas(canvas, step, slideIndex) {
     ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
+// ─── CTA Slides ──────────────────────────────────────────────────────────────
+const CTA_POOL = [
+    { tag:"PARA TUS CLASES Y RESIDENTES", headline:"Visitá NeoMonitor", sub:"Ingresá a www.neomonitor.pro y usá los casos presets para tus clases o tus residentes. Gratis." },
+    { tag:"HERRAMIENTA DOCENTE GRATUITA", headline:"www.neomonitor.pro", sub:"Casos clínicos presets listos para usar en tus clases, ateneos o con tus residentes." },
+    { tag:"IDEAL PARA DOCENTES Y RESIDENTES", headline:"Probá NeoMonitor", sub:"Visitá www.neomonitor.pro y explorá los casos disponibles para tu práctica clínica." },
+    { tag:"CASOS PRESETS LISTOS PARA USAR", headline:"Entrá a NeoMonitor", sub:"Ingresá a www.neomonitor.pro y usá los escenarios presets en tus clases o residencias." },
+    { tag:"GRATIS · SIN REGISTRO", headline:"NeoMonitor.pro", sub:"Visitá la web y aprovechá los casos clínicos presets para enseñar y aprender medicina." },
+    { tag:"PARA TUS ATENEOS Y CLASES", headline:"Visitá la web app", sub:"www.neomonitor.pro — casos presets para neonatología, pediatría y adultos. Sin costo." },
+    { tag:"USALO CON TUS RESIDENTES", headline:"NeoMonitor es gratis", sub:"Ingresá a www.neomonitor.pro y usá los casos disponibles en tus actividades docentes." },
+    { tag:"DOCENCIA MÉDICA SIN COSTO", headline:"Ingresá a NeoMonitor", sub:"Visitá www.neomonitor.pro y descubrí los casos presets para tus clases y residentes." },
+    { tag:"CASOS CLÍNICOS PARA ENSEÑAR", headline:"www.neomonitor.pro", sub:"Ingresá gratis y usá los escenarios presets para enriquecer tus clases y ateneos." },
+    { tag:"PARA PROFESIONALES DE LA SALUD", headline:"Visitá NeoMonitor", sub:"Explorá los casos presets en www.neomonitor.pro. Ideal para docentes y residentes." },
+];
+
+function renderCTASlide(canvas, cta) {
+    const SIZE = 1080;
+    canvas.width = SIZE; canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,SIZE,SIZE);
+    ctx.fillStyle = '#1e293b';
+    for (let gx=20; gx<SIZE; gx+=40) for (let gy=20; gy<SIZE; gy+=40) {
+        ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill();
+    }
+    const grd = ctx.createRadialGradient(SIZE/2,SIZE/2,0,SIZE/2,SIZE/2,580);
+    grd.addColorStop(0,'rgba(37,99,235,0.18)'); grd.addColorStop(1,'transparent');
+    ctx.fillStyle = grd; ctx.fillRect(0,0,SIZE,SIZE);
+    const PAD = 80, cx = SIZE/2;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    roundRect(ctx,cx-48,PAD,96,96,22); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 38px Inter, sans-serif';
+    ctx.textBaseline='middle'; ctx.fillText('NM',cx,PAD+48); ctx.textBaseline='top';
+    ctx.fillStyle='#22c55e'; ctx.font='bold 26px Inter, sans-serif';
+    ctx.fillText(cta.tag,cx,PAD+128);
+    ctx.fillStyle='#fff'; ctx.font='bold 90px Inter, sans-serif';
+    const hl = wrapText(ctx,cta.headline.toUpperCase(),cx,PAD+186,SIZE-PAD*2,96);
+    const subY = PAD+186+hl*96+32;
+    ctx.fillStyle='#94a3b8'; ctx.font='400 38px Inter, sans-serif';
+    wrapText(ctx,cta.sub,cx,subY,SIZE-PAD*2-40,52);
+    const urlY = SIZE-PAD-100;
+    roundRect(ctx,PAD,urlY,SIZE-PAD*2,88,44); ctx.fillStyle='#2563eb'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 40px Inter, sans-serif';
+    ctx.textBaseline='middle'; ctx.fillText('WWW.NEOMONITOR.PRO',cx,urlY+44);
+    ctx.fillStyle='#334155'; ctx.font='bold 20px Inter, sans-serif';
+    ctx.textBaseline='top'; ctx.fillText('NEOMONITOR EXPERT SUITE · v5.0',cx,SIZE-PAD-8);
+    ctx.textAlign='left'; ctx.textBaseline='top';
+}
+
 // ─── Preview ──────────────────────────────────────────────────────────────────
 const SlidePreview = ({ step, index }) => (
     <div className="w-full aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-white/5 flex flex-col p-5" style={{background:'#020617'}}>
@@ -328,6 +599,11 @@ const App = () => {
             renderSlideToCanvas(canvas, scenario.steps[i], i);
             images.push(canvas.toDataURL('image/png'));
         }
+        setStatus('Generando llamada a la acción…');
+        await new Promise(r => setTimeout(r, 30));
+        const ctaCanvas = document.createElement('canvas');
+        renderCTASlide(ctaCanvas, CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)]);
+        images.push(ctaCanvas.toDataURL('image/png'));
         setGallery(images); setStatus(''); setIsGenerating(false);
     };
 
@@ -358,9 +634,9 @@ const App = () => {
                 <header className="mb-10 max-w-6xl mx-auto">
                     <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
                         <h2 className="text-4xl font-black tracking-tight uppercase">Editor de <span className="text-blue-500">Casos</span></h2>
-                        <div className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase inline-block w-fit">13 Escenarios NRP</div>
+                        <div className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase inline-block w-fit">33 Escenarios Clínicos</div>
                     </div>
-                    <p className="text-slate-400">Casos clínicos neonatales basados en el NRP · AHA/AAP 8ª edición.</p>
+                    <p className="text-slate-400">Casos neonatales, pediátricos y de adultos basados en protocolos internacionales.</p>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
@@ -374,12 +650,12 @@ const App = () => {
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Escenario Maestro</label>
                                 <select onChange={e=>loadScenario(e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold cursor-pointer">
                                     <option value="">-- Nuevo Documento --</option>
-                                    <optgroup label="─ Casos Originales ─">
-                                        <option value="brady">Bradicardia Severa</option>
+                                    <optgroup label="─ Neonatología — Originales ─">
+                                        <option value="brady">Bradicardia Severa Neonatal</option>
                                         <option value="pneumo">Neumotórax a Tensión</option>
                                         <option value="sepsis">Shock Séptico Neonatal</option>
                                     </optgroup>
-                                    <optgroup label="─ Nuevos NRP 8ª Ed. ─">
+                                    <optgroup label="─ Neonatología — NRP 8ª Ed. ─">
                                         <option value="apnea_primaria">Apnea Primaria al Nacer</option>
                                         <option value="vpp_inefectiva">VPP Inefectiva — MR-SOPA</option>
                                         <option value="aspiracion_meconio">Líquido Amniótico Meconial</option>
@@ -390,6 +666,30 @@ const App = () => {
                                         <option value="hipoglucemia_neonatal">Hipoglucemia Neonatal Severa</option>
                                         <option value="encefalopatia_hipoxica">Encefalopatía Hipóxico-Isquémica</option>
                                         <option value="hipertension_pulmonar">Hipertensión Pulmonar Neonatal</option>
+                                    </optgroup>
+                                    <optgroup label="─ Pediatría ─">
+                                        <option value="pedi_asma">Crisis Asmática Severa</option>
+                                        <option value="pedi_croup">Croup — Laringotraqueítis</option>
+                                        <option value="pedi_convulsion">Estado Convulsivo Febril</option>
+                                        <option value="pedi_bronquiolitis">Bronquiolitis Grave — VSR</option>
+                                        <option value="pedi_shock">Shock Distributivo Pediátrico</option>
+                                        <option value="pedi_sepsis">Sepsis Grave Pediátrica</option>
+                                        <option value="pedi_cad">Cetoacidosis Diabética Pediátrica</option>
+                                        <option value="pedi_tce">TCE Grave Pediátrico</option>
+                                        <option value="pedi_anafilaxia">Anafilaxia Grave Pediátrica</option>
+                                        <option value="pedi_intox_pcm">Intoxicación por Paracetamol</option>
+                                    </optgroup>
+                                    <optgroup label="─ Adultos ─">
+                                        <option value="adult_sdra">SDRA — Adulto</option>
+                                        <option value="adult_iam_shock">IAM + Shock Cardiogénico</option>
+                                        <option value="adult_sepsis">Sepsis Severa — Adulto</option>
+                                        <option value="adult_tep">TEP Masivo — Adulto</option>
+                                        <option value="adult_estado_epi">Estado Epiléptico — Adulto</option>
+                                        <option value="adult_stroke">Stroke Isquémico Agudo</option>
+                                        <option value="adult_pcr">PCR — RCP Avanzada</option>
+                                        <option value="adult_isr">Intubación de Secuencia Rápida</option>
+                                        <option value="adult_insuf_resp">Insuficiencia Respiratoria Aguda</option>
+                                        <option value="adult_crisis_hta">Crisis Hipertensiva con DOB</option>
                                     </optgroup>
                                 </select>
                             </div>
