@@ -633,6 +633,8 @@ const App = () => {
     const [status, setStatus] = useState('');
     const [audioObjectUrl, setAudioObjectUrl] = useState(null);
     const [audioFileName, setAudioFileName] = useState('');
+    const [caseDescription, setCaseDescription] = useState('');
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     const handleAudioFile = (e) => {
         const file = e.target.files[0];
@@ -773,6 +775,79 @@ const App = () => {
         }
     };
 
+    const generateWithAI = async () => {
+        if (!caseDescription.trim()) {
+            setStatus('Por favor, describe el caso clínico');
+            return;
+        }
+
+        let apiKey = localStorage.getItem('claude_api_key');
+        if (!apiKey) {
+            apiKey = prompt('Ingresá tu API key de Claude (sk-ant-...):');
+            if (!apiKey) {
+                setStatus('Se requiere API key para usar esta función');
+                return;
+            }
+            localStorage.setItem('claude_api_key', apiKey);
+        }
+
+        setIsGeneratingAI(true);
+        setStatus('Generando caso con IA...');
+
+        try {
+            const response = await fetch('http://localhost:3001/api/generate-case', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    apiKey,
+                    caseDescription
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Error en la API de Claude');
+            }
+
+            const data = await response.json();
+            console.log('Respuesta completa de Claude:', data);
+
+            const content = data.content[0].text;
+            console.log('Contenido raw:', content);
+
+            // Limpiar markdown si Claude devuelve con ```json
+            let jsonStr = content.trim();
+            if (jsonStr.startsWith('```json')) {
+                jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '');
+            } else if (jsonStr.startsWith('```')) {
+                jsonStr = jsonStr.replace(/^```\n/, '').replace(/\n```$/, '');
+            }
+
+            console.log('JSON limpio:', jsonStr);
+            const caseData = JSON.parse(jsonStr);
+            console.log('Datos parseados:', caseData);
+
+            const formattedSteps = caseData.steps.map(s => ({
+                t: s.title || '',
+                d: s.description || '',
+                v: (s.hr !== null || s.spo2 !== null) ? { hr: s.hr, sp: s.spo2 } : null
+            }));
+
+            setScenario({ title: caseData.title, steps: formattedSteps });
+            setActiveSlide(0);
+            setCaseDescription('');
+            setStatus('✅ Caso generado con IA');
+            setTimeout(() => setStatus(''), 4000);
+        } catch (err) {
+            console.error('Error completo:', err);
+            setStatus('❌ Error: ' + err.message);
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
     const currentStep = scenario.steps[activeSlide];
 
     return (
@@ -811,6 +886,26 @@ const App = () => {
                         <SlidePreview step={currentStep} index={activeSlide}/>
 
                         <div className="glass-card p-6 rounded-[32px] space-y-6">
+                            <div className="space-y-4 pb-4 border-b border-white/5">
+                                <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2 block">✨ Generar con IA</label>
+                                <textarea
+                                    placeholder="Ej: Shock séptico en lactante de 3 meses con meningococcemia..."
+                                    rows={2}
+                                    value={caseDescription}
+                                    onChange={(e) => setCaseDescription(e.target.value)}
+                                    disabled={isGeneratingAI}
+                                    className="w-full rounded-xl p-4 text-sm resize-none"
+                                />
+                                <button
+                                    onClick={generateWithAI}
+                                    disabled={isGeneratingAI || isExportingVideo || !caseDescription.trim()}
+                                    className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]"
+                                >
+                                    {isGeneratingAI ? <><div className="w-2 h-2 bg-white rounded-full animate-pulse"/><span>{status}</span></> : <>✨ Generar Caso</>}
+                                </button>
+                                <p className="text-[9px] text-purple-300/70 font-medium leading-tight">Tu API key se guarda localmente. Generada en español basado en NRP 8ª edición.</p>
+                            </div>
+
                             <div>
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Escenario Maestro</label>
                                 <select onChange={e=>loadScenario(e.target.value)} className="w-full rounded-xl p-4 text-sm font-bold cursor-pointer">
