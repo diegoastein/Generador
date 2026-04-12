@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="drive-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -28,6 +29,9 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useRef, useCallback, useEffect } = React;
+
+// ─── Inicializar Drive Sync ───────────────────────────────────────────────────
+DriveSync.init().catch(e => console.warn('Drive Sync init error:', e));
 
 /* ─────────────────────────────────────────────────────────────────────────────
    ESCENARIOS — 13 casos NRP (AHA/AAP 8ª ed. 2021 + actualización 2023)
@@ -899,21 +903,44 @@ const App = () => {
     const [batchFormat, setBatchFormat] = useState('carruseles'); // 'carruseles', 'reels', 'ambos'
     const [library, setLibrary] = useState([]);
     const [activeTab, setActiveTab] = useState('editor'); // 'editor', 'library'
+    const [driveConnected, setDriveConnected] = useState(false);
 
-    // Cargar biblioteca desde localStorage
+    // Listener de cambios en Drive
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem('neocontent_library');
-            if (saved) setLibrary(JSON.parse(saved));
-        } catch (err) {
-            console.warn('Error cargando biblioteca:', err);
-        }
+        DriveSync.onStatusChange(({ isSignedIn }) => {
+            setDriveConnected(isSignedIn);
+        });
     }, []);
 
-    // Guardar biblioteca a localStorage cuando cambia
+    // Cargar biblioteca desde localStorage y Drive
+    useEffect(() => {
+        const loadLibrary = async () => {
+            try {
+                const data = await DriveSync.loadAll();
+                const lib = data.neocontent_library || [];
+                setLibrary(lib);
+            } catch (err) {
+                console.warn('Error cargando biblioteca:', err);
+                try {
+                    const saved = localStorage.getItem('neocontent_library');
+                    if (saved) setLibrary(JSON.parse(saved));
+                } catch (e) {}
+            }
+        };
+        loadLibrary();
+    }, []);
+
+    // Guardar biblioteca a localStorage y Drive cuando cambia
     useEffect(() => {
         try {
             localStorage.setItem('neocontent_library', JSON.stringify(library));
+            // Guardar también a Drive
+            DriveSync.saveAll({
+                neocontent_library: library,
+                neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
+                neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
+                videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]')
+            }).catch(e => console.warn('Error guardando a Drive:', e));
         } catch (err) {
             console.warn('Error guardando biblioteca:', err);
         }
@@ -1526,9 +1553,19 @@ const App = () => {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
             <aside className="w-full md:w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col items-center md:items-start shrink-0">
-                <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
-                    <span className="font-black text-xl tracking-tighter uppercase">NeoMonitor</span>
+                <div className="flex items-center gap-3 mb-12 w-full justify-between md:justify-start">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
+                        <span className="font-black text-xl tracking-tighter uppercase">NeoMonitor</span>
+                    </div>
+                    <button onClick={() => driveConnected ? DriveSync.signOut() : DriveSync.signIn()}
+                        className={`text-[9px] font-black px-2 py-1 rounded-lg transition-all ${
+                            driveConnected
+                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700/70'
+                        }`}>
+                        {driveConnected ? '🔗 Drive' : '📴 Drive'}
+                    </button>
                 </div>
                 <nav className="w-full space-y-2">
                     <div className="p-4 rounded-2xl bg-blue-600/10 border border-blue-500/30 flex items-center gap-4 text-blue-400">

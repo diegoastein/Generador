@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="drive-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -24,6 +25,8 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
+
+DriveSync.init().catch(e => console.warn('Drive Sync init error:', e));
 
 /* ─────────────────────────────────────────────────────────────────────────────
    PRESETS — 12 quiz NRP (AHA/AAP 8ª ed. 2021 + actualización 2023)
@@ -534,6 +537,7 @@ const App = () => {
     const [batchDescriptions, setBatchDescriptions] = useState('');
     const [isBatchGenerating, setIsBatchGenerating] = useState(false);
     const [batchProgress, setBatchProgress] = useState('');
+    const [driveConnected, setDriveConnected] = useState(false);
     const [data, setData] = useState({
         title:"Desafío Clínico",
         caseText:"Describe aquí el escenario...",
@@ -543,16 +547,40 @@ const App = () => {
         explanation:"Explica aquí la resolución técnica..."
     });
 
+    // Listener de Drive
+    useEffect(() => {
+        DriveSync.onStatusChange(({ isSignedIn }) => {
+            setDriveConnected(isSignedIn);
+        });
+    }, []);
+
     // ─── Biblioteca ───────────────────────────────────────────────────────────
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem('neoquiz_library');
-            if (saved) setLibrary(JSON.parse(saved));
-        } catch(e) {}
+        const loadLibrary = async () => {
+            try {
+                const data = await DriveSync.loadAll();
+                const lib = data.neoquiz_library || [];
+                setLibrary(lib);
+            } catch (err) {
+                try {
+                    const saved = localStorage.getItem('neoquiz_library');
+                    if (saved) setLibrary(JSON.parse(saved));
+                } catch(e) {}
+            }
+        };
+        loadLibrary();
     }, []);
 
     useEffect(() => {
-        try { localStorage.setItem('neoquiz_library', JSON.stringify(library)); } catch(e) {}
+        try {
+            localStorage.setItem('neoquiz_library', JSON.stringify(library));
+            DriveSync.saveAll({
+                neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
+                neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
+                neoquiz_library: library,
+                videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]')
+            }).catch(e => console.warn('Error guardando a Drive:', e));
+        } catch(e) {}
     }, [library]);
 
     const addToLibrary = (quizData) => {
@@ -780,9 +808,19 @@ const App = () => {
             </aside>
 
             <main className="flex-1 p-12 overflow-y-auto">
-                <header className="mb-10 max-w-6xl mx-auto">
-                    <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
-                    <p className="text-slate-400 text-sm">32 presets · Neonatología, Pediatría y Adultos · Pack de 5 imágenes Stories 9:16 + CTA.</p>
+                <header className="mb-10 max-w-6xl mx-auto flex items-start justify-between">
+                    <div>
+                        <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
+                        <p className="text-slate-400 text-sm">32 presets · Neonatología, Pediatría y Adultos · Pack de 5 imágenes Stories 9:16 + CTA.</p>
+                    </div>
+                    <button onClick={() => driveConnected ? DriveSync.signOut() : DriveSync.signIn()}
+                        className={`text-[10px] font-black px-3 py-2 rounded-lg transition-all whitespace-nowrap ${
+                            driveConnected
+                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+                                : 'bg-slate-800 text-slate-500 hover:bg-slate-700/70'
+                        }`}>
+                        {driveConnected ? '🔗 Drive' : '📴 Drive'}
+                    </button>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
