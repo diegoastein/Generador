@@ -96,10 +96,10 @@
     <strong style="color:#818cf8;">¿Cómo usar?</strong>
     &nbsp;1) Generá contenido en <strong>Casos Expandidos</strong>, <strong>NeoQuiz</strong> o <strong>Novedades</strong> — aparece acá automáticamente.
     &nbsp;2) El caption se pre-carga solo. Editalo si querés.
-    &nbsp;3) Pegá la URL de Google Drive, asignale fecha y hora.
+    &nbsp;3) Asignale fecha y hora a cada publicación.
     &nbsp;4) Exportá el CSV e importalo en <strong>Buffer / Later / Meta Business Suite</strong>.
     <br/>
-    <span style="color:#64748b;">URL pública de Drive: abrí el archivo → clic derecho → Compartir → Cualquiera con el enlace → copiá el link.</span>
+    <span style="color:#64748b;">Los archivos generados se descargan automáticamente a tu carpeta de Google Drive sincronizada.</span>
   </div>
 
   <!-- Filtros -->
@@ -263,15 +263,8 @@ function render() {
                 >${escapeHtml(captionVal)}</textarea>
               </div>
 
-              <!-- URL Drive -->
-              <div>
-                <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">URL Google Drive (pública)</label>
-                <input
-                  type="url"
-                  placeholder="https://drive.google.com/file/d/..."
-                  value="${escapeHtml(p.driveUrl || '')}"
-                  oninput="updateField(${item.id}, 'driveUrl', this.value)"
-                />
+              <div style="font-size:11px; color:#475569; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid rgba(255,255,255,0.04);">
+                📁 Archivo en carpeta de Google Drive sincronizada
               </div>
             </div>
 
@@ -338,18 +331,19 @@ function exportCSV() {
 
     // Encabezado CSV (compatible con Buffer y Later)
     const rows = [
-        ['Date', 'Time', 'Type', 'Title', 'Caption', 'Media URL', 'Status']
+        ['Date', 'Time', 'Source', 'Type', 'Title', 'Caption', 'Status']
     ];
 
     scheduled.forEach(item => {
         const p = plan[item.id];
+        const captionVal = p.caption !== undefined ? p.caption : (item.caption || '');
         rows.push([
             p.date,
             p.time,
+            item.source || '',
             item.type,
             item.title,
-            p.caption || '',
-            p.driveUrl || '',
+            captionVal,
             item.status
         ]);
     });
