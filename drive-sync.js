@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 const DriveSync = (() => {
-    const GOOGLE_CLIENT_ID = '556848757705-q1402ovpah1g0akpaa1ke9gpa7nnqsr4.apps.googleusercontent.com';
+    const GOOGLE_CLIENT_ID = '556848757705-7u8digtksvvngrrdiapm4n6q74r9n4p9.apps.googleusercontent.com';
     const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
     const FILE_NAME = 'neomonitor_library.json';
 
