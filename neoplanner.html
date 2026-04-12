@@ -30,11 +30,16 @@
     border-radius: 16px;
     padding: 20px;
   }
-  .badge-carrusel { background: rgba(6,182,212,0.15); color: #22d3ee; border: 1px solid rgba(6,182,212,0.2); }
-  .badge-reel     { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
+  .badge-carrusel  { background: rgba(6,182,212,0.15);   color: #22d3ee; border: 1px solid rgba(6,182,212,0.2); }
+  .badge-reel      { background: rgba(168,85,247,0.15);  color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
+  .badge-quiz      { background: rgba(245,158,11,0.15);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+  .badge-video     { background: rgba(234,179,8,0.15);   color: #facc15; border: 1px solid rgba(234,179,8,0.2); }
   .badge-borrador   { background: rgba(100,116,139,0.15); color: #94a3b8; }
   .badge-listo      { background: rgba(34,197,94,0.15);  color: #4ade80; }
   .badge-publicado  { background: rgba(99,102,241,0.15); color: #818cf8; }
+  .badge-src-casos     { background: rgba(6,182,212,0.1);   color: #67e8f9; border: 1px solid rgba(6,182,212,0.15); }
+  .badge-src-quiz      { background: rgba(245,158,11,0.1);  color: #fcd34d; border: 1px solid rgba(245,158,11,0.15); }
+  .badge-src-novedades { background: rgba(168,85,247,0.1);  color: #d8b4fe; border: 1px solid rgba(168,85,247,0.15); }
   .badge { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
   .btn-primary {
     background: #4f46e5; color: #fff; font-weight: 800;
@@ -89,19 +94,23 @@
   <!-- Info banner -->
   <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:14px; padding:14px 20px; margin-bottom:24px; font-size:12px; color:#a5b4fc; line-height:1.7;">
     <strong style="color:#818cf8;">¿Cómo usar?</strong>
-    &nbsp;1) Generá el contenido en <strong>Casos Expandidos</strong>.
-    &nbsp;2) Pegá la URL pública de Google Drive para cada archivo.
-    &nbsp;3) Asignale fecha, hora y caption.
-    &nbsp;4) Exportá el CSV e importalo en <strong>Buffer / Later / Hootsuite</strong>.
+    &nbsp;1) Generá contenido en <strong>Casos Expandidos</strong>, <strong>NeoQuiz</strong> o <strong>Novedades</strong> — aparece acá automáticamente.
+    &nbsp;2) El caption se pre-carga solo. Editalo si querés.
+    &nbsp;3) Pegá la URL de Google Drive, asignale fecha y hora.
+    &nbsp;4) Exportá el CSV e importalo en <strong>Buffer / Later / Meta Business Suite</strong>.
     <br/>
-    <span style="color:#64748b;">Para obtener URL pública: abrí el archivo en Drive → clic derecho → <em>Compartir</em> → <em>Cualquiera con el enlace</em> → copiá el link.</span>
+    <span style="color:#64748b;">URL pública de Drive: abrí el archivo → clic derecho → Compartir → Cualquiera con el enlace → copiá el link.</span>
   </div>
 
   <!-- Filtros -->
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-    <button class="btn-secondary" id="filterAll"    onclick="setFilter('all')"       style="font-size:10px; padding:7px 16px;">Todos</button>
-    <button class="btn-secondary" id="filterPending" onclick="setFilter('pending')"  style="font-size:10px; padding:7px 16px;">Sin programar</button>
-    <button class="btn-secondary" id="filterReady"  onclick="setFilter('ready')"     style="font-size:10px; padding:7px 16px;">Con fecha</button>
+    <button class="btn-secondary" id="filterAll"       onclick="setFilter('all')"        style="font-size:10px; padding:7px 16px;">Todos</button>
+    <button class="btn-secondary" id="filterPending"   onclick="setFilter('pending')"    style="font-size:10px; padding:7px 16px;">Sin programar</button>
+    <button class="btn-secondary" id="filterReady"     onclick="setFilter('ready')"      style="font-size:10px; padding:7px 16px;">Con fecha</button>
+    <span style="color:#1e293b; align-self:center;">|</span>
+    <button class="btn-secondary" id="filterCasos"     onclick="setFilter('casos')"      style="font-size:10px; padding:7px 16px;">Casos</button>
+    <button class="btn-secondary" id="filterQuiz"      onclick="setFilter('quiz')"       style="font-size:10px; padding:7px 16px;">Quiz</button>
+    <button class="btn-secondary" id="filterNovedades" onclick="setFilter('novedades')"  style="font-size:10px; padding:7px 16px;">Novedades</button>
   </div>
 
   <!-- Lista -->
@@ -123,8 +132,14 @@ function init() {
 
 function loadFromLibrary() {
     try {
-        const raw = localStorage.getItem('neocontent_library');
-        library = raw ? JSON.parse(raw) : [];
+        const parse = (key, source) => {
+            const raw = localStorage.getItem(key);
+            return (raw ? JSON.parse(raw) : []).map(i => ({ ...i, source }));
+        };
+        const casos     = parse('neocontent_library', 'Casos');
+        const quiz      = parse('neoquiz_library',    'Quiz');
+        const novedades = parse('neonovedades_library','Novedades');
+        library = [...casos, ...quiz, ...novedades].sort((a, b) => b.id - a.id);
     } catch(e) {
         library = [];
     }
@@ -171,11 +186,11 @@ function deleteFromPlan(id) {
 // ─── Filtro ───────────────────────────────────────────────────────────────────
 function setFilter(f) {
     activeFilter = f;
-    ['filterAll','filterPending','filterReady'].forEach(id => {
-        document.getElementById(id).style.color = '';
-        document.getElementById(id).style.borderColor = '';
+    ['filterAll','filterPending','filterReady','filterCasos','filterQuiz','filterNovedades'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.color = ''; el.style.borderColor = ''; }
     });
-    const map = { all: 'filterAll', pending: 'filterPending', ready: 'filterReady' };
+    const map = { all:'filterAll', pending:'filterPending', ready:'filterReady', casos:'filterCasos', quiz:'filterQuiz', novedades:'filterNovedades' };
     const el = document.getElementById(map[f]);
     if (el) { el.style.color = '#818cf8'; el.style.borderColor = 'rgba(99,102,241,0.4)'; }
     render();
@@ -183,14 +198,11 @@ function setFilter(f) {
 
 function filteredLibrary() {
     return library.filter(item => {
-        if (activeFilter === 'pending') {
-            const p = plan[item.id] || {};
-            return !p.date || !p.time;
-        }
-        if (activeFilter === 'ready') {
-            const p = plan[item.id] || {};
-            return p.date && p.time;
-        }
+        if (activeFilter === 'pending')   { const p = plan[item.id]||{}; return !p.date||!p.time; }
+        if (activeFilter === 'ready')     { const p = plan[item.id]||{}; return p.date&&p.time; }
+        if (activeFilter === 'casos')     return item.source === 'Casos';
+        if (activeFilter === 'quiz')      return item.source === 'Quiz';
+        if (activeFilter === 'novedades') return item.source === 'Novedades';
         return true;
     });
 }
@@ -206,7 +218,7 @@ function render() {
             <div class="empty-state">
                 <div style="font-size:40px; margin-bottom:12px;">📭</div>
                 <div style="font-weight:800; font-size:16px; color:#334155; margin-bottom:8px;">Biblioteca vacía</div>
-                <div style="font-size:13px;">Generá contenido en <strong style="color:#4f46e5;">Casos Expandidos</strong> y volvé acá.</div>
+                <div style="font-size:13px;">Generá contenido en <strong style="color:#4f46e5;">Casos Expandidos</strong>, <strong style="color:#4f46e5;">NeoQuiz</strong> o <strong style="color:#4f46e5;">Novedades</strong> y volvé acá.</div>
             </div>`;
         return;
     }
@@ -220,8 +232,11 @@ function render() {
         const p = plan[item.id] || {};
         const hasDate = p.date && p.time;
         const borderClass = hasDate ? 'row-scheduled' : 'row-empty';
-        const typeClass = item.type === 'Reel' ? 'badge-reel' : 'badge-carrusel';
+        const typeMap = { 'Reel':'badge-reel', 'Carrusel':'badge-carrusel', 'Quiz Pack':'badge-quiz', 'Video':'badge-video' };
+        const typeClass = typeMap[item.type] || 'badge-carrusel';
         const statusClass = { Borrador: 'badge-borrador', Listo: 'badge-listo', Publicado: 'badge-publicado' }[item.status] || 'badge-borrador';
+        const srcClass = { Casos:'badge-src-casos', Quiz:'badge-src-quiz', Novedades:'badge-src-novedades' }[item.source] || 'badge-src-casos';
+        const captionVal = p.caption !== undefined ? p.caption : (item.caption || '');
 
         return `
         <div class="card ${borderClass}" id="row_${item.id}" style="margin-bottom:12px;">
@@ -230,6 +245,7 @@ function render() {
             <!-- Columna izquierda: info del caso -->
             <div>
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                <span class="badge ${srcClass}">${item.source || ''}</span>
                 <span class="badge ${typeClass}">${item.type}</span>
                 <span class="badge ${statusClass}">${item.status}</span>
                 <span style="font-weight:800; font-size:14px;">${escapeHtml(item.title)}</span>
@@ -241,10 +257,10 @@ function render() {
                 <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">Caption / Texto del post</label>
                 <textarea
                   rows="3"
-                  placeholder="Escribí el caption para esta publicación..."
+                  placeholder="Caption generado automáticamente o escribí uno..."
                   oninput="updateField(${item.id}, 'caption', this.value)"
                   style="resize:vertical; line-height:1.6;"
-                >${escapeHtml(p.caption || '')}</textarea>
+                >${escapeHtml(captionVal)}</textarea>
               </div>
 
               <!-- URL Drive -->
@@ -289,9 +305,13 @@ function render() {
 }
 
 function updateCounter() {
-    const scheduled = Object.values(plan).filter(p => p.date && p.time).length;
+    const scheduled = library.filter(item => { const p = plan[item.id]||{}; return p.date && p.time; }).length;
     const total = library.length;
-    document.getElementById('counterLabel').textContent = `${total} items · ${scheduled} programados`;
+    const casos     = library.filter(i => i.source === 'Casos').length;
+    const quiz      = library.filter(i => i.source === 'Quiz').length;
+    const novedades = library.filter(i => i.source === 'Novedades').length;
+    document.getElementById('counterLabel').textContent =
+        `${total} items (${casos} casos · ${quiz} quiz · ${novedades} novedades) · ${scheduled} programados`;
 }
 
 function escapeHtml(str) {
