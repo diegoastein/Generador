@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -532,6 +533,8 @@ const App = () => {
     const [generating, setGenerating] = useState(false);
     const [gallery, setGallery] = useState([]);
     const [status, setStatus] = useState('');
+    const [activeTab, setActiveTab] = useState('editor');
+    const [library, setLibrary] = useState([]);
     const [data, setData] = useState({
         title:"Desafío Clínico",
         caseText:"Describe aquí el escenario...",
@@ -540,6 +543,72 @@ const App = () => {
         answer:"Respuesta correcta",
         explanation:"Explica aquí la resolución técnica..."
     });
+
+    // ─── Biblioteca ───────────────────────────────────────────────────────────
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('neoquiz_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch(e) {}
+    }, []);
+
+    useEffect(() => {
+        try { localStorage.setItem('neoquiz_library', JSON.stringify(library)); } catch(e) {}
+    }, [library]);
+
+    const addToLibrary = (quizData) => {
+        const newItem = {
+            id: Date.now(),
+            title: quizData.title || 'Sin título',
+            type: 'Quiz Pack',
+            dateTime: new Date().toLocaleString('es-AR'),
+            status: 'Borrador',
+            quizData: { ...quizData }
+        };
+        setLibrary(prev => [newItem, ...prev]);
+    };
+
+    const updateLibraryStatus = (id, status) => {
+        setLibrary(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+    };
+
+    const deleteLibraryItem = (id) => {
+        if (confirm('¿Eliminar este quiz de la biblioteca?')) {
+            setLibrary(prev => prev.filter(item => item.id !== id));
+        }
+    };
+
+    const regenerateFromLibrary = (item) => {
+        setData(item.quizData);
+        setActiveStep(0);
+        setGallery([]);
+        setActiveTab('editor');
+        alert('✓ Quiz cargado en el editor');
+    };
+
+    // ─── Descarga ZIP ─────────────────────────────────────────────────────────
+    const downloadQuizAsZip = async () => {
+        if (gallery.length === 0) { alert('Primero generá el pack de stories'); return; }
+        try {
+            const zip = new JSZip();
+            const folderName = (data.title || 'quiz').replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 50);
+            const quizFolder = zip.folder(folderName).folder('stories');
+            const labels = ['1_portada', '2_escenario', '3_pregunta', '4_respuesta', '5_cta'];
+            for (let i = 0; i < gallery.length; i++) {
+                const base64 = gallery[i].replace(/^data:image\/png;base64,/, '');
+                quizFolder.file(`${labels[i] || (i+1)}.png`, base64, { base64: true });
+            }
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${folderName}_${new Date().toISOString().slice(0,10)}.zip`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch(err) {
+            alert('Error al crear ZIP: ' + err.message);
+        }
+    };
 
     const loadPreset=(key)=>{
         if(PRESETS[key]){ setData(PRESETS[key]); setActiveStep(0); setGallery([]); }
@@ -564,7 +633,9 @@ const App = () => {
         const ctaC=document.createElement('canvas');
         drawQuizCTASlide(ctaC, CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)]);
         imgs.push(ctaC.toDataURL('image/png'));
-        setGallery(imgs); setStatus(''); setGenerating(false);
+        setGallery(imgs);
+        addToLibrary(data);
+        setStatus(''); setGenerating(false);
     };
 
     const inp="w-full rounded-xl p-3 text-sm";
@@ -693,11 +764,31 @@ const App = () => {
                                     ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>{status}</>
                                     : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
                             </button>
+                            {gallery.length > 0 && (
+                                <button onClick={downloadQuizAsZip}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/5">
+                                    📦 Descargar ZIP
+                                </button>
+                            )}
                         </div>
                     </div>
 
                     <div className="lg:col-span-7">
-                        {gallery.length>0
+                        {/* Tabs */}
+                        <div className="flex gap-2 mb-6">
+                            <button onClick={() => setActiveTab('editor')}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'editor' ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                                ✏️ Editor
+                            </button>
+                            <button onClick={() => setActiveTab('library')}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'library' ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                                📚 Biblioteca ({library.length})
+                            </button>
+                        </div>
+
+                        {/* Panel Editor */}
+                        {activeTab === 'editor' && (
+                            gallery.length>0
                             ? <div className="grid grid-cols-2 gap-4 fade-in">
                                 {gallery.map((img,i)=>(
                                     <div key={i} className="group relative rounded-3xl overflow-hidden border border-white/5 shadow-2xl hover:scale-[1.02] transition-all">
@@ -716,7 +807,48 @@ const App = () => {
                                 <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
                                     Seleccioná un preset NRP<br/>y presioná <span className="text-amber-500">Generar Pack</span>
                                 </p>
-                              </div>}
+                              </div>
+                        )}
+
+                        {/* Panel Biblioteca */}
+                        {activeTab === 'library' && (
+                            library.length === 0
+                            ? <div className="border-2 border-dashed border-slate-800 rounded-[40px] flex flex-col items-center justify-center text-slate-700 text-center p-16" style={{minHeight:'300px'}}>
+                                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Biblioteca vacía<br/><span className="text-amber-500/50">Los quizzes generados aparecerán acá</span></p>
+                              </div>
+                            : <div className="space-y-4 fade-in">
+                                {library.map(item => (
+                                    <div key={item.id} className="glass-card p-5 rounded-2xl">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                    <span className="text-[9px] font-black px-2 py-1 rounded-full bg-amber-500/15 text-amber-400 uppercase">Quiz Pack</span>
+                                                    <select value={item.status} onChange={e => updateLibraryStatus(item.id, e.target.value)}
+                                                        className="text-[9px] font-black px-2 py-1 rounded-full border-0 cursor-pointer"
+                                                        style={{background:'rgba(255,255,255,0.05)', color: item.status==='Publicado'?'#818cf8':item.status==='Listo'?'#4ade80':'#94a3b8'}}>
+                                                        <option value="Borrador">Borrador</option>
+                                                        <option value="Listo">Listo</option>
+                                                        <option value="Publicado">Publicado</option>
+                                                    </select>
+                                                </div>
+                                                <p className="font-bold text-sm text-white mb-0.5">{item.title}</p>
+                                                <p className="text-[11px] text-slate-600">{item.dateTime}</p>
+                                            </div>
+                                            <div className="flex gap-2 shrink-0">
+                                                <button onClick={() => regenerateFromLibrary(item)}
+                                                    className="text-[10px] font-bold text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 transition-colors">
+                                                    ↻ Recargar
+                                                </button>
+                                                <button onClick={() => deleteLibraryItem(item.id)}
+                                                    className="text-[10px] font-bold text-slate-600 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 transition-colors">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                              </div>
+                        )}
                     </div>
                 </div>
             </main>

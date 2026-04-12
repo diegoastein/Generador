@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -415,57 +416,152 @@ function roundRect(ctx, x, y, w, h, r) {
 // ─── Renderizado 1:1 (Post) ──────────────────────────────────
 function renderSlideToCanvas(canvas, step, slideIndex) {
     if (!canvas || !step) return;
-    const SIZE = 1080;
-    canvas.width = SIZE; canvas.height = SIZE;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.fillStyle = '#1e293b';
-    for (let gx=20; gx<SIZE; gx+=40) for (let gy=20; gy<SIZE; gy+=40) {
-        ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill();
-    }
-    const PAD = 80;
-    ctx.font = 'bold 28px Inter, sans-serif';
-    const badgeText = 'CASO CLÍNICO';
-    const bw = ctx.measureText(badgeText).width + 60;
-    roundRect(ctx, PAD, PAD, bw, 60, 30); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(badgeText, PAD+30, PAD+30); ctx.textBaseline='top';
-    const titleY = PAD+90;
-    ctx.fillStyle='#fff'; ctx.font='bold 88px Inter, sans-serif'; ctx.textBaseline='top';
-    const tl = wrapText(ctx, (step.t||'Sin título').toUpperCase(), PAD, titleY, SIZE-PAD*2, 92);
-    const cardY = titleY + tl*92 + 32;
-    const cardH = step.v ? 460 : 320;
-    const cardW = SIZE - PAD*2;
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.fillStyle='#0f172a'; ctx.fill();
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1.5; ctx.stroke();
-    const grd = ctx.createRadialGradient(PAD+100,cardY+100,0,PAD+100,cardY+100,400);
-    grd.addColorStop(0,'rgba(37,99,235,0.12)'); grd.addColorStop(1,'transparent');
-    roundRect(ctx, PAD, cardY, cardW, cardH, 60); ctx.fillStyle=grd; ctx.fill();
-    ctx.fillStyle='#e2e8f0'; ctx.font='400 42px Inter, sans-serif'; ctx.textBaseline='top';
-    wrapText(ctx, step.d||'', PAD+60, cardY+60, cardW-120, 58);
-    if (step.v) {
-        const vy = cardY + cardH - 220; 
-        if (step.v.hr !== null) {
-            ctx.fillStyle='#22c55e'; ctx.font='bold 22px Inter, sans-serif'; ctx.textBaseline='top';
-            ctx.fillText('FRECUENCIA CARDIACA', PAD+60, vy);
-            ctx.font='bold 110px Inter, sans-serif'; ctx.fillText(String(step.v.hr), PAD+60, vy+35);
+    try {
+        const SIZE = 1080;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+
+        // Fondo
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, SIZE, SIZE);
+
+        // Patrón de puntos
+        ctx.fillStyle = '#1e293b';
+        for (let gx = 20; gx < SIZE; gx += 40) {
+            for (let gy = 20; gy < SIZE; gy += 40) {
+                ctx.beginPath();
+                ctx.arc(gx, gy, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
-        if (step.v.sp !== null) {
-            ctx.fillStyle='#facc15'; ctx.font='bold 22px Inter, sans-serif';
-            ctx.fillText('SATURACIÓN O₂', PAD+60+380, vy);
-            ctx.font='bold 110px Inter, sans-serif'; ctx.fillText(String(step.v.sp), PAD+60+380, vy+35);
-            ctx.font='bold 50px Inter, sans-serif';
-            ctx.fillText('%', PAD+60+380+ctx.measureText(String(step.v.sp)).width+8, vy+85);
+
+        const PAD = 70;
+
+        // Badge
+        ctx.font = 'bold 26px Arial, sans-serif';
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(PAD, PAD, 220, 55);
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CASO CLÍNICO', PAD + 20, PAD + 27);
+        ctx.textBaseline = 'top';
+
+        // Título — word-wrap basado en chars, máx 2 líneas, sin cortar palabras
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 66px Arial, sans-serif';
+        const titleText = (step.t || 'Sin título').toUpperCase();
+        const TITLE_MAX = 20; // chars por línea a 66px bold
+        const titleWords = titleText.split(' ');
+        const titleLineArr = [];
+        let titleCur = '';
+        for (const w of titleWords) {
+            const test = titleCur ? titleCur + ' ' + w : w;
+            if (test.length > TITLE_MAX && titleCur) {
+                titleLineArr.push(titleCur);
+                if (titleLineArr.length >= 2) break;
+                titleCur = w.substring(0, TITLE_MAX);
+            } else {
+                titleCur = test;
+            }
         }
+        if (titleCur && titleLineArr.length < 2) titleLineArr.push(titleCur);
+        titleLineArr.forEach((line, i) => ctx.fillText(line, PAD, PAD + 88 + i * 78));
+
+        // Card — baja si hay 2 líneas de título para no solapar
+        // título línea 2: top en PAD+88+78=236, bottom ≈236+66=302 → cardY debe ser >302
+        const cardY = PAD + (titleLineArr.length > 1 ? 255 : 190);
+        const cardH = step.v ? 490 : 340;
+        const cardW = SIZE - PAD * 2;
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(PAD, cardY, cardW, cardH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(PAD, cardY, cardW, cardH);
+
+        const grd = ctx.createRadialGradient(PAD + 100, cardY + 100, 0, PAD + 100, cardY + 100, 400);
+        grd.addColorStop(0, 'rgba(37,99,235,0.12)');
+        grd.addColorStop(1, 'transparent');
+        ctx.fillStyle = grd;
+        ctx.fillRect(PAD, cardY, cardW, cardH);
+
+        // Descripción — word-wrap basado en chars, máx 3 líneas, sin cortar palabras
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '400 36px Arial, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        const DESC_MAX = 42; // chars por línea a 36px en 880px útiles
+        const DESC_LINES = 3;
+        const descWords = (step.d || '').split(' ');
+        const descLineArr = [];
+        let descCur = '';
+        for (const w of descWords) {
+            const test = descCur ? descCur + ' ' + w : w;
+            if (test.length > DESC_MAX && descCur) {
+                descLineArr.push(descCur);
+                if (descLineArr.length >= DESC_LINES) break;
+                descCur = w.substring(0, DESC_MAX);
+            } else {
+                descCur = test;
+            }
+        }
+        if (descCur && descLineArr.length < DESC_LINES) descLineArr.push(descCur);
+        // Agregar '…' si el texto fue cortado
+        const descFull = step.d || '';
+        if (descLineArr.join(' ').length < descFull.length - 2) {
+            const last = descLineArr[descLineArr.length - 1];
+            descLineArr[descLineArr.length - 1] = last.trimEnd() + '…';
+        }
+        const descLH = 52;
+        descLineArr.forEach((line, i) => ctx.fillText(line, PAD + 30, cardY + 45 + i * descLH));
+
+        // Vitales
+        if (step.v) {
+            const vy = cardY + cardH - 240;
+            const colW = cardW / 2;
+
+            if (step.v.hr !== null) {
+                ctx.fillStyle = '#22c55e';
+                ctx.font = 'bold 24px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('FRECUENCIA CARDIACA', PAD + colW / 2, vy);
+                ctx.font = 'bold 140px Arial, sans-serif';
+                ctx.fillText(String(step.v.hr), PAD + colW / 2, vy + 50);
+            }
+
+            if (step.v.sp !== null) {
+                ctx.fillStyle = '#facc15';
+                ctx.font = 'bold 24px Arial, sans-serif';
+                ctx.fillText('SATURACIÓN O₂', PAD + colW + colW / 2, vy);
+                ctx.font = 'bold 140px Arial, sans-serif';
+                ctx.fillText(String(step.v.sp) + '%', PAD + colW + colW / 2, vy + 50);
+            }
+            ctx.textAlign = 'left';
+        }
+
+        // Footer
+        const fy = SIZE - 140;
+        ctx.fillStyle = '#475569';
+        ctx.font = 'bold 26px Arial, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText('neomonitor.pro', PAD, fy);
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.fillText('NRP 8ª · AHA/AAP 2023', PAD, fy + 35);
+
+        // Número
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 110px Arial, sans-serif';
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'right';
+        ctx.fillText((slideIndex + 1) + '/5', SIZE - PAD, SIZE - PAD);
+        ctx.textAlign = 'left';
+
+    } catch (err) {
+        console.error('Error en renderSlideToCanvas:', err);
+        throw err;
     }
-    const fy = SIZE-PAD-60;
-    ctx.fillStyle='#475569'; ctx.font='bold 28px Inter, sans-serif'; ctx.textBaseline='top';
-    ctx.fillText('neomonitor.pro', PAD+10, fy);
-    ctx.fillStyle='#1e293b'; ctx.font='bold 18px Inter, sans-serif';
-    ctx.fillText('NRP · AHA/AAP 8ª EDICIÓN', PAD+10, fy+38);
-    ctx.fillStyle='#1e293b'; ctx.font='bold 120px Inter, sans-serif';
-    ctx.textBaseline='bottom'; ctx.textAlign='right';
-    ctx.fillText((slideIndex+1)+'/5', SIZE-PAD, SIZE-PAD+20);
-    ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
 // ─── Renderizado 9:16 (Reel) ───────────────────────────────────────
@@ -480,47 +576,69 @@ function renderReelSlideToCanvas(canvas, step, slideIndex) {
         ctx.beginPath(); ctx.arc(gx,gy,1.5,0,Math.PI*2); ctx.fill();
     }
     const PAD = 100;
-    const badgeText = 'CASO CLÍNICO';
-    ctx.font = 'bold 32px Inter, sans-serif';
-    const bw = ctx.measureText(badgeText).width + 70;
-    roundRect(ctx, W/2 - bw/2, PAD, bw, 70, 35); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; 
-    ctx.fillText(badgeText, W/2, PAD+35); ctx.textBaseline='top'; ctx.textAlign='left';
+
+    // Badge
+    ctx.fillStyle='#2563eb';
+    roundRect(ctx, W/2 - 120, PAD, 240, 70, 35);
+    ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='bold 32px Arial, sans-serif';
+    ctx.fillText('CASO CLÍNICO', W/2, PAD+35);
+    ctx.textBaseline='top'; ctx.textAlign='left';
+
+    // Título
     const titleY = PAD + 180;
-    ctx.fillStyle='#fff'; ctx.font='bold 96px Inter, sans-serif'; ctx.textAlign='center';
-    const tl = wrapText(ctx, (step.t||'Sin título').toUpperCase(), W/2, titleY, W-PAD*2, 105);
+    ctx.fillStyle='#fff'; ctx.font='bold 96px Arial, sans-serif'; ctx.textAlign='center';
+    const titleText = (step.t||'Sin título').toUpperCase().substring(0, 30);
+    ctx.fillText(titleText, W/2, titleY);
     ctx.textAlign='left';
-    const cardY = titleY + tl*105 + 80;
+
+    // Card
+    const cardY = titleY + 140;
     const cardW = W - PAD*2, cardH = 750;
     roundRect(ctx, PAD, cardY, cardW, cardH, 80); ctx.fillStyle='#0f172a'; ctx.fill();
     roundRect(ctx, PAD, cardY, cardW, cardH, 80); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=2; ctx.stroke();
     const grd = ctx.createRadialGradient(W/2, cardY+200, 0, W/2, cardY+200, 500);
     grd.addColorStop(0,'rgba(37,99,235,0.15)'); grd.addColorStop(1,'transparent');
     roundRect(ctx, PAD, cardY, cardW, cardH, 80); ctx.fillStyle=grd; ctx.fill();
-    ctx.fillStyle='#e2e8f0'; ctx.font='400 48px Inter, sans-serif'; ctx.textAlign='center';
-    wrapText(ctx, step.d||'', W/2, cardY+100, cardW-160, 68);
+
+    // Descripción
+    ctx.fillStyle='#e2e8f0'; ctx.font='400 34px Arial, sans-serif'; ctx.textAlign='center';
+    let descReel = (step.d || '').substring(0, 45);
+    if (descReel.length === 45 && step.d.length > 45) {
+        descReel = descReel.trim() + '…';
+    }
+    ctx.fillText(descReel, W/2, cardY+100);
     ctx.textAlign='left';
+
+    // Vitales
     if (step.v) {
         const vy = cardY + 450, colW = cardW / 2;
         if (step.v.hr !== null) {
-            ctx.fillStyle='#22c55e'; ctx.font='bold 28px Inter, sans-serif'; ctx.textAlign='center';
+            ctx.fillStyle='#22c55e'; ctx.font='bold 28px Arial, sans-serif'; ctx.textAlign='center';
             ctx.fillText('FRECUENCIA CARDIACA', PAD + colW/2, vy);
-            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.hr), PAD + colW/2, vy+50);
+            ctx.font='bold 160px Arial, sans-serif'; ctx.fillText(String(step.v.hr), PAD + colW/2, vy+50);
         }
         if (step.v.sp !== null) {
-            ctx.fillStyle='#facc15'; ctx.font='bold 28px Inter, sans-serif'; ctx.textAlign='center';
+            ctx.fillStyle='#facc15'; ctx.font='bold 28px Arial, sans-serif'; ctx.textAlign='center';
             ctx.fillText('SATURACIÓN O₂', PAD + colW + colW/2, vy);
-            ctx.font='bold 160px Inter, sans-serif'; ctx.fillText(String(step.v.sp)+'%', PAD + colW + colW/2, vy+50);
+            ctx.font='bold 160px Arial, sans-serif'; ctx.fillText(String(step.v.sp)+'%', PAD + colW + colW/2, vy+50);
         }
         ctx.textAlign='left';
     }
+
+    // Footer
     const fy = H - 200;
-    ctx.fillStyle='#475569'; ctx.font='bold 36px Inter, sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle='#475569'; ctx.font='bold 36px Arial, sans-serif'; ctx.textAlign='center';
     ctx.fillText('neomonitor.pro', W/2, fy);
-    ctx.fillStyle='#1e293b'; ctx.font='bold 24px Inter, sans-serif';
+    ctx.fillStyle='#1e293b'; ctx.font='bold 24px Arial, sans-serif';
     ctx.fillText('NRP · SIMULACIÓN MÉDICA', W/2, fy+50);
-    ctx.font='bold 140px Inter, sans-serif'; ctx.fillStyle='#1e293b';
-    ctx.fillText((slideIndex+1)+'/5', W/2, H - PAD);
+
+    // Número de slide
+    ctx.font='bold 140px Arial, sans-serif'; ctx.fillStyle='#1e293b';
+    ctx.textAlign='right'; ctx.textBaseline='bottom';
+    ctx.fillText((slideIndex+1)+'/5', W - PAD, H - PAD);
+    ctx.textAlign='left';
 }
 
 // ─── CTA Slides ──────────────────────────────────────────────────────────────
@@ -538,36 +656,80 @@ const CTA_POOL = [
 ];
 
 function renderCTASlide(canvas, cta) {
-    const SIZE = 1080;
-    canvas.width = SIZE; canvas.height = SIZE;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.fillStyle = '#1e293b';
-    for (let gx=20; gx<SIZE; gx+=40) for (let gy=20; gy<SIZE; gy+=40) {
-        ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill();
+    try {
+        const SIZE = 1080;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+
+        // Fondo
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, SIZE, SIZE);
+
+        // Patrón de puntos
+        ctx.fillStyle = '#1e293b';
+        for (let gx = 20; gx < SIZE; gx += 40) {
+            for (let gy = 20; gy < SIZE; gy += 40) {
+                ctx.beginPath();
+                ctx.arc(gx, gy, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const PAD = 60;
+        const cx = SIZE / 2;
+
+        // Logo
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(cx - 40, PAD, 80, 80);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 44px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('NM', cx, PAD + 40);
+
+        // Tag
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 20px Arial, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText(cta.tag.substring(0, 35), cx, PAD + 110);
+
+        // Headline
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 60px Arial, sans-serif';
+        const headline = cta.headline.substring(0, 25).toUpperCase();
+        ctx.fillText(headline, cx, PAD + 180);
+
+        // Subtítulo
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '400 24px Arial, sans-serif';
+        let subtitle = (cta.sub || '').substring(0, 60);
+        if (subtitle.length === 60 && cta.sub.length > 60) {
+            subtitle = subtitle.trim() + '…';
+        }
+        ctx.fillText(subtitle, cx, PAD + 310);
+
+        // CTA box
+        const urlY = SIZE - 200;
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(PAD, urlY, SIZE - PAD * 2, 80);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px Arial, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('www.neomonitor.pro', cx, urlY + 40);
+
+        // Footer
+        ctx.fillStyle = '#334155';
+        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText('NEOMONITOR EXPERT SUITE', cx, SIZE - 50);
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+    } catch (err) {
+        console.error('Error en renderCTASlide:', err);
+        throw err;
     }
-    const grd = ctx.createRadialGradient(SIZE/2,SIZE/2,0,SIZE/2,SIZE/2,580);
-    grd.addColorStop(0,'rgba(37,99,235,0.18)'); grd.addColorStop(1,'transparent');
-    ctx.fillStyle = grd; ctx.fillRect(0,0,SIZE,SIZE);
-    const PAD = 80, cx = SIZE/2;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    roundRect(ctx,cx-48,PAD,96,96,22); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 38px Inter, sans-serif';
-    ctx.textBaseline='middle'; ctx.fillText('NM',cx,PAD+48); ctx.textBaseline='top';
-    ctx.fillStyle='#22c55e'; ctx.font='bold 26px Inter, sans-serif';
-    ctx.fillText(cta.tag,cx,PAD+128);
-    ctx.fillStyle='#fff'; ctx.font='bold 90px Inter, sans-serif';
-    const hl = wrapText(ctx,cta.headline.toUpperCase(),cx,PAD+186,SIZE-PAD*2,96);
-    const subY = PAD+186+hl*96+32;
-    ctx.fillStyle='#94a3b8'; ctx.font='400 38px Inter, sans-serif';
-    wrapText(ctx,cta.sub,cx,subY,SIZE-PAD*2-40,52);
-    const urlY = SIZE-PAD-100;
-    roundRect(ctx,PAD,urlY,SIZE-PAD*2,88,44); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 40px Inter, sans-serif';
-    ctx.textBaseline='middle'; ctx.fillText('WWW.NEOMONITOR.PRO',cx,urlY+44);
-    ctx.fillStyle='#334155'; ctx.font='bold 20px Inter, sans-serif';
-    ctx.textBaseline='top'; ctx.fillText('NEOMONITOR EXPERT SUITE · v5.0',cx,SIZE-PAD-8);
-    ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
 function renderReelCTASlide(canvas, cta) {
@@ -584,21 +746,38 @@ function renderReelCTASlide(canvas, cta) {
     ctx.fillStyle = grd; ctx.fillRect(0,0,W,H);
     const PAD = 100, cx = W/2;
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+    // Logo NM
     roundRect(ctx,cx-60,PAD,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 48px Inter, sans-serif';
+    ctx.fillStyle='#fff'; ctx.font='bold 48px Arial, sans-serif';
     ctx.textBaseline='middle'; ctx.fillText('NM',cx,PAD+60); ctx.textBaseline='top';
-    ctx.fillStyle='#22c55e'; ctx.font='bold 36px Inter, sans-serif';
+
+    // Tag (ej: "PARA TUS CLASES Y RESIDENTES")
+    ctx.fillStyle='#22c55e'; ctx.font='bold 36px Arial, sans-serif';
     ctx.fillText(cta.tag,cx,PAD+168);
-    ctx.fillStyle='#fff'; ctx.font='bold 128px Inter, sans-serif';
-    const hl = wrapText(ctx,cta.headline.toUpperCase(),cx,PAD+244,W-PAD*2,136);
-    const subY = PAD+244+hl*136+52;
-    ctx.fillStyle='#94a3b8'; ctx.font='400 52px Inter, sans-serif';
-    wrapText(ctx,cta.sub,cx,subY,W-PAD*2,70);
+
+    // Headline (ej: "Visitá NeoMonitor")
+    ctx.fillStyle='#fff'; ctx.font='bold 128px Arial, sans-serif';
+    let headlineText = (cta.headline.toUpperCase() || '').substring(0, 20);
+    ctx.fillText(headlineText, cx, PAD+244);
+
+    // Descripción (ej: "Ingresá a www.neomonitor.pro...")
+    const subY = PAD+400;
+    ctx.fillStyle='#94a3b8'; ctx.font='400 48px Arial, sans-serif';
+    let subText = (cta.sub || '').substring(0, 40);
+    if (subText.length === 40 && cta.sub.length > 40) {
+        subText = subText.trim() + '…';
+    }
+    ctx.fillText(subText, cx, subY);
+
+    // URL button
     const urlY = H-260;
     roundRect(ctx,PAD,urlY,W-PAD*2,130,65); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 58px Inter, sans-serif';
+    ctx.fillStyle='#fff'; ctx.font='bold 58px Arial, sans-serif';
     ctx.textBaseline='middle'; ctx.fillText('WWW.NEOMONITOR.PRO',cx,urlY+65);
-    ctx.fillStyle='#334155'; ctx.font='bold 30px Inter, sans-serif';
+
+    // Footer
+    ctx.fillStyle='#334155'; ctx.font='bold 30px Arial, sans-serif';
     ctx.textBaseline='top'; ctx.fillText('NEOMONITOR EXPERT SUITE',cx,H-108);
     ctx.textAlign='left'; ctx.textBaseline='top';
 }
@@ -619,6 +798,84 @@ const SlidePreview = ({ step, index }) => {
     );
 };
 
+// ─── Generar audio por defecto ─────────────────────────────────────────────
+const generateDefaultAudio = () => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const sampleRate = ctx.sampleRate;
+    const duration = 35; // 35 segundos
+    const totalSamples = duration * sampleRate;
+    const buffer = ctx.createBuffer(1, totalSamples, sampleRate);
+    const channel = buffer.getChannelData(0);
+
+    // Generar tono suave (220 Hz - nota A3)
+    const freq = 220;
+    for (let i = 0; i < totalSamples; i++) {
+        const t = i / sampleRate;
+        const wave = Math.sin(2 * Math.PI * freq * t);
+        // Envolvente suave para evitar clics
+        const envelope = Math.sin(Math.PI * (t / duration)) * 0.4;
+        channel[i] = wave * envelope;
+    }
+
+    const offlineCtx = new OfflineAudioContext(1, totalSamples, sampleRate);
+    const offlineBuffer = offlineCtx.createBuffer(1, totalSamples, sampleRate);
+    offlineBuffer.getChannelData(0).set(channel);
+
+    // Convertir a WAV y luego a blob
+    const wav = encodeWAV(offlineBuffer);
+    return new Blob([wav], { type: 'audio/wav' });
+};
+
+const encodeWAV = (buffer) => {
+    const channelData = buffer.getChannelData(0);
+    const sampleRate = buffer.sampleRate;
+    const frameLength = channelData.length;
+    const numberOfChannels = 1;
+    const format = 1; // PCM
+    const bitDepth = 16;
+
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numberOfChannels * bytesPerSample;
+
+    const audioData = new Float32Array(frameLength);
+    for (let i = 0; i < frameLength; i++) {
+        audioData[i] = channelData[i];
+    }
+
+    const dataLength = frameLength * numberOfChannels * bytesPerSample;
+    const buffer32 = new ArrayBuffer(44 + dataLength);
+    const view = new DataView(buffer32);
+
+    const writeString = (offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataLength, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numberOfChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataLength, true);
+
+    let offset = 44;
+    for (let i = 0; i < frameLength; i++) {
+        const s = Math.max(-1, Math.min(1, audioData[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        offset += 2;
+    }
+
+    return buffer32;
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
     const [activeSlide, setActiveSlide] = useState(0);
@@ -633,8 +890,106 @@ const App = () => {
     const [status, setStatus] = useState('');
     const [audioObjectUrl, setAudioObjectUrl] = useState(null);
     const [audioFileName, setAudioFileName] = useState('');
+    const [currentAudioFile, setCurrentAudioFile] = useState(null);
     const [caseDescription, setCaseDescription] = useState('');
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [batchDescriptions, setBatchDescriptions] = useState('');
+    const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+    const [batchProgress, setBatchProgress] = useState('');
+    const [batchFormat, setBatchFormat] = useState('carruseles'); // 'carruseles', 'reels', 'ambos'
+    const [library, setLibrary] = useState([]);
+    const [activeTab, setActiveTab] = useState('editor'); // 'editor', 'library'
+
+    // Cargar biblioteca desde localStorage
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('neocontent_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch (err) {
+            console.warn('Error cargando biblioteca:', err);
+        }
+    }, []);
+
+    // Guardar biblioteca a localStorage cuando cambia
+    useEffect(() => {
+        try {
+            localStorage.setItem('neocontent_library', JSON.stringify(library));
+        } catch (err) {
+            console.warn('Error guardando biblioteca:', err);
+        }
+    }, [library]);
+
+    const addToLibrary = (item) => {
+        const newItem = {
+            id: Date.now(),
+            title: item.title || scenario.title || 'Sin título',
+            type: item.type, // 'Carrusel' o 'Reel'
+            dateTime: new Date().toLocaleString('es-AR'),
+            audio: audioFileName || 'Sin audio',
+            status: 'Borrador', // Borrador, Listo, Publicado
+            scenarioData: scenario
+        };
+        setLibrary([newItem, ...library]);
+    };
+
+    const updateLibraryItem = (id, updates) => {
+        setLibrary(library.map(item => item.id === id ? { ...item, ...updates } : item));
+    };
+
+    const deleteLibraryItem = (id) => {
+        setLibrary(library.filter(item => item.id !== id));
+    };
+
+    const sanitizeFileName = (str, maxLen = 50) => {
+        return str.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, maxLen).replace(/_+/g, '_').replace(/^_|_$/g, '');
+    };
+
+    const regenerateFromLibrary = (item) => {
+        setScenario(item.scenarioData);
+        setActiveSlide(0);
+        setActiveTab('editor');
+        alert('✓ Caso cargado en el editor');
+    };
+
+    const downloadCarruselAsZip = async () => {
+        if (gallery.length === 0) {
+            alert('No hay carruseles para descargar');
+            return;
+        }
+
+        try {
+            const zip = new JSZip();
+            const caseName = sanitizeFileName(scenario.title, 50);
+            const caseFolder = zip.folder(caseName);
+            const carruselFolder = caseFolder.folder('carruseles');
+
+            for (let i = 0; i < gallery.length; i++) {
+                let slideTitle;
+                if (i < 5 && scenario.steps[i]) {
+                    slideTitle = sanitizeFileName(scenario.steps[i].t || `slide_${i + 1}`, 40);
+                } else {
+                    slideTitle = sanitizeFileName('cta', 40);
+                }
+
+                const dataUrl = gallery[i];
+                const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+                carruselFolder.file(`${i + 1}_${slideTitle}.png`, base64, { base64: true });
+            }
+
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().slice(0, 10);
+            a.download = `${caseName}_${timestamp}.zip`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            alert('✓ Carrusel descargado');
+        } catch (err) {
+            console.error('Error descargando ZIP:', err);
+            alert('Error: ' + err.message);
+        }
+    };
 
     const handleAudioFile = (e) => {
         const file = e.target.files[0];
@@ -643,13 +998,70 @@ const App = () => {
         const url = URL.createObjectURL(file);
         setAudioObjectUrl(url);
         setAudioFileName(file.name);
+        setCurrentAudioFile(file);
     };
 
     const clearAudio = () => {
         if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
         setAudioObjectUrl(null);
         setAudioFileName('');
+        setCurrentAudioFile(null);
     };
+
+    const saveAudioAsDefault = async (blob, fileName) => {
+        try {
+            // Advertencia si es muy grande (>10MB)
+            if (blob.size > 10 * 1024 * 1024) {
+                if (!confirm(`El archivo pesa ${(blob.size / 1024 / 1024).toFixed(1)}MB. ¿Guardarlo como defecto?`)) return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                localStorage.setItem('defaultAudioBase64', reader.result);
+                localStorage.setItem('defaultAudioFileName', fileName);
+                alert(`✓ "${fileName}" es ahora tu audio por defecto`);
+            };
+            reader.readAsDataURL(blob);
+        } catch (err) {
+            alert('Error al guardar audio: ' + err.message);
+        }
+    };
+
+    const resetAudioToDefault = () => {
+        localStorage.removeItem('defaultAudioBase64');
+        localStorage.removeItem('defaultAudioFileName');
+        if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
+        setAudioObjectUrl(null);
+        setAudioFileName('');
+        setCurrentAudioFile(null);
+        alert('✓ Audio por defecto eliminado');
+    };
+
+    // Cargar audio guardado al iniciar (si existe)
+    useEffect(() => {
+        try {
+            const savedBase64 = localStorage.getItem('defaultAudioBase64');
+            const savedFileName = localStorage.getItem('defaultAudioFileName');
+
+            if (savedBase64 && savedFileName) {
+                // Cargar audio guardado
+                fetch(savedBase64)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        setAudioObjectUrl(url);
+                        setAudioFileName(`⭐ ${savedFileName}`);
+                    })
+                    .catch(err => {
+                        console.warn('Error al cargar audio guardado:', err);
+                        setAudioObjectUrl(null);
+                        setAudioFileName('');
+                    });
+            }
+            // Si no hay guardado, no cargar nada
+        } catch (err) {
+            console.warn('Error al iniciar audio:', err);
+        }
+    }, []);
 
     const loadScenario = (key) => {
         if (!key) return;
@@ -667,23 +1079,58 @@ const App = () => {
         setScenario({...scenario, steps: newSteps});
     };
 
-    const generateImages = async () => {
-        setIsGenerating(true); setGallery([]);
-        const images = [];
-        for (let i=0; i<5; i++) {
-            setStatus('Generando '+(i+1)+'/5…');
-            await new Promise(r => setTimeout(r, 60));
-            const canvas = document.createElement('canvas');
-            renderSlideToCanvas(canvas, scenario.steps[i], i);
-            images.push(canvas.toDataURL('image/png'));
+    const generateImages = () => {
+        try {
+            setIsGenerating(true);
+            setGallery([]);
+            setStatus('Preparando canvas…');
+
+            // Generar todas las imágenes de una vez (sin await)
+            const images = [];
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1080;
+                    canvas.height = 1080;
+                    renderSlideToCanvas(canvas, scenario.steps[i], i);
+                    const imgData = canvas.toDataURL('image/png', 0.95);
+                    images.push(imgData);
+                    console.log(`✓ Slide ${i+1} generado`);
+                } catch (slideErr) {
+                    console.error(`Error en slide ${i+1}:`, slideErr);
+                    setStatus(`❌ Error en slide ${i+1}: ${slideErr.message}`);
+                    setIsGenerating(false);
+                    return;
+                }
+            }
+
+            // Generar CTA
+            try {
+                const ctaCanvas = document.createElement('canvas');
+                ctaCanvas.width = 1080;
+                ctaCanvas.height = 1080;
+                const chosenCTA = CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)];
+                renderCTASlide(ctaCanvas, chosenCTA);
+                images.push(ctaCanvas.toDataURL('image/png', 0.95));
+                console.log('✓ CTA generado');
+            } catch (ctaErr) {
+                console.error('Error en CTA:', ctaErr);
+                setStatus(`❌ Error en CTA: ${ctaErr.message}`);
+                setIsGenerating(false);
+                return;
+            }
+
+            // Actualizar estado
+            setGallery(images);
+            addToLibrary({ title: scenario.title, type: 'Carrusel' });
+            setStatus('✅ Carrusel generado');
+            setIsGenerating(false);
+        } catch (err) {
+            console.error('Error generando carrusel:', err);
+            setStatus('❌ Error: ' + err.message);
+            setIsGenerating(false);
         }
-        setStatus('Generando llamada a la acción…');
-        await new Promise(r => setTimeout(r, 60));
-        const ctaCanvas = document.createElement('canvas');
-        const chosenCTA = CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)];
-        renderCTASlide(ctaCanvas, chosenCTA);
-        images.push(ctaCanvas.toDataURL('image/png'));
-        setGallery(images); setStatus(''); setIsGenerating(false);
     };
 
     const exportVideo = async () => {
@@ -699,33 +1146,47 @@ const App = () => {
             canvas.width = 1080; canvas.height = 1920;
             const videoStream = canvas.captureStream(30);
 
-            const mimeType = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
-                .find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+            const mimeType = [
+                'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+                'video/mp4',
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm'
+            ].find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
 
             let recordStream = videoStream;
 
+            // Solo usar archivos cargados localmente para grabar (evita problemas CORS)
             if (audioObjectUrl) {
-                setStatus('Cargando audio...');
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioEl = new Audio(audioObjectUrl);
-                audioEl.loop = true;
-                await new Promise((resolve, reject) => {
-                    audioEl.oncanplaythrough = resolve;
-                    audioEl.onerror = () => reject(new Error('No se pudo cargar el audio'));
-                    audioEl.load();
-                });
-                const src = audioCtx.createMediaElementSource(audioEl);
-                const dest = audioCtx.createMediaStreamDestination();
-                // Ganancia para evitar clipping
-                const gain = audioCtx.createGain();
-                gain.gain.value = 0.85;
-                src.connect(gain);
-                gain.connect(dest);
-                gain.connect(audioCtx.destination);
-                recordStream = new MediaStream([
-                    ...videoStream.getVideoTracks(),
-                    ...dest.stream.getAudioTracks()
-                ]);
+                try {
+                    setStatus('Cargando audio...');
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    audioEl = new Audio(audioObjectUrl);
+                    audioEl.crossOrigin = 'anonymous';
+                    audioEl.loop = true;
+
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => reject(new Error('Timeout audio')), 10000);
+                        audioEl.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
+                        audioEl.onerror = (e) => { clearTimeout(timeout); reject(new Error(`Error: ${e}`)); };
+                        audioEl.load();
+                    });
+
+                    const src = audioCtx.createMediaElementSource(audioEl);
+                    const dest = audioCtx.createMediaStreamDestination();
+                    const gain = audioCtx.createGain();
+                    gain.gain.value = 0.85;
+                    src.connect(gain);
+                    gain.connect(dest);
+                    gain.connect(audioCtx.destination);
+
+                    recordStream = new MediaStream([
+                        ...videoStream.getVideoTracks(),
+                        ...dest.stream.getAudioTracks()
+                    ]);
+                } catch (err) {
+                    console.warn('Audio no disponible, reel sin sonido:', err.message);
+                }
             }
 
             const recorder = new MediaRecorder(recordStream, { mimeType, videoBitsPerSecond: 8000000 });
@@ -733,14 +1194,16 @@ const App = () => {
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
             recorder.onstop = () => {
-                if (audioEl) { audioEl.pause(); audioEl.src = ''; }
+                if (audioEl?.pause) audioEl.pause();
                 if (audioCtx) audioCtx.close();
-                const blob = new Blob(chunks, { type: 'video/webm' });
+                const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                const blob = new Blob(chunks, { type: mimeType.includes('mp4') ? 'video/mp4' : 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url;
-                a.download = `NeoMonitor_Reel_${scenario.title.replace(/\s+/g, '_')}.webm`;
+                a.download = `NeoMonitor_Reel_${scenario.title.replace(/\s+/g, '_')}.${ext}`;
                 a.click();
                 setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+                addToLibrary({ title: scenario.title, type: 'Reel' });
                 setIsExportingVideo(false); setStatus('');
             };
 
@@ -795,7 +1258,7 @@ const App = () => {
         setStatus('Generando caso con IA...');
 
         try {
-            const response = await fetch('http://localhost:3001/api/generate-case', {
+            const response = await fetch('/api/generate-case', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -848,6 +1311,215 @@ const App = () => {
         }
     };
 
+    const generateReelBlob = async (steps, caseTitle) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080; canvas.height = 1920;
+                const videoStream = canvas.captureStream(30);
+
+                const mimeType = [
+                    'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+                    'video/mp4',
+                    'video/webm;codecs=vp9',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ].find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+                let recordStream = videoStream;
+                let audioEl = null;
+                let audioCtx = null;
+
+                // Usar audio por defecto si existe
+                if (audioObjectUrl) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        audioEl = new Audio(audioObjectUrl);
+                        audioEl.crossOrigin = 'anonymous';
+                        audioEl.loop = true;
+
+                        await new Promise((res, rej) => {
+                            const timeout = setTimeout(() => rej(new Error('Audio timeout')), 10000);
+                            audioEl.oncanplaythrough = () => { clearTimeout(timeout); res(); };
+                            audioEl.onerror = (e) => { clearTimeout(timeout); rej(e); };
+                            audioEl.load();
+                        });
+
+                        const src = audioCtx.createMediaElementSource(audioEl);
+                        const dest = audioCtx.createMediaStreamDestination();
+                        const gain = audioCtx.createGain();
+                        gain.gain.value = 0.85;
+                        src.connect(gain);
+                        gain.connect(dest);
+                        gain.connect(audioCtx.destination);
+                        recordStream = new MediaStream([...videoStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+                    } catch (err) {
+                        console.warn('Audio no disponible, reel sin audio:', err);
+                    }
+                }
+
+                const recorder = new MediaRecorder(recordStream, { mimeType, videoBitsPerSecond: 8000000 });
+                const chunks = [];
+                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+                recorder.onstop = () => {
+                    if (audioEl?.pause) audioEl.pause();
+                    if (audioCtx) audioCtx.close();
+                    const blobType = mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+                    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    const blob = new Blob(chunks, { type: blobType });
+                    resolve({ blob, ext });
+                };
+
+                // Iniciar audio y grabación
+                if (audioEl) audioEl.play();
+                recorder.start();
+                await new Promise(r => setTimeout(r, 400)); // Pequeño delay para que recorder esté listo
+
+                // Renderizar slides MIENTRAS se graba (7 segundos cada uno)
+                const slideDuration = 7000;
+                for (let i = 0; i < 5; i++) {
+                    const slideStartTime = Date.now();
+                    while (Date.now() - slideStartTime < slideDuration) {
+                        renderReelSlideToCanvas(canvas, steps[i], i);
+                        await new Promise(r => requestAnimationFrame(r));
+                    }
+                }
+
+                // Detener grabación
+                setTimeout(() => recorder.stop(), 500);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    };
+
+    const batchGenerateCases = async () => {
+        const lines = batchDescriptions.trim().split('\n').filter(l => l.trim());
+        if (lines.length === 0) {
+            alert('Por favor, escribe al menos un tema');
+            return;
+        }
+
+        let apiKey = localStorage.getItem('claude_api_key');
+        if (!apiKey) {
+            apiKey = prompt('Ingresá tu API key de Claude (sk-ant-...):');
+            if (!apiKey) {
+                alert('Se requiere API key');
+                return;
+            }
+            localStorage.setItem('claude_api_key', apiKey);
+        }
+
+        setIsBatchGenerating(true);
+        const zip = new JSZip();
+        let successCount = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const description = lines[i].trim();
+            const folderName = description.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+
+            setBatchProgress(`${i + 1}/${lines.length} - Generando: ${description.substring(0, 40)}`);
+
+            try {
+                const response = await fetch('/api/generate-case', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, caseDescription: description })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'Error en Claude');
+                }
+
+                const data = await response.json();
+                let jsonStr = data.content[0].text.trim();
+                if (jsonStr.startsWith('```json')) {
+                    jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '');
+                } else if (jsonStr.startsWith('```')) {
+                    jsonStr = jsonStr.replace(/^```\n/, '').replace(/\n```$/, '');
+                }
+
+                const caseData = JSON.parse(jsonStr);
+                const formattedSteps = caseData.steps.map(s => ({
+                    t: s.title || '',
+                    d: s.description || '',
+                    v: (s.hr !== null || s.spo2 !== null) ? { hr: s.hr, sp: s.spo2 } : null
+                }));
+
+                const folder = zip.folder(folderName);
+
+                // Generar Carruseles (PNGs)
+                if (batchFormat === 'carruseles' || batchFormat === 'ambos') {
+                    setBatchProgress(`${i + 1}/${lines.length} - Renderizando carruseles de ${description.substring(0, 40)}`);
+                    const carruselFolder = folder.folder('carruseles');
+                    for (let j = 0; j < 5; j++) {
+                        const canvas = document.createElement('canvas');
+                        renderSlideToCanvas(canvas, formattedSteps[j], j);
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+                        const slideTitle = sanitizeFileName(formattedSteps[j].t || `slide_${j + 1}`, 40);
+                        carruselFolder.file(`${j + 1}_${slideTitle}.png`, base64, { base64: true });
+                    }
+                }
+
+                // Generar Reels (MP4 o WebM)
+                if (batchFormat === 'reels' || batchFormat === 'ambos') {
+                    setBatchProgress(`${i + 1}/${lines.length} - Grabando reel de ${description.substring(0, 40)}`);
+                    try {
+                        const { blob: reelBlob, ext: reelExt } = await generateReelBlob(formattedSteps, caseData.title);
+                        const reelFolder = folder.folder('reels');
+                        const reelBase64 = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                resolve(reader.result.split(',')[1]);
+                            };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(reelBlob);
+                        });
+                        const reelTitle = sanitizeFileName(caseData.title || description, 50);
+                        reelFolder.file(`reel_${reelTitle}_9-16.${reelExt}`, reelBase64, { base64: true });
+                    } catch (reelErr) {
+                        console.warn(`Error generando reel para "${description}":`, reelErr);
+                        setBatchProgress(`${i + 1}/${lines.length} - ⚠️ Reel falló, continuando...`);
+                    }
+                }
+
+                successCount++;
+                // Pequeña pausa entre casos
+                await new Promise(r => setTimeout(r, 500));
+            } catch (err) {
+                console.error(`Error en "${description}":`, err);
+                setBatchProgress(`${i + 1}/${lines.length} - ❌ Error: ${err.message}`);
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        // Descargar ZIP
+        if (successCount > 0) {
+            setBatchProgress(`Empaquetando ${successCount} casos...`);
+            zip.generateAsync({ type: 'blob' }).then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fileName = `NeoMonitor_Batch_${new Date().toISOString().split('T')[0]}.zip`;
+                a.download = fileName;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                setBatchProgress(`✅ ${successCount}/${lines.length} casos descargados`);
+                setTimeout(() => {
+                    setIsBatchGenerating(false);
+                    setBatchProgress('');
+                }, 2000);
+            });
+        } else {
+            alert('No se generó ningún caso');
+            setIsBatchGenerating(false);
+            setBatchProgress('');
+        }
+    };
+
     const currentStep = scenario.steps[activeSlide];
 
     return (
@@ -880,9 +1552,26 @@ const App = () => {
                     <p className="text-slate-400">Casos neonatales, pediátricos y de adultos. Posts 1:1 y Reels 9:16 para Instagram y LinkedIn.</p>
                 </header>
 
+                <div className="flex gap-4 mb-6 max-w-6xl mx-auto px-6">
+                    {['editor', 'library'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all ${
+                                activeTab === tab
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                        >
+                            {tab === 'editor' ? '✏️ Editor' : `📚 Biblioteca (${library.length})`}
+                        </button>
+                    ))}
+                </div>
+
+                {activeTab === 'editor' ? (
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
                     <div className="lg:col-span-5 space-y-6">
-                        
+
                         <SlidePreview step={currentStep} index={activeSlide}/>
 
                         <div className="glass-card p-6 rounded-[32px] space-y-6">
@@ -904,6 +1593,52 @@ const App = () => {
                                     {isGeneratingAI ? <><div className="w-2 h-2 bg-white rounded-full animate-pulse"/><span>{status}</span></> : <>✨ Generar Caso</>}
                                 </button>
                                 <p className="text-[9px] text-purple-300/70 font-medium leading-tight">Tu API key se guarda localmente. Generada en español basado en NRP 8ª edición.</p>
+                            </div>
+
+                            <div className="space-y-4 pb-4 border-b border-white/5">
+                                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 block">📦 Generar en Masa</label>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { value: 'carruseles', label: '📷 Carruseles', desc: '1:1 PNG' },
+                                        { value: 'reels', label: '🎬 Reels', desc: '9:16 WebM' },
+                                        { value: 'ambos', label: '✨ Ambos', desc: 'PNG + WebM' }
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => setBatchFormat(opt.value)}
+                                            disabled={isBatchGenerating}
+                                            className={`p-3 rounded-lg font-bold transition-all text-[9px] flex flex-col items-center gap-1 ${
+                                                batchFormat === opt.value
+                                                    ? 'bg-emerald-600 text-white'
+                                                    : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
+                                            }`}
+                                        >
+                                            <span>{opt.label}</span>
+                                            <span className="text-[8px] opacity-70">{opt.desc}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <textarea
+                                    placeholder="Escribe un tema por línea&#10;Ej: Bradicardia severa en prematuro&#10;Neumotórax a tensión&#10;Hipoglucemia grave"
+                                    rows={3}
+                                    value={batchDescriptions}
+                                    onChange={(e) => setBatchDescriptions(e.target.value)}
+                                    disabled={isBatchGenerating}
+                                    className="w-full rounded-xl p-4 text-sm resize-none font-mono text-[11px]"
+                                />
+                                <button
+                                    onClick={batchGenerateCases}
+                                    disabled={isBatchGenerating || isGeneratingAI || !batchDescriptions.trim()}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]"
+                                >
+                                    {isBatchGenerating
+                                        ? <><div className="w-2 h-2 bg-white rounded-full animate-pulse"/><span>{batchProgress}</span></>
+                                        : <>📦 Generar + ZIP</>
+                                    }
+                                </button>
+                                <p className="text-[9px] text-emerald-300/70 font-medium leading-tight">Genera 5 slides por cada tema. Se descargan como ZIP con subcarpetas por tema.</p>
                             </div>
 
                             <div>
@@ -985,24 +1720,34 @@ const App = () => {
 
                                     {/* ── Música para el Reel ── */}
                                     <div>
-                                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest block mb-2">
-                                            Música para el Reel
-                                        </label>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Música para el Reel</label>
+                                            <div className="flex gap-2">
+                                                {audioFileName && audioFileName.includes('⭐') && (
+                                                    <button onClick={resetAudioToDefault} className="text-[9px] font-bold text-cyan-500 hover:text-cyan-400 transition-colors">Eliminar defecto</button>
+                                                )}
+                                                {currentAudioFile && !audioFileName.includes('⭐') && (
+                                                    <button onClick={() => saveAudioAsDefault(currentAudioFile, currentAudioFile.name)} className="text-[9px] font-bold text-green-500 hover:text-green-400 transition-colors">Guardar como defecto</button>
+                                                )}
+                                                {audioFileName && (
+                                                    <button onClick={clearAudio} className="text-[9px] font-bold text-slate-600 hover:text-amber-400 transition-colors">Limpiar</button>
+                                                )}
+                                            </div>
+                                        </div>
                                         <label className="flex items-center gap-3 w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 cursor-pointer hover:border-amber-500/50 transition-all group">
                                             <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
                                             </svg>
                                             <span className="text-[10px] font-bold text-slate-400 truncate flex-1">
-                                                {audioFileName || 'Subir MP3 royalty-free…'}
+                                                {audioFileName || 'Subir MP3…'}
                                             </span>
-                                            {audioFileName && (
-                                                <button onClick={e=>{e.preventDefault();clearAudio();}} className="text-slate-600 hover:text-red-400 transition-colors text-xs font-black">✕</button>
+                                            {audioFileName && !audioFileName.includes('por defecto') && (
+                                                <button onClick={e=>{e.preventDefault();handleAudioFile({target: {files: []}});}} className="text-slate-600 hover:text-red-400 transition-colors text-xs font-black">✕</button>
                                             )}
                                             <input type="file" accept="audio/mp3,audio/mpeg,audio/*" onChange={handleAudioFile} className="hidden"/>
                                         </label>
-                                        <p className="text-[9px] text-slate-700 font-bold mt-1.5 leading-relaxed">
-                                            Música libre de derechos:{' '}
-                                            <span className="text-slate-500">pixabay.com/music · freemusicarchive.org · bensound.com</span>
+                                        <p className="text-[8px] text-slate-700 font-bold mt-1.5 leading-relaxed">
+                                            Audios: <span className="text-slate-500">pixabay.com/music · freepd.com · zapsplat.com</span>
                                         </p>
                                     </div>
 
@@ -1020,33 +1765,109 @@ const App = () => {
                                         className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl shadow-amber-600/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs">
                                         {isExportingVideo
                                             ? <><div className="w-2 h-2 bg-white rounded-full recording-dot"/><span>{status}</span></>
-                                            : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg><span>Exportar Reel 9:16{audioFileName ? ' + Audio' : ''}</span></>}
+                                            : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg><span>Exportar Reel 9:16{audioFileName ? ` + Audio` : ''}</span></>}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-7">
+                    <div className="lg:col-span-7 space-y-4">
+                        {gallery.length > 0 && (
+                            <button
+                                onClick={downloadCarruselAsZip}
+                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]"
+                            >
+                                📦 Descargar Carrusel como ZIP
+                            </button>
+                        )}
                         {gallery.length > 0
                             ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
-                                {gallery.map((img,i) => (
+                                {gallery.map((img,i) => {
+                                    const slideTitle = i < 5 && scenario.steps[i]
+                                        ? sanitizeFileName(scenario.steps[i].t || `slide_${i + 1}`, 40)
+                                        : sanitizeFileName('cta', 40);
+                                    return (
                                     <div key={i} className="group relative rounded-3xl border border-white/5 overflow-hidden shadow-2xl hover:scale-[1.02] transition-all">
                                         <img src={img} alt={'Slide '+(i+1)} className="w-full aspect-square object-cover"/>
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
-                                            <a href={img} download={'NeoMonitor_Post_'+(i+1)+'.png'} className="bg-white text-black p-4 rounded-full shadow-2xl">
+                                            <a href={img} download={`${i + 1}_${slideTitle}.png`} className="bg-white text-black p-4 rounded-full shadow-2xl">
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                             </a>
                                         </div>
                                         <div className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">POST {i+1}</div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                               </div>
                             : <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
                                 <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Personaliza tu caso y elige el formato de exportación para tu red social preferida.</p>
                               </div>}
                     </div>
                 </div>
+                ) : (
+                <div className="w-full max-w-6xl mx-auto px-6 space-y-4">
+                    {library.length === 0 ? (
+                        <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
+                            <p className="text-sm font-bold uppercase tracking-widest leading-relaxed">📚 Tu biblioteca está vacía</p>
+                            <p className="text-xs text-slate-600 mt-2">Genera carruseles o reels para verlos aquí</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
+                            {library.map(item => (
+                                <div key={item.id} className="glass-card rounded-2xl p-4 flex flex-col gap-3 border border-white/10">
+                                    <div>
+                                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Título</p>
+                                        <p className="text-sm font-bold text-white truncate">{item.title}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                        <div>
+                                            <p className="text-slate-600 uppercase font-black tracking-widest mb-1">Tipo</p>
+                                            <span className={`px-2 py-1 rounded font-bold ${item.type === 'Carrusel' ? 'bg-blue-600/30 text-blue-300' : 'bg-purple-600/30 text-purple-300'}`}>{item.type}</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-600 uppercase font-black tracking-widest mb-1">Fecha</p>
+                                            <p className="text-slate-400 text-[9px]">{item.dateTime.split(',')[0]}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest mb-1">Audio</p>
+                                        <p className="text-[9px] text-slate-400 truncate">{item.audio}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest mb-2">Estado</p>
+                                        <select
+                                            value={item.status}
+                                            onChange={(e) => updateLibraryItem(item.id, { status: e.target.value })}
+                                            className="w-full text-[9px] font-bold px-2 py-1 rounded bg-slate-800 border border-white/10 text-white cursor-pointer"
+                                        >
+                                            <option value="Borrador">Borrador</option>
+                                            <option value="Listo">Listo</option>
+                                            <option value="Publicado">Publicado</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-2 pt-2 border-t border-white/5">
+                                        <button
+                                            onClick={() => regenerateFromLibrary(item)}
+                                            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[9px] py-2 rounded transition-all uppercase tracking-widest"
+                                        >
+                                            ↻ Recargar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('¿Eliminar de la biblioteca?')) deleteLibraryItem(item.id);
+                                            }}
+                                            className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold text-[9px] py-2 rounded transition-all uppercase tracking-widest"
+                                        >
+                                            ✕ Borrar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                )}
             </main>
         </div>
     );

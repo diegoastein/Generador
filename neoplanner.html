@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeoPlanner — NeoMonitor Expert Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #020617; color: #f1f5f9; font-family: Arial, sans-serif; }
+  input, textarea, select {
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 12px;
+    width: 100%;
+    font-size: 13px;
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: rgba(99,102,241,0.5);
+  }
+  input[type="date"], input[type="time"] {
+    color-scheme: dark;
+  }
+  .card {
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .badge-carrusel { background: rgba(6,182,212,0.15); color: #22d3ee; border: 1px solid rgba(6,182,212,0.2); }
+  .badge-reel     { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
+  .badge-borrador   { background: rgba(100,116,139,0.15); color: #94a3b8; }
+  .badge-listo      { background: rgba(34,197,94,0.15);  color: #4ade80; }
+  .badge-publicado  { background: rgba(99,102,241,0.15); color: #818cf8; }
+  .badge { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .05em; }
+  .btn-primary {
+    background: #4f46e5; color: #fff; font-weight: 800;
+    border-radius: 12px; padding: 10px 20px;
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    border: none; cursor: pointer; transition: background .2s;
+  }
+  .btn-primary:hover { background: #4338ca; }
+  .btn-secondary {
+    background: #1e293b; color: #94a3b8; font-weight: 700;
+    border-radius: 12px; padding: 10px 20px;
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: background .2s;
+  }
+  .btn-secondary:hover { background: #273549; color: #f1f5f9; }
+  .btn-danger {
+    background: transparent; color: #f87171; font-weight: 700;
+    border-radius: 10px; padding: 6px 12px;
+    font-size: 11px; border: 1px solid rgba(248,113,113,0.2); cursor: pointer; transition: all .2s;
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+  .empty-state { text-align: center; padding: 60px 20px; color: #475569; }
+  .row-scheduled { border-left: 3px solid #4f46e5; }
+  .row-empty { border-left: 3px solid #334155; }
+  .counter { font-size: 11px; color: #64748b; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div style="max-width:1100px; margin:0 auto; padding:32px 20px;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="index.html" style="color:#4f46e5; font-size:12px; font-weight:800; text-decoration:none; letter-spacing:.08em; text-transform:uppercase;">← Dashboard</a>
+      <span style="color:#1e293b;">|</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; background:#4f46e5; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px;">NP</div>
+        <div>
+          <div style="font-weight:900; font-size:18px; letter-spacing:-.02em;">NeoPlanner</div>
+          <div style="font-size:10px; color:#475569; font-weight:700; text-transform:uppercase; letter-spacing:.08em;">Planificador de contenido</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="counter" id="counterLabel">0 items</span>
+      <button class="btn-secondary" onclick="loadFromLibrary()">↻ Actualizar Biblioteca</button>
+      <button class="btn-primary" onclick="exportCSV()">⬇ Exportar CSV</button>
+    </div>
+  </div>
+
+  <!-- Info banner -->
+  <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:14px; padding:14px 20px; margin-bottom:24px; font-size:12px; color:#a5b4fc; line-height:1.7;">
+    <strong style="color:#818cf8;">¿Cómo usar?</strong>
+    &nbsp;1) Generá el contenido en <strong>Casos Expandidos</strong>.
+    &nbsp;2) Pegá la URL pública de Google Drive para cada archivo.
+    &nbsp;3) Asignale fecha, hora y caption.
+    &nbsp;4) Exportá el CSV e importalo en <strong>Buffer / Later / Hootsuite</strong>.
+    <br/>
+    <span style="color:#64748b;">Para obtener URL pública: abrí el archivo en Drive → clic derecho → <em>Compartir</em> → <em>Cualquiera con el enlace</em> → copiá el link.</span>
+  </div>
+
+  <!-- Filtros -->
+  <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+    <button class="btn-secondary" id="filterAll"    onclick="setFilter('all')"       style="font-size:10px; padding:7px 16px;">Todos</button>
+    <button class="btn-secondary" id="filterPending" onclick="setFilter('pending')"  style="font-size:10px; padding:7px 16px;">Sin programar</button>
+    <button class="btn-secondary" id="filterReady"  onclick="setFilter('ready')"     style="font-size:10px; padding:7px 16px;">Con fecha</button>
+  </div>
+
+  <!-- Lista -->
+  <div id="plannerList"></div>
+
+</div>
+
+<script>
+// ─── Estado ───────────────────────────────────────────────────────────────────
+let library = [];
+let plan = {}; // { [id]: { date, time, caption, driveUrl } }
+let activeFilter = 'all';
+
+// ─── Inicialización ───────────────────────────────────────────────────────────
+function init() {
+    loadPlan();
+    loadFromLibrary();
+}
+
+function loadFromLibrary() {
+    try {
+        const raw = localStorage.getItem('neocontent_library');
+        library = raw ? JSON.parse(raw) : [];
+    } catch(e) {
+        library = [];
+    }
+    render();
+}
+
+function loadPlan() {
+    try {
+        const raw = localStorage.getItem('neoplanner_plan');
+        plan = raw ? JSON.parse(raw) : {};
+    } catch(e) {
+        plan = {};
+    }
+}
+
+function savePlan() {
+    localStorage.setItem('neoplanner_plan', JSON.stringify(plan));
+}
+
+// ─── Actualización de campos ──────────────────────────────────────────────────
+function updateField(id, field, value) {
+    if (!plan[id]) plan[id] = {};
+    plan[id][field] = value;
+    savePlan();
+    updateCounter();
+    highlightRow(id);
+}
+
+function highlightRow(id) {
+    const row = document.getElementById('row_' + id);
+    if (!row) return;
+    const p = plan[id] || {};
+    const hasDate = p.date && p.time;
+    row.className = row.className.replace(/row-scheduled|row-empty/g, '').trim();
+    row.classList.add(hasDate ? 'row-scheduled' : 'row-empty');
+}
+
+function deleteFromPlan(id) {
+    delete plan[id];
+    savePlan();
+    render();
+}
+
+// ─── Filtro ───────────────────────────────────────────────────────────────────
+function setFilter(f) {
+    activeFilter = f;
+    ['filterAll','filterPending','filterReady'].forEach(id => {
+        document.getElementById(id).style.color = '';
+        document.getElementById(id).style.borderColor = '';
+    });
+    const map = { all: 'filterAll', pending: 'filterPending', ready: 'filterReady' };
+    const el = document.getElementById(map[f]);
+    if (el) { el.style.color = '#818cf8'; el.style.borderColor = 'rgba(99,102,241,0.4)'; }
+    render();
+}
+
+function filteredLibrary() {
+    return library.filter(item => {
+        if (activeFilter === 'pending') {
+            const p = plan[item.id] || {};
+            return !p.date || !p.time;
+        }
+        if (activeFilter === 'ready') {
+            const p = plan[item.id] || {};
+            return p.date && p.time;
+        }
+        return true;
+    });
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+    const container = document.getElementById('plannerList');
+    const items = filteredLibrary();
+    updateCounter();
+
+    if (library.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size:40px; margin-bottom:12px;">📭</div>
+                <div style="font-weight:800; font-size:16px; color:#334155; margin-bottom:8px;">Biblioteca vacía</div>
+                <div style="font-size:13px;">Generá contenido en <strong style="color:#4f46e5;">Casos Expandidos</strong> y volvé acá.</div>
+            </div>`;
+        return;
+    }
+
+    if (items.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div style="font-size:13px; color:#475569;">No hay items con este filtro.</div></div>`;
+        return;
+    }
+
+    container.innerHTML = items.map(item => {
+        const p = plan[item.id] || {};
+        const hasDate = p.date && p.time;
+        const borderClass = hasDate ? 'row-scheduled' : 'row-empty';
+        const typeClass = item.type === 'Reel' ? 'badge-reel' : 'badge-carrusel';
+        const statusClass = { Borrador: 'badge-borrador', Listo: 'badge-listo', Publicado: 'badge-publicado' }[item.status] || 'badge-borrador';
+
+        return `
+        <div class="card ${borderClass}" id="row_${item.id}" style="margin-bottom:12px;">
+          <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:start;">
+
+            <!-- Columna izquierda: info del caso -->
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                <span class="badge ${typeClass}">${item.type}</span>
+                <span class="badge ${statusClass}">${item.status}</span>
+                <span style="font-weight:800; font-size:14px;">${escapeHtml(item.title)}</span>
+              </div>
+              <div style="font-size:11px; color:#475569; margin-bottom:14px;">Generado: ${item.dateTime}</div>
+
+              <!-- Caption -->
+              <div style="margin-bottom:10px;">
+                <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">Caption / Texto del post</label>
+                <textarea
+                  rows="3"
+                  placeholder="Escribí el caption para esta publicación..."
+                  oninput="updateField(${item.id}, 'caption', this.value)"
+                  style="resize:vertical; line-height:1.6;"
+                >${escapeHtml(p.caption || '')}</textarea>
+              </div>
+
+              <!-- URL Drive -->
+              <div>
+                <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">URL Google Drive (pública)</label>
+                <input
+                  type="url"
+                  placeholder="https://drive.google.com/file/d/..."
+                  value="${escapeHtml(p.driveUrl || '')}"
+                  oninput="updateField(${item.id}, 'driveUrl', this.value)"
+                />
+              </div>
+            </div>
+
+            <!-- Columna derecha: fecha/hora + acciones -->
+            <div style="min-width:180px;">
+              <div style="margin-bottom:10px;">
+                <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">Fecha</label>
+                <input
+                  type="date"
+                  value="${p.date || ''}"
+                  onchange="updateField(${item.id}, 'date', this.value)"
+                />
+              </div>
+              <div style="margin-bottom:16px;">
+                <label style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px;">Hora</label>
+                <input
+                  type="time"
+                  value="${p.time || ''}"
+                  onchange="updateField(${item.id}, 'time', this.value)"
+                />
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                ${hasDate ? `<div style="font-size:11px; font-weight:800; color:#4ade80; text-align:center; padding:6px; background:rgba(34,197,94,0.08); border-radius:8px;">✓ Programado</div>` : `<div style="font-size:11px; color:#475569; text-align:center; padding:6px; background:rgba(255,255,255,0.02); border-radius:8px;">Sin fecha</div>`}
+                <button class="btn-danger" onclick="deleteFromPlan(${item.id})">Quitar del plan</button>
+              </div>
+            </div>
+
+          </div>
+        </div>`;
+    }).join('');
+}
+
+function updateCounter() {
+    const scheduled = Object.values(plan).filter(p => p.date && p.time).length;
+    const total = library.length;
+    document.getElementById('counterLabel').textContent = `${total} items · ${scheduled} programados`;
+}
+
+function escapeHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Exportar CSV ─────────────────────────────────────────────────────────────
+function exportCSV() {
+    const scheduled = library.filter(item => {
+        const p = plan[item.id] || {};
+        return p.date && p.time;
+    });
+
+    if (scheduled.length === 0) {
+        alert('No hay publicaciones programadas.\nAsignale fecha y hora a al menos un item.');
+        return;
+    }
+
+    // Ordenar por fecha/hora
+    scheduled.sort((a, b) => {
+        const pa = plan[a.id], pb = plan[b.id];
+        return (pa.date + pa.time).localeCompare(pb.date + pb.time);
+    });
+
+    // Encabezado CSV (compatible con Buffer y Later)
+    const rows = [
+        ['Date', 'Time', 'Type', 'Title', 'Caption', 'Media URL', 'Status']
+    ];
+
+    scheduled.forEach(item => {
+        const p = plan[item.id];
+        rows.push([
+            p.date,
+            p.time,
+            item.type,
+            item.title,
+            p.caption || '',
+            p.driveUrl || '',
+            item.status
+        ]);
+    });
+
+    const csv = rows.map(row =>
+        row.map(cell => {
+            const s = String(cell || '').replace(/"/g, '""');
+            return s.includes(',') || s.includes('\n') || s.includes('"') ? `"${s}"` : s;
+        }).join(',')
+    ).join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `NeoPlanner_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ─── Arrancar ─────────────────────────────────────────────────────────────────
+init();
+setFilter('all');
+</script>
+
+</body>
+</html>
