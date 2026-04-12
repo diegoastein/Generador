@@ -344,6 +344,7 @@ function App() {
 
     const addToLibrary = (type) => {
         const title = slides[0]?.title || 'Sin título';
+        const caption = `✨ ${title}. Conocé las últimas novedades de NeoMonitor en www.neomonitor.pro\n\n#neomonitor #novedades #neonatologia #educacionmedica #pediatria #tecnologiamedica #medicina`;
         const newItem = {
             id: Date.now(),
             title,
@@ -351,7 +352,8 @@ function App() {
             slideCount: slides.length,
             dateTime: new Date().toLocaleString('es-AR'),
             status: 'Borrador',
-            slidesData: slides.map(s => ({ ...s, audioUrl: null })) // sin audio para no saturar localStorage
+            caption,
+            slidesData: slides.map(s => ({ ...s, audioUrl: null }))
         };
         setLibrary(prev => [newItem, ...prev]);
     };
@@ -908,6 +910,18 @@ function App() {
                                                     </button>
                                                 </div>
                                             </div>
+                                            {item.caption && (
+                                                <div className="mt-3 pt-3 border-t border-white/5">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Caption</p>
+                                                        <button onClick={() => navigator.clipboard.writeText(item.caption).then(() => alert('✓ Caption copiado'))}
+                                                            className="text-[9px] font-black text-amber-400 hover:text-amber-300 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 transition-colors">
+                                                            📋 Copiar
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-500 leading-relaxed line-clamp-3 whitespace-pre-line">{item.caption}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                   </div>

@@ -556,12 +556,15 @@ const App = () => {
     }, [library]);
 
     const addToLibrary = (quizData) => {
+        const title = quizData.title || 'Sin título';
+        const caption = `🧠 ${title}. ¿Podés resolver este desafío clínico? Escenario basado en NRP 8ª Ed. y AHA/AAP 2023.\n\n#rcp #educacionmedica #quiz #neonatologia #nrp #reanimacion #pediatria #neomonitor`;
         const newItem = {
             id: Date.now(),
-            title: quizData.title || 'Sin título',
+            title,
             type: 'Quiz Pack',
             dateTime: new Date().toLocaleString('es-AR'),
             status: 'Borrador',
+            caption,
             quizData: { ...quizData }
         };
         setLibrary(prev => [newItem, ...prev]);
@@ -674,12 +677,14 @@ const App = () => {
                 drawQuizCTASlide(ctaC, CTA_POOL[Math.floor(Math.random() * CTA_POOL.length)]);
                 storiesFolder.file(`${labels[4]}.png`, ctaC.toDataURL('image/png').replace(/^data:image\/png;base64,/, ''), { base64: true });
 
+                const batchTitle = quizData.title || description;
                 setLibrary(prev => [{
                     id: Date.now() + i,
-                    title: quizData.title || description,
+                    title: batchTitle,
                     type: 'Quiz Pack',
                     dateTime: new Date().toLocaleString('es-AR'),
                     status: 'Borrador',
+                    caption: `🧠 ${batchTitle}. ¿Podés resolver este desafío clínico? Escenario basado en NRP 8ª Ed. y AHA/AAP 2023.\n\n#rcp #educacionmedica #quiz #neonatologia #nrp #reanimacion #pediatria #neomonitor`,
                     quizData
                 }, ...prev]);
             }
@@ -1019,6 +1024,18 @@ const App = () => {
                                                 </button>
                                             </div>
                                         </div>
+                                        {item.caption && (
+                                            <div className="mt-3 pt-3 border-t border-white/5">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Caption</p>
+                                                    <button onClick={() => navigator.clipboard.writeText(item.caption).then(() => alert('✓ Caption copiado'))}
+                                                        className="text-[9px] font-black text-amber-400 hover:text-amber-300 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 transition-colors">
+                                                        📋 Copiar
+                                                    </button>
+                                                </div>
+                                                <p className="text-[9px] text-slate-500 leading-relaxed line-clamp-3 whitespace-pre-line">{item.caption}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                               </div>
