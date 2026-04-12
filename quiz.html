@@ -405,11 +405,7 @@ function drawQuizSlide(canvas, step, data) {
     }
 
     const P=90;
-    rrect(ctx,W/2-60,P,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 52px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('NM',W/2,P+60); ctx.textAlign='left'; ctx.textBaseline='top';
-
-    const cY=P+160, cH=H-cY-180, cW=W-P*2;
+    const cY=P+40, cH=H-cY-180, cW=W-P*2;
     rrect(ctx,P,cY,cW,cH,72); ctx.fillStyle='#0f172a'; ctx.fill();
     rrect(ctx,P,cY,cW,cH,72); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=2; ctx.stroke();
     const grd=ctx.createRadialGradient(W-P,cY+200,0,W-P,cY+200,500);
@@ -420,11 +416,11 @@ function drawQuizSlide(canvas, step, data) {
     let y=cY+80;
 
     if(step===0){
-        ctx.fillStyle='#f59e0b'; ctx.font='bold 36px system-ui'; ctx.fillText('NUEVO DESAFÍO',iX,y); y+=70;
-        ctx.fillStyle='#fff'; ctx.font='bold 108px system-ui';
-        const tl=wrapText(ctx,data.title.toUpperCase(),iX,y,iW,112); y+=tl*112+60;
-        ctx.fillStyle='#64748b'; ctx.font='400 46px system-ui';
-        wrapText(ctx,'¿Estás listo para responder como un experto?',iX,y,iW,58);
+        ctx.fillStyle='#f59e0b'; ctx.font='bold 32px system-ui'; ctx.fillText('NUEVO DESAFÍO',iX,y); y+=60;
+        ctx.fillStyle='#fff'; ctx.font='bold 76px system-ui';
+        const tl=wrapText(ctx,data.title.toUpperCase(),iX,y,iW,86); y+=tl*86+60;
+        ctx.fillStyle='#64748b'; ctx.font='400 44px system-ui';
+        wrapText(ctx,'¿Estás listo para responder como un experto?',iX,y,iW,56);
     }
 
     if(step===1){
@@ -501,14 +497,11 @@ function drawQuizCTASlide(canvas, cta) {
     ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
     const P=90, cx=W/2;
     ctx.textAlign='center'; ctx.textBaseline='top';
-    rrect(ctx,cx-60,P,120,120,28); ctx.fillStyle='#2563eb'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 48px system-ui';
-    ctx.textBaseline='middle'; ctx.fillText('NM',cx,P+60); ctx.textBaseline='top';
     ctx.fillStyle='#f59e0b'; ctx.font='bold 34px system-ui';
-    ctx.fillText(cta.tag,cx,P+168);
-    ctx.fillStyle='#fff'; ctx.font='bold 124px system-ui';
-    const hl=wrapText(ctx,cta.headline.toUpperCase(),cx,P+238,W-P*2,132);
-    const subY=P+238+hl*132+52;
+    ctx.fillText(cta.tag,cx,P+40);
+    ctx.fillStyle='#fff'; ctx.font='bold 110px system-ui';
+    const hl=wrapText(ctx,cta.headline.toUpperCase(),cx,P+120,W-P*2,120);
+    const subY=P+120+hl*120+52;
     ctx.fillStyle='#94a3b8'; ctx.font='400 50px system-ui';
     wrapText(ctx,cta.sub,cx,subY,W-P*2,68);
     const urlY=H-250;
@@ -516,7 +509,7 @@ function drawQuizCTASlide(canvas, cta) {
     ctx.fillStyle='#000'; ctx.font='bold 54px system-ui';
     ctx.textBaseline='middle'; ctx.fillText('WWW.NEOMONITOR.PRO',cx,urlY+64);
     ctx.fillStyle='#334155'; ctx.font='bold 28px system-ui';
-    ctx.textBaseline='top'; ctx.fillText('NEOMONITOR EXPERT SUITE · v5.0',cx,H-106);
+    ctx.textBaseline='top'; ctx.fillText('NEOMONITOR',cx,H-106);
     ctx.textAlign='left'; ctx.textBaseline='top';
 }
 
@@ -535,6 +528,12 @@ const App = () => {
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('editor');
     const [library, setLibrary] = useState([]);
+    const [editorMode, setEditorMode] = useState('manual'); // 'manual' | 'ai'
+    const [aiDescription, setAiDescription] = useState('');
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [batchDescriptions, setBatchDescriptions] = useState('');
+    const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+    const [batchProgress, setBatchProgress] = useState('');
     const [data, setData] = useState({
         title:"Desafío Clínico",
         caseText:"Describe aquí el escenario...",
@@ -583,7 +582,122 @@ const App = () => {
         setActiveStep(0);
         setGallery([]);
         setActiveTab('editor');
+        setEditorMode('manual');
         alert('✓ Quiz cargado en el editor');
+    };
+
+    // ─── Generación con IA ────────────────────────────────────────────────────
+    const generateWithAI = async () => {
+        if (!aiDescription.trim()) return;
+        let apiKey = localStorage.getItem('claude_api_key');
+        if (!apiKey) {
+            apiKey = prompt('Ingresá tu API key de Claude (sk-ant-...):');
+            if (!apiKey) return;
+            localStorage.setItem('claude_api_key', apiKey);
+        }
+        setIsGeneratingAI(true);
+        try {
+            const response = await fetch('/api/generate-quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apiKey, quizDescription: aiDescription })
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Error en API');
+            }
+            const apiData = await response.json();
+            let jsonStr = apiData.content[0].text.trim();
+            if (jsonStr.startsWith('```json')) jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '');
+            else if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```\n/, '').replace(/\n```$/, '');
+            const quizData = JSON.parse(jsonStr);
+            setData({
+                title: quizData.title || '',
+                caseText: quizData.caseText || '',
+                question: quizData.question || '',
+                options: quizData.options || ['', '', ''],
+                answer: quizData.answer || '',
+                explanation: quizData.explanation || ''
+            });
+            setActiveStep(0);
+            setGallery([]);
+            setAiDescription('');
+            setEditorMode('manual');
+        } catch (err) {
+            alert('Error al generar con IA: ' + err.message);
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
+    // ─── Generación en Masa ───────────────────────────────────────────────────
+    const batchGenerateQuizzes = async () => {
+        const lines = batchDescriptions.trim().split('\n').filter(l => l.trim());
+        if (!lines.length) { alert('Escribí al menos un tema por línea'); return; }
+        let apiKey = localStorage.getItem('claude_api_key');
+        if (!apiKey) {
+            apiKey = prompt('Ingresá tu API key de Claude (sk-ant-...):');
+            if (!apiKey) return;
+            localStorage.setItem('claude_api_key', apiKey);
+        }
+        setIsBatchGenerating(true);
+        const zip = new JSZip();
+        const labels = ['1_portada', '2_escenario', '3_pregunta', '4_respuesta', '5_cta'];
+        try {
+            for (let i = 0; i < lines.length; i++) {
+                const description = lines[i].trim();
+                setBatchProgress(`${i + 1}/${lines.length} — ${description.substring(0, 45)}`);
+                const response = await fetch('/api/generate-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, quizDescription: description })
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `Error en: ${description}`);
+                }
+                const apiData = await response.json();
+                let jsonStr = apiData.content[0].text.trim();
+                if (jsonStr.startsWith('```json')) jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '');
+                else if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/^```\n/, '').replace(/\n```$/, '');
+                const quizData = JSON.parse(jsonStr);
+
+                const folderName = description.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 50);
+                const storiesFolder = zip.folder(folderName).folder('stories');
+                for (let s = 0; s < 4; s++) {
+                    const c = document.createElement('canvas');
+                    drawQuizSlide(c, s, quizData);
+                    const base64 = c.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
+                    storiesFolder.file(`${labels[s]}.png`, base64, { base64: true });
+                }
+                const ctaC = document.createElement('canvas');
+                drawQuizCTASlide(ctaC, CTA_POOL[Math.floor(Math.random() * CTA_POOL.length)]);
+                storiesFolder.file(`${labels[4]}.png`, ctaC.toDataURL('image/png').replace(/^data:image\/png;base64,/, ''), { base64: true });
+
+                setLibrary(prev => [{
+                    id: Date.now() + i,
+                    title: quizData.title || description,
+                    type: 'Quiz Pack',
+                    dateTime: new Date().toLocaleString('es-AR'),
+                    status: 'Borrador',
+                    quizData
+                }, ...prev]);
+            }
+            setBatchProgress('Comprimiendo ZIP…');
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `NeoQuiz_Batch_${new Date().toISOString().slice(0, 10)}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setBatchDescriptions('');
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            setIsBatchGenerating(false);
+            setBatchProgress('');
+        }
     };
 
     // ─── Descarga ZIP ─────────────────────────────────────────────────────────
@@ -645,7 +759,7 @@ const App = () => {
             <aside className="w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col shrink-0">
                 <div className="flex items-center gap-3 mb-12">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
-                    <span className="font-black text-xl tracking-tighter uppercase">Expert Suite</span>
+                    <span className="font-black text-xl tracking-tighter uppercase">NeoMonitor</span>
                 </div>
                 <nav>
                     <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-4 text-amber-400">
@@ -683,93 +797,153 @@ const App = () => {
                             </div>
                         </div>
 
+                        <div className="glass-card rounded-[32px] overflow-hidden">
+                            {/* Tabs IA / Manual */}
+                            <div className="flex border-b border-white/5">
+                                <button onClick={() => setEditorMode('ai')}
+                                    className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all ${editorMode === 'ai' ? 'bg-purple-600/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-500 hover:text-slate-300'}`}>
+                                    ✨ Generar con IA
+                                </button>
+                                <button onClick={() => setEditorMode('manual')}
+                                    className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all ${editorMode === 'manual' ? 'bg-amber-500/10 text-amber-300 border-b-2 border-amber-500' : 'text-slate-500 hover:text-slate-300'}`}>
+                                    ✏️ Editor manual
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-4">
+                                {/* ── Modo IA ── */}
+                                {editorMode === 'ai' && (
+                                    <div className="space-y-4">
+                                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                                            Describí el escenario de reanimación. Claude genera el quiz completo con pregunta, opciones y explicación clínica.
+                                        </p>
+                                        <div>
+                                            <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-1.5 block">Tema o escenario</label>
+                                            <textarea className={inp+" resize-none"} rows={4}
+                                                value={aiDescription}
+                                                onChange={e => setAiDescription(e.target.value)}
+                                                placeholder="Ej: PCR neonatal con bradicardia severa que no responde a VPP&#10;Anafilaxia pediátrica en guardia&#10;TEP masivo con inestabilidad hemodinámica"/>
+                                        </div>
+                                        <button onClick={generateWithAI} disabled={isGeneratingAI || !aiDescription.trim()}
+                                            className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-black py-5 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3">
+                                            {isGeneratingAI
+                                                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Generando con IA…</>
+                                                : <>✨ Generar Quiz con IA</>}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ── Modo Manual ── */}
+                                {editorMode === 'manual' && (<>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset NRP</label>
+                                        <select onChange={e=>loadPreset(e.target.value)} className={inp+" font-bold cursor-pointer"}>
+                                            <option value="">— Nuevo desafío —</option>
+                                            <optgroup label="─ Neonatología — Originales ─">
+                                                <option value="arritmia">Arritmia Neonatal (TSV)</option>
+                                                <option value="cpap">Fallo Respiratorio / CPAP</option>
+                                            </optgroup>
+                                            <optgroup label="─ Neonatología — NRP 8ª Ed. ─">
+                                                <option value="vpp_inicio">¿Cuándo Iniciar VPP?</option>
+                                                <option value="fio2_termino">FiO₂ Inicial — RN de Término</option>
+                                                <option value="fio2_prematuro">FiO₂ Inicial — Prematuro</option>
+                                                <option value="sopa_steps">Pasos MR-SOPA</option>
+                                                <option value="compresiones_indicacion">Indicación de Compresiones</option>
+                                                <option value="epinefrina_via">Epinefrina: Vía y Dosis</option>
+                                                <option value="temperatura_prematuro">Termorregulación Prematuro</option>
+                                                <option value="meconio_nrp8">Meconio Espeso — NRP 8ª Ed.</option>
+                                                <option value="clampe_cordon">Pinzamiento del Cordón</option>
+                                                <option value="hipotermia_ehi">Hipotermia Terapéutica — EHI</option>
+                                            </optgroup>
+                                            <optgroup label="─ Pediatría ─">
+                                                <option value="pedi_epinefrina_anafilaxia">Epinefrina en Anafilaxia Pediátrica</option>
+                                                <option value="pedi_croup_epiglotitis">Croup vs Epiglotitis</option>
+                                                <option value="pedi_convulsion_primera">Primera Línea en Convulsión</option>
+                                                <option value="pedi_shock_reconocimiento">Reconocimiento de Shock Pediátrico</option>
+                                                <option value="pedi_asma_gravedad">Gravedad de Crisis Asmática</option>
+                                                <option value="pedi_cad_complicacion">Complicación más grave de CAD</option>
+                                                <option value="pedi_sepsis_bolo">Volumen en Sepsis Pediátrica</option>
+                                                <option value="pedi_bronquiolitis_tto">Manejo de Bronquiolitis Grave</option>
+                                                <option value="pedi_tce_indicacion_tc">Indicación TC en TCE Pediátrico</option>
+                                                <option value="pedi_rcp_ratio">RCP en Lactantes — Ratio y Técnica</option>
+                                            </optgroup>
+                                            <optgroup label="─ Adultos ─">
+                                                <option value="adult_sdra_berlin">SDRA — Criterios de Berlín</option>
+                                                <option value="adult_killip">Clasificación Killip-Kimball</option>
+                                                <option value="adult_sepsis_bundle">Bundle Sepsis — Hora 1</option>
+                                                <option value="adult_tep_trombolisis">Trombólisis en TEP Masivo</option>
+                                                <option value="adult_stroke_ventana">Ventana Trombolítica en ACV</option>
+                                                <option value="adult_pcr_adrenalina">Adrenalina en PCR — Timing</option>
+                                                <option value="adult_isr_secuencia">ISR — Secuencia de Fármacos</option>
+                                                <option value="adult_epoc_spo2">Objetivo SpO₂ en EPOC Agudizado</option>
+                                                <option value="adult_hta_reduccion">Crisis HTA — Cuánto y Cuán Rápido</option>
+                                                <option value="adult_estado_epi_segunda">Estado Epiléptico — Segunda Línea</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Título</label>
+                                        <input className={inp+" font-bold"} value={data.title} onChange={e=>updateField('title',e.target.value)} placeholder="Título del quiz"/>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Escenario clínico</label>
+                                        <textarea className={inp+" resize-none"} rows={3} value={data.caseText} onChange={e=>updateField('caseText',e.target.value)} placeholder="Caso clínico..."/>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 block">Pregunta</label>
+                                        <input className={inp+" font-bold"} style={{color:'#f59e0b'}} value={data.question} onChange={e=>updateField('question',e.target.value)} placeholder="¿Qué conducta tomarías?"/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Opciones de respuesta</label>
+                                        {data.options.map((opt,i)=>(
+                                            <input key={i} className={inp} value={opt} onChange={e=>updateField('options',e.target.value,i)} placeholder={'Opción '+(i+1)}/>
+                                        ))}
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 block">Respuesta correcta</label>
+                                        <input className={inp+" font-bold"} style={{color:'#22c55e'}} value={data.answer} onChange={e=>updateField('answer',e.target.value)} placeholder="Respuesta"/>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Explicación técnica</label>
+                                        <textarea className={inp+" resize-none"} rows={3} value={data.explanation} onChange={e=>updateField('explanation',e.target.value)} placeholder="Explicación técnica basada en NRP..."/>
+                                    </div>
+                                </>)}
+
+                                <button onClick={generate} disabled={generating || editorMode === 'ai'}
+                                    className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3">
+                                    {generating
+                                        ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>{status}</>
+                                        : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
+                                </button>
+                                {gallery.length > 0 && (
+                                    <button onClick={downloadQuizAsZip}
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/5">
+                                        📦 Descargar ZIP
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ── Generar en Masa ── */}
                         <div className="glass-card p-6 rounded-[32px] space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Preset NRP</label>
-                                <select onChange={e=>loadPreset(e.target.value)} className={inp+" font-bold cursor-pointer"}>
-                                    <option value="">— Nuevo desafío —</option>
-                                    <optgroup label="─ Neonatología — Originales ─">
-                                        <option value="arritmia">Arritmia Neonatal (TSV)</option>
-                                        <option value="cpap">Fallo Respiratorio / CPAP</option>
-                                    </optgroup>
-                                    <optgroup label="─ Neonatología — NRP 8ª Ed. ─">
-                                        <option value="vpp_inicio">¿Cuándo Iniciar VPP?</option>
-                                        <option value="fio2_termino">FiO₂ Inicial — RN de Término</option>
-                                        <option value="fio2_prematuro">FiO₂ Inicial — Prematuro</option>
-                                        <option value="sopa_steps">Pasos MR-SOPA</option>
-                                        <option value="compresiones_indicacion">Indicación de Compresiones</option>
-                                        <option value="epinefrina_via">Epinefrina: Vía y Dosis</option>
-                                        <option value="temperatura_prematuro">Termorregulación Prematuro</option>
-                                        <option value="meconio_nrp8">Meconio Espeso — NRP 8ª Ed.</option>
-                                        <option value="clampe_cordon">Pinzamiento del Cordón</option>
-                                        <option value="hipotermia_ehi">Hipotermia Terapéutica — EHI</option>
-                                    </optgroup>
-                                    <optgroup label="─ Pediatría ─">
-                                        <option value="pedi_epinefrina_anafilaxia">Epinefrina en Anafilaxia Pediátrica</option>
-                                        <option value="pedi_croup_epiglotitis">Croup vs Epiglotitis</option>
-                                        <option value="pedi_convulsion_primera">Primera Línea en Convulsión</option>
-                                        <option value="pedi_shock_reconocimiento">Reconocimiento de Shock Pediátrico</option>
-                                        <option value="pedi_asma_gravedad">Gravedad de Crisis Asmática</option>
-                                        <option value="pedi_cad_complicacion">Complicación más grave de CAD</option>
-                                        <option value="pedi_sepsis_bolo">Volumen en Sepsis Pediátrica</option>
-                                        <option value="pedi_bronquiolitis_tto">Manejo de Bronquiolitis Grave</option>
-                                        <option value="pedi_tce_indicacion_tc">Indicación TC en TCE Pediátrico</option>
-                                        <option value="pedi_rcp_ratio">RCP en Lactantes — Ratio y Técnica</option>
-                                    </optgroup>
-                                    <optgroup label="─ Adultos ─">
-                                        <option value="adult_sdra_berlin">SDRA — Criterios de Berlín</option>
-                                        <option value="adult_killip">Clasificación Killip-Kimball</option>
-                                        <option value="adult_sepsis_bundle">Bundle Sepsis — Hora 1</option>
-                                        <option value="adult_tep_trombolisis">Trombólisis en TEP Masivo</option>
-                                        <option value="adult_stroke_ventana">Ventana Trombolítica en ACV</option>
-                                        <option value="adult_pcr_adrenalina">Adrenalina en PCR — Timing</option>
-                                        <option value="adult_isr_secuencia">ISR — Secuencia de Fármacos</option>
-                                        <option value="adult_epoc_spo2">Objetivo SpO₂ en EPOC Agudizado</option>
-                                        <option value="adult_hta_reduccion">Crisis HTA — Cuánto y Cuán Rápido</option>
-                                        <option value="adult_estado_epi_segunda">Estado Epiléptico — Segunda Línea</option>
-                                    </optgroup>
-                                </select>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 mb-1">📦 Generar en Masa</h3>
+                                <p className="text-[11px] text-slate-600 leading-relaxed">Un tema por línea. Claude genera cada quiz y los comprime en un ZIP listo para descargar.</p>
                             </div>
-
-                            <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Título</label>
-                                <input className={inp+" font-bold"} value={data.title} onChange={e=>updateField('title',e.target.value)} placeholder="Título del quiz"/>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Escenario clínico</label>
-                                <textarea className={inp+" resize-none"} rows={3} value={data.caseText} onChange={e=>updateField('caseText',e.target.value)} placeholder="Caso clínico..."/>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 block">Pregunta</label>
-                                <input className={inp+" font-bold"} style={{color:'#f59e0b'}} value={data.question} onChange={e=>updateField('question',e.target.value)} placeholder="¿Qué conducta tomarías?"/>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Opciones de respuesta</label>
-                                {data.options.map((opt,i)=>(
-                                    <input key={i} className={inp} value={opt} onChange={e=>updateField('options',e.target.value,i)} placeholder={'Opción '+(i+1)}/>
-                                ))}
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1 block">Respuesta correcta</label>
-                                <input className={inp+" font-bold"} style={{color:'#22c55e'}} value={data.answer} onChange={e=>updateField('answer',e.target.value)} placeholder="Respuesta"/>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Explicación técnica</label>
-                                <textarea className={inp+" resize-none"} rows={3} value={data.explanation} onChange={e=>updateField('explanation',e.target.value)} placeholder="Explicación técnica basada en NRP..."/>
-                            </div>
-
-                            <button onClick={generate} disabled={generating}
-                                className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-5 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-3">
-                                {generating
-                                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>{status}</>
-                                    : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
-                            </button>
-                            {gallery.length > 0 && (
-                                <button onClick={downloadQuizAsZip}
-                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/5">
-                                    📦 Descargar ZIP
-                                </button>
+                            <textarea className={inp+" resize-none"} rows={5}
+                                value={batchDescriptions}
+                                onChange={e => setBatchDescriptions(e.target.value)}
+                                placeholder={"PCR neonatal post-VPP sin respuesta\nAnafilaxia pediátrica con colapso\nFibrilación ventricular en adulto\nEHI moderada en RN de término\nShock séptico en lactante"}
+                                disabled={isBatchGenerating}/>
+                            {batchProgress && (
+                                <p className="text-[11px] text-purple-400 font-bold uppercase tracking-widest truncate">{batchProgress}</p>
                             )}
+                            <button onClick={batchGenerateQuizzes} disabled={isBatchGenerating || !batchDescriptions.trim()}
+                                className="w-full bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/10">
+                                {isBatchGenerating
+                                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Generando…</>
+                                    : <>📦 Generar + ZIP</>}
+                            </button>
                         </div>
                     </div>
 

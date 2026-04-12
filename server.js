@@ -108,6 +108,75 @@ RESPONDE SOLO CON JSON VÁLIDO (sin markdown, sin explicaciones adicionales):
         return;
     }
 
+    // API endpoint: generate quiz
+    if (req.method === 'POST' && pathname === '/api/generate-quiz') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const { quizDescription, apiKey } = JSON.parse(body);
+                if (!apiKey || !quizDescription) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'apiKey y quizDescription son requeridos' }));
+                    return;
+                }
+                const systemPrompt = `Sos un médico intensivista experto en emergencias, reanimación neonatal, pediátrica y adultos, con dominio de NRP 8ª edición y guías AHA/AAP 2023. Tu objetivo es generar preguntas de quiz clínico de alto impacto para profesionales de la salud.
+
+REGLAS ESTRICTAS:
+- El escenario debe ser una situación CRÍTICA de reanimación o emergencia real (nunca un caso ambulatorio o leve)
+- La pregunta debe ser de conducta clínica aguda (¿qué hacés primero?, ¿cuál es el fármaco?, ¿cuándo intubás?)
+- EXACTAMENTE 3 opciones de respuesta — todas plausibles, solo una correcta
+- "answer" debe coincidir EXACTAMENTE (carácter por carácter) con una de las 3 opciones
+- "explanation" debe citar NRP/AHA/AAP con fundamento técnico breve
+- Español rioplatense. Sin markdown. Solo JSON válido.
+
+RESTRICCIONES DE LONGITUD:
+- "title": máximo 50 caracteres
+- "caseText": máximo 300 caracteres (2-3 oraciones)
+- "question": máximo 150 caracteres
+- cada opción: máximo 80 caracteres
+- "explanation": máximo 400 caracteres
+
+RESPONDE SOLO CON JSON:
+{
+  "title": "Título corto",
+  "caseText": "Escenario clínico crítico...",
+  "question": "¿Cuál es la conducta inmediata?",
+  "options": ["Opción A", "Opción B", "Opción C"],
+  "answer": "Opción A",
+  "explanation": "Fundamento técnico basado en NRP/AHA/AAP..."
+}`;
+
+                const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1024,
+                        system: systemPrompt,
+                        messages: [{ role: 'user', content: `Generá un quiz clínico sobre: ${quizDescription}` }]
+                    })
+                });
+                const claudeData = await claudeResponse.json();
+                if (!claudeResponse.ok) {
+                    res.writeHead(claudeResponse.status, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: claudeData.error?.message || 'Error en API de Claude' }));
+                    return;
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(claudeData));
+            } catch (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
     // API endpoint: generate novedades
     if (req.method === 'POST' && pathname === '/api/generate-novedades') {
         let body = '';

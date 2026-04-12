@@ -66,7 +66,7 @@ const FORMATS = {
 const DEFAULT_SLIDES = [
     { id: 1, title: "Nueva Funcionalidad", subtitle: "NeoMonitor v2.0", body: "Descripción de la nueva característica del software. Explicá brevemente el beneficio para el usuario.", tag: "NUEVO", palette: "azul", audioUrl: null },
     { id: 2, title: "Mejora de Rendimiento", subtitle: "Procesamiento en tiempo real", body: "El motor de cálculo fue optimizado para reducir la latencia en escenarios de alta demanda clínica.", tag: "MEJORA", palette: "verde", audioUrl: null },
-    { id: 3, title: "Disponible Ahora", subtitle: "Actualización gratuita", body: "Descargá la última versión de NeoMonitor desde el panel de administración de tu institución.", tag: "UPDATE", palette: "ambar", audioUrl: null },
+    { id: 3, title: "Disponible Ahora", subtitle: "www.neomonitor.pro", body: "Visitá neomonitor.pro para conocer todas las novedades y actualizaciones.", tag: "UPDATE", palette: "ambar", audioUrl: null },
 ];
 
 /* ─── CANVAS HELPERS ─────────────────────────────────────────────────────── */
@@ -165,9 +165,6 @@ function drawSlideCarousel(ctx, slide, W, H) {
     ctx.font = `900 36px Inter, sans-serif`;
     ctx.textBaseline = 'bottom';
     ctx.fillText('NeoMonitor', PAD, logoY + 36);
-    ctx.fillStyle = pal.sub + '80';
-    ctx.font = `400 24px Inter, sans-serif`;
-    ctx.fillText('Expert Suite', PAD + ctx.measureText('NeoMonitor').width + 16, logoY + 36);
     ctx.textBaseline = 'top';
 
     // AUDIO INDICATOR
@@ -280,10 +277,7 @@ function drawSlideReel(ctx, slide, W, H) {
     ctx.font = `900 42px Inter, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText('NeoMonitor', W / 2, H - 80);
-    ctx.fillStyle = pal.sub + '80';
-    ctx.font = `400 28px Inter, sans-serif`;
-    ctx.fillText('Expert Suite', W / 2, H - 40);
+    ctx.fillText('NeoMonitor', W / 2, H - 60);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
@@ -571,22 +565,65 @@ function App() {
         canvas.height = fmt.h;
         const ctx = canvas.getContext('2d');
 
-        const stream = canvas.captureStream(30);
-        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-            ? 'video/webm;codecs=vp9'
-            : 'video/webm';
-        mediaRecRef.current = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+        const videoStream = canvas.captureStream(30);
+        const mimeType = [
+            'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+            'video/mp4',
+            'video/webm;codecs=vp9',
+            'video/webm'
+        ].find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
+        const ext = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+
+        // Agregar audio si hay uno disponible
+        let recordStream = videoStream;
+        let audioCtx = null;
+        let audioEl = null;
+        const audioSrc = defaultAudioUrl || slides[0]?.audioUrl || null;
+        if (audioSrc) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioEl = new Audio(audioSrc);
+                audioEl.crossOrigin = 'anonymous';
+                audioEl.loop = true;
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Timeout')), 10000);
+                    audioEl.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
+                    audioEl.onerror = () => { clearTimeout(timeout); reject(new Error('Error audio')); };
+                    audioEl.load();
+                });
+                const src = audioCtx.createMediaElementSource(audioEl);
+                const dest = audioCtx.createMediaStreamDestination();
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.85;
+                src.connect(gain);
+                gain.connect(dest);
+                gain.connect(audioCtx.destination);
+                recordStream = new MediaStream([
+                    ...videoStream.getVideoTracks(),
+                    ...dest.stream.getAudioTracks()
+                ]);
+            } catch (err) {
+                console.warn('Audio no disponible, video sin sonido:', err.message);
+                recordStream = videoStream;
+            }
+        }
+
+        mediaRecRef.current = new MediaRecorder(recordStream, { mimeType, videoBitsPerSecond: 8000000 });
         chunksRef.current = [];
         mediaRecRef.current.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
         mediaRecRef.current.onstop = () => {
+            if (audioEl) { audioEl.pause(); audioEl.src = ''; }
+            if (audioCtx) audioCtx.close();
             const blob = new Blob(chunksRef.current, { type: mimeType });
-            triggerDownload(URL.createObjectURL(blob), `neomonitor-novedades-${format}.webm`);
+            triggerDownload(URL.createObjectURL(blob), `neomonitor-novedades-${format}.${ext}`);
+            addToLibrary('Video');
             setRecording(false);
             setRecProgress(0);
         };
 
         setRecording(true);
         mediaRecRef.current.start();
+        if (audioEl) audioEl.play().catch(() => {});
 
         const SLIDE_DURATION = slideDuration;
         const FADE_FRAMES = 18;       // frames de fade
@@ -634,7 +671,7 @@ function App() {
                     <div className="w-8 h-8 bg-amber-500 rounded-xl flex items-center justify-center font-black text-xs text-black">NM</div>
                     <div>
                         <h1 className="text-xs font-black uppercase tracking-widest leading-none">Novedades Generator</h1>
-                        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">NeoMonitor Expert Suite</p>
+                        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">neomonitor.pro</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
