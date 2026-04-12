@@ -105,6 +105,9 @@ const App = () => {
     const [isRecording,setIsRecording]  = useState(false);
     const [recStatus,  setRecStatus]    = useState('');
     const [labels, setLabels] = useState({ top: 'VISTA MONITOR', bottom: 'VISTA CONTROL' });
+    const [library, setLibrary] = useState([]);
+    const [lastVideo, setLastVideo] = useState(null);
+    const [showLibrary, setShowLibrary] = useState(false);
 
     const canvasRef  = useRef(null);
     const monRef     = useRef(null);
@@ -112,6 +115,42 @@ const App = () => {
     const rafRef     = useRef(null);
     const recRef     = useRef(null);
     const chunksRef  = useRef([]);
+
+    // ── Biblioteca ─────────────────────────────────────────────────────────────
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('videosinc_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch(e) {}
+    }, []);
+
+    useEffect(() => {
+        try { localStorage.setItem('videosinc_library', JSON.stringify(library)); } catch(e) {}
+    }, [library]);
+
+    const addToLibrary = () => {
+        if (!lastVideo) return;
+        const newItem = {
+            id: Date.now(),
+            title: `Sync ${new Date().toLocaleString('es-AR').split(',')[0]}`,
+            labels,
+            dateTime: new Date().toLocaleString('es-AR'),
+            status: 'Borrador',
+            caption: `🎬 Video sincronizado NeoMonitor. Monitor y control en 9:16 vertical.\n\n#neomonitor #videosync #educacionmedica #neonatologia #pediatria #medicina`
+        };
+        setLibrary(prev => [newItem, ...prev]);
+        alert('✓ Video guardado en biblioteca');
+    };
+
+    const updateLibraryStatus = (id, status) => {
+        setLibrary(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+    };
+
+    const deleteLibraryItem = (id) => {
+        if (confirm('¿Eliminar de la biblioteca?')) {
+            setLibrary(prev => prev.filter(item => item.id !== id));
+        }
+    };
 
     // ── Loop de render ────────────────────────────────────────────────────────
     useEffect(() => {
@@ -175,6 +214,7 @@ const App = () => {
             setRecStatus('Preparando descarga…');
             const blob = new Blob(chunksRef.current, { type: 'video/webm' });
             const url  = URL.createObjectURL(blob);
+            setLastVideo({ blob, url });
             const a    = document.createElement('a');
             a.href     = url;
             a.download = `NM_Sync_${Date.now()}.webm`;
@@ -318,6 +358,18 @@ const App = () => {
                             </button>
                         )}
 
+                        {lastVideo && !isRecording && (
+                            <button onClick={addToLibrary}
+                                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 p-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95">
+                                💾 Guardar a Biblioteca
+                            </button>
+                        )}
+
+                        <button onClick={() => setShowLibrary(!showLibrary)}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 p-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95">
+                            📚 Biblioteca ({library.length})
+                        </button>
+
                         {recStatus && (
                             <p className="text-center text-[10px] text-amber-400 font-bold uppercase tracking-widest">{recStatus}</p>
                         )}
@@ -328,14 +380,67 @@ const App = () => {
                     </p>
                 </div>
 
-                {/* Preview canvas */}
-                <div className="flex-1 flex items-center justify-center">
-                    <div style={{ position:'relative', borderRadius:32, overflow:'hidden', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 30px 80px rgba(0,0,0,0.6)' }}>
-                        {/* Glow superior */}
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(245,158,11,0.08), transparent 40%)', pointerEvents:'none', zIndex:1, borderRadius:32 }} />
-                        <canvas ref={canvasRef} width={1080} height={1920}
-                            style={{ width: 'auto', height: 'calc(100vh - 80px)', maxHeight: 800, aspectRatio:'9/16', display:'block', borderRadius:32 }} />
-                    </div>
+                {/* Preview canvas / Biblioteca */}
+                <div className="flex-1 flex items-center justify-center overflow-y-auto">
+                    {showLibrary ? (
+                        <div className="w-full max-w-2xl">
+                            {library.length === 0 ? (
+                                <div style={{ textAlign:'center', padding:40, color:'#64748b' }}>
+                                    <p style={{ fontSize:'14px', fontWeight:'bold', textTransform:'uppercase', marginBottom:10 }}>Biblioteca vacía</p>
+                                    <p style={{ fontSize:'12px' }}>Los videos guardados aparecerán aquí</p>
+                                </div>
+                            ) : (
+                                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:16, padding:20 }}>
+                                    {library.map(item => (
+                                        <div key={item.id} style={{ background:'rgba(15,23,42,0.8)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:16, padding:16, backdropFilter:'blur(16px)' }}>
+                                            <div style={{ marginBottom:12 }}>
+                                                <p style={{ fontSize:'11px', fontWeight:'900', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>Título</p>
+                                                <p style={{ fontSize:'14px', fontWeight:'bold', color:'white', overflow:'hidden', textOverflow:'ellipsis' }}>{item.title}</p>
+                                            </div>
+                                            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12, fontSize:'10px' }}>
+                                                <div>
+                                                    <p style={{ color:'#64748b', fontWeight:'900', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>Fecha</p>
+                                                    <p style={{ color:'#cbd5e1' }}>{item.dateTime.split(',')[0]}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ color:'#64748b', fontWeight:'900', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4 }}>Estado</p>
+                                                    <select value={item.status} onChange={e => updateLibraryStatus(item.id, e.target.value)}
+                                                        style={{ width:'100%', padding:'4px 8px', borderRadius:8, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'white', fontSize:'10px', fontWeight:'bold', cursor:'pointer' }}>
+                                                        <option value="Borrador">Borrador</option>
+                                                        <option value="Listo">Listo</option>
+                                                        <option value="Publicado">Publicado</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            {item.caption && (
+                                                <div style={{ marginBottom:12, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+                                                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+                                                        <p style={{ fontSize:'9px', color:'#64748b', fontWeight:'900', textTransform:'uppercase', letterSpacing:'.05em' }}>Caption</p>
+                                                        <button onClick={() => navigator.clipboard.writeText(item.caption).then(() => alert('✓ Caption copiado'))}
+                                                            style={{ fontSize:'9px', fontWeight:'bold', color:'#fbbf24', padding:'2px 8px', borderRadius:6, background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.2)', cursor:'pointer', transition:'all .2s' }}>
+                                                            📋 Copiar
+                                                        </button>
+                                                    </div>
+                                                    <p style={{ fontSize:'9px', color:'#94a3b8', lineHeight:'1.4' }}>{item.caption.split('\n').slice(0,2).join('\n')}</p>
+                                                </div>
+                                            )}
+                                            <button onClick={() => deleteLibraryItem(item.id)}
+                                                style={{ width:'100%', padding:'8px 12px', borderRadius:8, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', color:'#f87171', fontSize:'9px', fontWeight:'bold', cursor:'pointer', transition:'all .2s', textTransform:'uppercase', letterSpacing:'.05em' }}>
+                                                ✕ Eliminar
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div style={{ position:'relative', borderRadius:32, overflow:'hidden', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 30px 80px rgba(0,0,0,0.6)' }}>
+                            {/* Glow superior */}
+                            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(245,158,11,0.08), transparent 40%)', pointerEvents:'none', zIndex:1, borderRadius:32 }} />
+                            <canvas ref={canvasRef} width={1080} height={1920}
+                                style={{ width: 'auto', height: 'calc(100vh - 80px)', maxHeight: 800, aspectRatio:'9/16', display:'block', borderRadius:32 }} />
+                        </div>
+                    )}
                 </div>
             </main>
 
