@@ -466,7 +466,6 @@ function App() {
             }
             const blob = await zip.generateAsync({ type: 'blob' });
             triggerDownload(URL.createObjectURL(blob), `${folderName}_${new Date().toISOString().slice(0,10)}.zip`);
-            addToLibrary(format === 'carousel' ? 'Carrusel' : 'Video');
         } catch(err) {
             alert('Error al crear ZIP: ' + err.message);
         }
@@ -584,22 +583,38 @@ function App() {
         if (audioSrc) {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioEl = new Audio(audioSrc);
-                audioEl.crossOrigin = 'anonymous';
+                audioEl = new Audio();
+                audioEl.src = audioSrc;
                 audioEl.loop = true;
+                audioEl.volume = 0.85;
+
+                // Esperar a que esté listo
                 await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => reject(new Error('Timeout')), 10000);
-                    audioEl.oncanplaythrough = () => { clearTimeout(timeout); resolve(); };
-                    audioEl.onerror = () => { clearTimeout(timeout); reject(new Error('Error audio')); };
-                    audioEl.load();
+                    const timeout = setTimeout(() => reject(new Error('Timeout cargando audio')), 5000);
+
+                    const onReady = () => {
+                        clearTimeout(timeout);
+                        audioEl.removeEventListener('canplay', onReady);
+                        audioEl.removeEventListener('error', onError);
+                        resolve();
+                    };
+
+                    const onError = (e) => {
+                        clearTimeout(timeout);
+                        audioEl.removeEventListener('canplay', onReady);
+                        audioEl.removeEventListener('error', onError);
+                        reject(new Error('Error cargando audio: ' + (e?.message || 'desconocido')));
+                    };
+
+                    audioEl.addEventListener('canplay', onReady, { once: true });
+                    audioEl.addEventListener('error', onError, { once: true });
                 });
+
                 const src = audioCtx.createMediaElementSource(audioEl);
                 const dest = audioCtx.createMediaStreamDestination();
-                const gain = audioCtx.createGain();
-                gain.gain.value = 0.85;
-                src.connect(gain);
-                gain.connect(dest);
-                gain.connect(audioCtx.destination);
+                src.connect(dest);
+                src.connect(audioCtx.destination);
+
                 recordStream = new MediaStream([
                     ...videoStream.getVideoTracks(),
                     ...dest.stream.getAudioTracks()
@@ -618,7 +633,6 @@ function App() {
             if (audioCtx) audioCtx.close();
             const blob = new Blob(chunksRef.current, { type: mimeType });
             triggerDownload(URL.createObjectURL(blob), `neomonitor-novedades-${format}.${ext}`);
-            addToLibrary('Video');
             setRecording(false);
             setRecProgress(0);
         };
@@ -858,6 +872,11 @@ function App() {
                                 className={`btn py-2.5 rounded-xl text-[9px] border ${recording ? 'bg-red-500/15 text-red-400 border-red-500/20' : 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border-amber-500/20'}`}>
                                 {recording ? `${recProgress}%` : '▶ Video'}
                             </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                            <button onClick={() => addToLibrary('Carrusel')} className="btn py-2.5 bg-green-500/15 hover:bg-green-500/25 text-green-400 rounded-xl text-[9px] border border-green-500/20">💾 Carrusel</button>
+                            <button onClick={() => addToLibrary('Video')} className="btn py-2.5 bg-green-500/15 hover:bg-green-500/25 text-green-400 rounded-xl text-[9px] border border-green-500/20">💾 Video</button>
+                            <div></div>
                         </div>
                         {recording && <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-amber-500 transition-all" style={{ width: `${recProgress}%` }} /></div>}
                         <div className="flex gap-1">
