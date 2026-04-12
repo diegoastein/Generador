@@ -13,124 +13,34 @@ Static HTML/CSS/JS web app para generar contenido médico para redes sociales (c
 
 | Archivo | Módulo | Descripción |
 |---|---|---|
-| `index.html` | Dashboard | Panel central con los 4 módulos |
+| `index.html` | Dashboard | Panel central con los 5 módulos |
 | `novedades.html` | Novedades NeoMonitor | Carruseles + Reels/Stories de novedades de producto, con soporte de audio |
 | `casosexp.html` | Casos Expandidos | 33 escenarios, posts 1:1 + Reels 9:16 con CTA + audio personalizado |
-| `quiz.html` | NeoQuiz Expert | 32 presets clínicos, pack de 5 Stories con respuesta/explicación/CTA |
+| `quiz.html` | NeoQuiz Expert | 32 presets clínicos + generación IA + batch, pack de 5 Stories 9:16 con respuesta/explicación/CTA |
 | `videosinc.html` | Video Sync 9:16 | Sincronización y exportación de video vertical |
-| `neoplanner.html` | NeoPlanner | Planificador de publicaciones: vincula biblioteca con fechas/captions/Drive URLs, exporta CSV compatible con Buffer/Later |
+| `neoplanner.html` | NeoPlanner | Planificador unificado: agrega las 3 bibliotecas, asigna fechas/captions, exporta CSV para Buffer/Later |
 
 ## Protocolos clínicos de referencia
 
 - NRP 8ª Edición
 - AHA / AAP 2023
 
-## Audio personalizado en Casos Expandidos
+## Branding
 
-En `casosexp.html`, la sección "Música para el Reel" permite:
+- Nombre: **NeoMonitor** (sin "Expert Suite", sin "Suite")
+- Web: **www.neomonitor.pro**
+- Canvas de todos los módulos usa "NeoMonitor" o "NEOMONITOR" — nunca "Expert Suite"
+- El logo NM no se renderiza en los slides del canvas (fue eliminado de quiz.html)
 
-1. **Subir MP3 local**: Click en el input de archivo para seleccionar un audio de Pixabay, FreePD, Zapsplat, etc.
-2. **Guardar como defecto**: Una vez cargado, botón "Guardar como defecto" persiste el audio en localStorage
-3. **Cargar automáticamente**: Al reiniciar la página, se carga el audio guardado (marcado con ⭐)
-4. **Eliminar defecto**: Botón "Eliminar defecto" limpia el almacenamiento sin perder el audio actual
-5. **Limpiar actual**: Botón "Limpiar" quita el audio del session actual sin afectar el guardado
+## Captions automáticos
 
-Sin audio guardado, la página inicia sin audio.
+Todos los módulos generan un caption automático al guardar en biblioteca:
 
-## Generación en Batch (Casos Expandidos)
+- **Casos Expandidos**: `🏥 {título}. Escenario clínico de reanimación... #rcp #educacionmedica #neonatologia #nrp #reanimacion #pediatria #neomonitor`
+- **NeoQuiz**: `🧠 {título}. ¿Podés resolver este desafío?... #rcp #educacionmedica #quiz #neonatologia #nrp #reanimacion #pediatria #neomonitor`
+- **Novedades**: `✨ {título}. Conocé las novedades en www.neomonitor.pro... #neomonitor #novedades #neonatologia #educacionmedica #pediatria #tecnologiamedica`
 
-Sección "Generar en Masa" en `casosexp.html` permite generar múltiples casos con IA y exportarlos automáticamente:
-
-1. **Elegir formato**:
-   - 📷 **Carruseles**: PNG 1:1 (5 slides por tema)
-   - 🎬 **Reels**: MP4 9:16 (35 segundos con audio, compatible Instagram)
-   - ✨ **Ambos**: PNG + MP4 en la misma carpeta
-
-2. **Escribir temas**: Uno por línea en el textarea
-   ```
-   Bradicardia severa en prematuro
-   Neumotórax a tensión
-   Hipoglucemia grave
-   ```
-
-3. **Generar**: Click en "Generar + ZIP"
-   - Llama a Claude API (prompts personalizados en servidor)
-   - Genera 5 slides renderizados por cada tema
-   - Genera reels grabados si está seleccionado (toma ~35s por reel)
-   - Comprime en ZIP con estructura de carpetas por tema
-
-4. **ZIP descargado automáticamente** con estructura:
-   ```
-   NeoMonitor_Batch_YYYY-MM-DD.zip
-   ├── bradicardia_severa_en_prematuro/
-   │   ├── carruseles/
-   │   │   ├── 1_signos_vitales_anormales.png
-   │   │   ├── 2_evaluacion_inicial.png
-   │   │   ├── 3_manejo_inmediato.png
-   │   │   ├── 4_monitoreo_continuo.png
-   │   │   └── 5_seguimiento_y_evaluacion.png
-   │   └── reels/
-   │       └── reel_bradicardia_severa_en_prematuro_9-16.mp4
-   ├── neumotorax_a_tension/
-   │   └── ...
-   ```
-
-**Formatos**:
-- **Carruseles**: PNG 1080×1080 (1:1)
-- **Reels**: MP4 1080×1920 (H.264 + AAC) o WebM fallback — 9:16, compatible con Instagram
-
-**Nota**: Generación de reels es lenta (35s por reel). Para batch de 10 reels ≈ 6 min.
-
-En Chromebook, los ZIPs se descargan a la carpeta sincronizada con Google Drive automáticamente.
-
-## Biblioteca Local (Casos Expandidos)
-
-Pestaña **📚 Biblioteca** en `casosexp.html` que registra todo el contenido generado:
-
-### Datos guardados por elemento:
-- **ID**: timestamp único
-- **Título**: del caso
-- **Tipo**: Carrusel o Reel
-- **Fecha/Hora**: de generación
-- **Audio**: nombre del archivo usado (o "Sin audio")
-- **Estado**: Borrador / Listo / Publicado (cambiable)
-- **Datos del caso**: snapshot completo para regenerar
-
-### Almacenamiento:
-- **localStorage** bajo clave `neocontent_library`
-- Persiste entre sesiones automáticamente
-- Formato: Array de objetos JSON
-
-### Funcionalidades por elemento:
-1. **↻ Recargar**: Carga el caso en el editor para regenerar/editar
-2. **✕ Borrar**: Elimina de la biblioteca (requiere confirmación)
-3. **Estado**: dropdown para marcar Borrador/Listo/Publicado
-
-### Interfaz:
-- Grid de cards (responsive: 1 col móvil, 3 cols desktop)
-- Contador en tab (`📚 Biblioteca (N)`)
-- Mensaje si está vacía
-
-**Nota**: Los datos regenerables (slides, audio) se guardan en el snapshot. El caso se puede recargar idéntico tiempo después.
-
-## Descarga de Carruseles y Reels individuales
-
-### Carruseles (desde "Generar Carrusel 1:1"):
-- **Descargar individual**: Click en imagen → descarga PNG nombrado `1_titulo_slide.png`
-- **Descargar como ZIP**: Botón "📦 Descargar Carrusel como ZIP"
-  - Estructura: `carruseles/1_titulo.png, 2_titulo.png, ...`
-  - Nombre: `NeoMonitor_Carrusel_{titulo}_{YYYY-MM-DD}.zip`
-  - Se agrega automáticamente a la Biblioteca con estado "Borrador"
-
-### Reels (desde "Exportar Reel 9:16"):
-- **Descargar**: Se descarga automático como `NeoMonitor_Reel_{titulo}.mp4`
-- Se agrega automáticamente a la Biblioteca con estado "Borrador"
-
-### Ambos:
-- **Mismo sistema de nombrado descriptivo** que batch
-- **Añadidos a la Biblioteca automáticamente** al exportar
-- **Pueden cambiar de estado** desde la Biblioteca
-- **Pueden regenerarse** desde la Biblioteca (recarga el caso)
+El caption se muestra en la card de biblioteca con botón "📋 Copiar".
 
 ## Servidor Node.js (server.js)
 
@@ -138,11 +48,12 @@ Puerto 8000. Sirve archivos estáticos y proxea llamadas a Claude API.
 
 ### Endpoints:
 - `POST /api/generate-case` — genera caso clínico neonatal/pediátrico (5 slides con vitales, JSON estructurado)
-- `POST /api/generate-novedades` — genera carrusel de novedades de producto NeoMonitor (3–5 slides con title/subtitle/body/tag/palette)
+- `POST /api/generate-novedades` — genera carrusel de novedades (3–5 slides con title/subtitle/body/tag/palette)
+- `POST /api/generate-quiz` — genera quiz clínico crítico de reanimación (title/caseText/question/options[3]/answer/explanation)
 
 ### Cuándo se necesita el servidor:
 - **Siempre para generación con IA**: los archivos HTML llaman a `/api/...` (URL relativa). Si se abre el HTML directo con `file://`, esas llamadas fallan con "Failed to fetch".
-- **No necesario para descargas**: PNG, ZIP y video son 100% client-side. Funcionan con `file://` o `localhost`.
+- **No necesario para descargas**: PNG, ZIP y video son 100% client-side.
 
 ### Patrón de descarga correcto (todos los módulos):
 Usar `canvas.toBlob()` + `URL.createObjectURL()` + `document.body.appendChild(a)` antes de `.click()`. **No usar `canvas.toDataURL()`** para descargas — Chrome moderno puede bloquearlo silenciosamente.
@@ -156,7 +67,6 @@ const triggerDownload = (url, filename) => {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 2000);
 };
-// Para canvas:
 canvas.toBlob(blob => triggerDownload(URL.createObjectURL(blob), 'archivo.png'), 'image/png');
 ```
 
@@ -169,41 +79,73 @@ Cada módulo tiene su propia biblioteca en localStorage:
 | Casos Expandidos | `neocontent_library` |
 | Novedades | `neonovedades_library` |
 | NeoQuiz | `neoquiz_library` |
-
-NeoPlanner lee `neocontent_library` (de Casos Expandidos) y guarda el plan en `neoplanner_plan`.
+| NeoPlanner (plan) | `neoplanner_plan` |
 
 ### Campos comunes por item de biblioteca:
 - `id`: timestamp único
 - `title`: título del contenido
-- `type`: "Carrusel", "Reel", "Video", etc.
+- `type`: "Carrusel" | "Reel" | "Video" | "Quiz Pack"
 - `dateTime`: fecha/hora de generación (string)
 - `status`: "Borrador" | "Listo" | "Publicado"
-- `slidesData` / datos del caso: snapshot para regenerar
+- `caption`: texto auto-generado con hashtags (editable en NeoPlanner)
+- datos del contenido: `scenarioData` (casos) | `quizData` (quiz) | `slidesData` (novedades)
+
+## NeoPlanner (neoplanner.html)
+
+Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
+
+- Lee `neocontent_library` + `neoquiz_library` + `neonovedades_library`, ordenadas por fecha desc
+- Badge de fuente por item: **Casos** / **Quiz** / **Novedades**
+- Caption pre-cargado desde el campo `caption` del item (editable)
+- Filtros: Todos / Sin programar / Con fecha / Casos / Quiz / Novedades
+- Asignar fecha y hora a cada publicación
+- Los archivos generados se descargan a la carpeta de Google Drive sincronizada (Chromebook)
+- Exportar CSV compatible con Buffer / Later / Meta Business Suite
+  - Columnas: Date, Time, Source, Type, Title, Caption, Status
+
+## NeoQuiz (quiz.html)
+
+### Generación con IA
+- Tab "✨ Generar con IA": describir escenario → llama a `/api/generate-quiz`
+- Todos los casos generados por IA son situaciones **críticas de reanimación** (NRP/AHA/AAP)
+- El resultado se carga en el editor manual para ajuste antes de generar
+- API key se guarda en `claude_api_key` (localStorage)
+
+### Generación en Masa (Batch)
+- Card "📦 Generar en Masa": un tema por línea → genera cada quiz con IA → ZIP de PNGs
+- Estructura ZIP: `{tema}/stories/{1_portada, 2_escenario, 3_pregunta, 4_respuesta, 5_cta}.png`
+- Cada item se agrega automáticamente a la biblioteca con caption
+
+### Canvas (drawQuizSlide)
+- Formato 9:16 (1080×1920)
+- Sin logo NM en los slides — fue eliminado para ganar espacio
+- Título portada: bold 76px, lineH 86
+- `wrapText()` con `measureText()` — quiz usa system-ui (no Arial), no tiene el bug de Inter
 
 ## Novedades (novedades.html)
 
+### Exportación de video
+- Intenta MP4 primero: `video/mp4;codecs="avc1.42E01E,mp4a.40.2"` → `video/mp4` → WebM fallback
+- La extensión del archivo refleja el formato real (.mp4 o .webm)
+- Audio capturado via `AudioContext` + `createMediaStreamDestination`: usa `defaultAudioUrl` o audio del primer slide
+- `audioEl.play()` se llama en el mismo tick que `mediaRecRef.current.start()`
+- El reel se agrega a la biblioteca en `onstop` (no antes)
+
 ### Layout 3 columnas:
 - **Izquierda (200px)**: lista de slides con orden, agregar/eliminar
-- **Centro (420px)**: tabs — "✨ Generar con IA" | "✏️ Editor manual" + acciones de exportación fijas abajo
-- **Derecha (flex-1)**: preview canvas (cuando mainTab = 'editor') o biblioteca (cuando mainTab = 'library')
-
-### Generación con IA:
-- Requiere servidor corriendo (`localhost:8000`)
-- Tab "✨ Generar con IA" → describir novedad → llama a `/api/generate-novedades`
-- API key se guarda en localStorage (`claude_api_key`)
-- Resultado: 3–5 slides con palette automática, reemplaza slides actuales
+- **Centro (420px)**: tabs "✨ Generar con IA" | "✏️ Editor manual" + acciones de exportación
+- **Derecha (flex-1)**: preview canvas o biblioteca
 
 ### Biblioteca toggle:
 - Botón "📚 Biblioteca" en el header alterna `mainTab` entre `'editor'` y `'library'`
-- No hay tabs internos en el panel derecho — el header es el único control
 
 ## Renderizado de Canvas (casosexp.html)
 
 ### Funciones de renderizado:
 - **renderSlideToCanvas()**: Genera carruseles 1:1 (1080×1080 PNG)
 - **renderReelSlideToCanvas()**: Genera Reels 9:16 (1080×1920 PNG mientras se graba)
-- **renderCTASlide()**: CTA 1:1 con botón y llamada a acción
-- **renderReelCTASlide()**: CTA 9:16 para Reels
+- **renderCTASlide()**: CTA 1:1
+- **renderReelCTASlide()**: CTA 9:16
 
 ### Especificaciones de fuente y truncado:
 - **Fuente**: Arial (siempre disponible en canvas, evita problemas con Inter)
@@ -215,10 +157,29 @@ NeoPlanner lee `neocontent_library` (de Casos Expandidos) y guarda el plan en `n
 - **Footer**: 26px (1:1) / 36px (9:16)
 
 ### Nota importante:
-- NO usar `wrapText()` — causa cuelgues por intentar medir Inter en canvas
+- NO usar `wrapText()` en casosexp — causa cuelgues por intentar medir Inter en canvas
 - Truncado basado en **substring(0, N)**, no en `measureText()` — más confiable
-- El texto se trunca con `…` al final si es más largo que el límite
 - Todos los textos usan `.substring(0, maxChars)` antes de renderizar
+
+## Audio personalizado en Casos Expandidos
+
+En `casosexp.html`, la sección "Música para el Reel" permite:
+
+1. **Subir MP3 local**: Click en el input de archivo
+2. **Guardar como defecto**: persiste en localStorage (`defaultAudioBase64` + `defaultAudioFileName`)
+3. **Cargar automáticamente**: al reiniciar la página, se carga el audio guardado (marcado con ⭐)
+4. **Eliminar defecto**: limpia localStorage sin perder el audio actual
+5. **Limpiar actual**: quita el audio de la sesión sin afectar el guardado
+
+## Generación en Batch (Casos Expandidos)
+
+Sección "Generar en Masa" en `casosexp.html`:
+
+- **Formatos**: Carruseles (PNG 1:1) | Reels (MP4 9:16) | Ambos
+- **Temas**: un tema por línea en el textarea
+- **ZIP** con estructura `{tema}/carruseles/` y/o `{tema}/reels/`
+- Reels: ~35s por reel. Batch de 10 reels ≈ 6 min.
+- En Chromebook los ZIPs se descargan a Google Drive automáticamente
 
 ## Convenciones
 
@@ -226,7 +187,8 @@ NeoPlanner lee `neocontent_library` (de Casos Expandidos) y guarda el plan en `n
 - Los formatos de salida son: 1:1 (carruseles/posts) y 9:16 (Reels/Stories)
 - Targets: neonatología, pediatría, adultos
 - Plataformas: Instagram y LinkedIn
-- Canvas: siempre usar Arial, truncado basado en caracteres, nunca measureText en bucle
+- Canvas casosexp: siempre Arial, truncado por caracteres, nunca measureText en bucle
+- Canvas quiz/novedades: usan system-ui/Inter con wrapText y measureText (no tienen el bug)
 
 ### Directrices de desarrollo:
 1. Think before acting. Read existing files before writing code.
