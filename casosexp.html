@@ -12,8 +12,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
-        input, textarea, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; outline: none; }
+        input, textarea, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: white !important; outline: none; font-size: 16px; }
         input:focus, textarea:focus, select:focus { border-color: #3b82f6 !important; }
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            input, textarea, select { padding: 12px !important; font-size: 16px; }
+        }
         .active-tab { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
         .glass-card { background: rgba(15,23,42,0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
         .fade-in { animation: fadeIn 0.4s ease-out; }
@@ -1584,7 +1588,7 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
-            <aside className="w-full md:w-72 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col items-center md:items-start shrink-0">
+            <aside className="w-full md:w-72 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/5 p-4 md:p-6 flex flex-col items-center md:items-start shrink-0 max-h-96 md:max-h-none overflow-y-auto md:overflow-visible">
                 <div className="flex items-center gap-3 mb-12 w-full justify-between md:justify-start">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
@@ -1616,7 +1620,7 @@ const App = () => {
             </aside>
 
             <main className="flex-1 p-6 md:p-12 overflow-y-auto">
-                <header className="mb-10 max-w-6xl mx-auto">
+                <header className="mb-6 md:mb-10 max-w-6xl mx-auto px-2 md:px-0">
                     <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
                         <h2 className="text-4xl font-black tracking-tight uppercase">Editor de <span className="text-blue-500">Casos</span></h2>
                         <div className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase inline-block w-fit">33 Escenarios Clínicos</div>
@@ -1624,7 +1628,7 @@ const App = () => {
                     <p className="text-slate-400">Casos neonatales, pediátricos y de adultos. Posts 1:1 y Reels 9:16 para Instagram y LinkedIn.</p>
                 </header>
 
-                <div className="flex gap-4 mb-6 max-w-6xl mx-auto px-6">
+                <div className="flex gap-4 mb-6 max-w-6xl mx-auto px-2 md:px-6">
                     {['editor', 'library'].map(tab => (
                         <button
                             key={tab}
@@ -1641,12 +1645,12 @@ const App = () => {
                 </div>
 
                 {activeTab === 'editor' ? (
-                <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
-                    <div className="lg:col-span-5 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 max-w-6xl mx-auto items-start px-2 md:px-0">
+                    <div className="lg:col-span-5 space-y-4 md:space-y-6">
 
                         <SlidePreview step={currentStep} index={activeSlide}/>
 
-                        <div className="glass-card p-6 rounded-[32px] space-y-6">
+                        <div className="glass-card p-4 md:p-6 rounded-[32px] space-y-4 md:space-y-6">
                             <div className="space-y-4 pb-4 border-b border-white/5">
                                 <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2 block">✨ Generar con IA</label>
                                 <textarea
@@ -1892,7 +1896,7 @@ const App = () => {
                     </div>
                 </div>
                 ) : (
-                <div className="w-full max-w-6xl mx-auto px-6 space-y-4">
+                <div className="w-full max-w-6xl mx-auto px-2 md:px-6 space-y-4">
                     {library.length === 0 ? (
                         <div className="border-2 border-dashed border-slate-800 rounded-[40px] aspect-square flex flex-col items-center justify-center text-slate-700 p-12 text-center">
                             <p className="text-sm font-bold uppercase tracking-widest leading-relaxed">📚 Tu biblioteca está vacía</p>

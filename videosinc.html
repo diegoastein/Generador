@@ -12,8 +12,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; overflow: hidden; }
         ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:10px; }
-        input[type="text"] { background:#020617 !important; border:1px solid #1e293b !important; color:white !important; outline:none; transition:all .2s; }
+        input[type="text"] { background:#020617 !important; border:1px solid #1e293b !important; color:white !important; outline:none; transition:all .2s; font-size: 16px; }
         input[type="text"]:focus { border-color:#f59e0b !important; }
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            input[type="text"] { padding: 12px !important; font-size: 16px; }
+        }
         .glass { background:rgba(15,23,42,0.8); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
@@ -342,10 +346,10 @@ const App = () => {
     const canPlay   = !!monitorSrc && !!controlSrc;
 
     return (
-        <div className="min-h-screen flex" style={{height:'100vh',overflow:'hidden'}}>
+        <div className="min-h-screen flex flex-col md:flex-row" style={{height:'100vh',overflow:'hidden'}}>
 
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900/50 border-r border-white/5 p-6 flex flex-col shrink-0">
+            <aside className="hidden md:flex w-full md:w-64 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/5 p-6 flex-col shrink-0">
                 <div className="flex items-center gap-3 mb-10 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
@@ -372,10 +376,10 @@ const App = () => {
             </aside>
 
             {/* Main */}
-            <main className="flex-1 flex gap-8 p-10 overflow-hidden">
+            <main className="flex-1 flex flex-col md:flex-row gap-4 md:gap-8 p-4 md:p-10 overflow-hidden">
 
                 {/* Panel izquierdo */}
-                <div className="w-80 shrink-0 flex flex-col gap-5 overflow-y-auto">
+                <div className="w-full md:w-80 shrink-0 flex flex-col gap-5 overflow-y-auto">
                     <div>
                         <h2 className="text-3xl font-black uppercase tracking-tight mb-1">
                             Demos <span className="text-amber-500">Sync</span>
@@ -456,9 +460,9 @@ const App = () => {
                 </div>
 
                 {/* Preview canvas / Biblioteca */}
-                <div className="flex-1 flex items-center justify-center overflow-y-auto">
+                <div className="flex-1 flex items-center justify-center overflow-y-auto min-h-96 md:min-h-0">
                     {showLibrary ? (
-                        <div className="w-full max-w-2xl">
+                        <div className="w-full max-w-2xl px-2 md:px-0">
                             {library.length === 0 ? (
                                 <div style={{ textAlign:'center', padding:40, color:'#64748b' }}>
                                     <p style={{ fontSize:'14px', fontWeight:'bold', textTransform:'uppercase', marginBottom:10 }}>Biblioteca vacía</p>
@@ -513,7 +517,7 @@ const App = () => {
                             {/* Glow superior */}
                             <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(245,158,11,0.08), transparent 40%)', pointerEvents:'none', zIndex:1, borderRadius:32 }} />
                             <canvas ref={canvasRef} width={1080} height={1920}
-                                style={{ width: 'auto', height: 'calc(100vh - 80px)', maxHeight: 800, aspectRatio:'9/16', display:'block', borderRadius:32 }} />
+                                style={{ width: 'auto', height: 'calc(100vh - 40px)', maxHeight: window.innerWidth < 768 ? 'calc(100vw * 16/9)' : 800, aspectRatio:'9/16', display:'block', borderRadius:32 }} />
                         </div>
                     )}
                 </div>
