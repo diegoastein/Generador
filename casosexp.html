@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="drive-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -903,48 +902,81 @@ const App = () => {
     const [batchFormat, setBatchFormat] = useState('carruseles'); // 'carruseles', 'reels', 'ambos'
     const [library, setLibrary] = useState([]);
     const [activeTab, setActiveTab] = useState('editor'); // 'editor', 'library'
-    const [driveConnected, setDriveConnected] = useState(false);
 
-    // Listener de cambios en Drive
+    // Cargar biblioteca desde localStorage
     useEffect(() => {
-        DriveSync.onStatusChange(({ isSignedIn }) => {
-            setDriveConnected(isSignedIn);
-        });
+        try {
+            const saved = localStorage.getItem('neocontent_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch (e) {
+            console.warn('Error cargando biblioteca:', e);
+        }
     }, []);
 
-    // Cargar biblioteca desde localStorage y Drive
-    useEffect(() => {
-        const loadLibrary = async () => {
-            try {
-                const data = await DriveSync.loadAll();
-                const lib = data.neocontent_library || [];
-                setLibrary(lib);
-            } catch (err) {
-                console.warn('Error cargando biblioteca:', err);
-                try {
-                    const saved = localStorage.getItem('neocontent_library');
-                    if (saved) setLibrary(JSON.parse(saved));
-                } catch (e) {}
-            }
-        };
-        loadLibrary();
-    }, []);
-
-    // Guardar biblioteca a localStorage y Drive cuando cambia
+    // Guardar biblioteca a localStorage cuando cambia
     useEffect(() => {
         try {
             localStorage.setItem('neocontent_library', JSON.stringify(library));
-            // Guardar también a Drive
-            DriveSync.saveAll({
-                neocontent_library: library,
-                neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
-                neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
-                videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]')
-            }).catch(e => console.warn('Error guardando a Drive:', e));
         } catch (err) {
             console.warn('Error guardando biblioteca:', err);
         }
     }, [library]);
+
+    // Exportar todas las bibliotecas a JSON
+    const exportLibraries = () => {
+        const allData = {
+            neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
+            neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
+            neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
+            videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]'),
+            exportDate: new Date().toISOString()
+        };
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `neomonitor-sync-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    };
+
+    // Importar bibliotecas desde JSON
+    const importLibraries = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.neocontent_library) {
+                        localStorage.setItem('neocontent_library', JSON.stringify(data.neocontent_library));
+                        setLibrary(data.neocontent_library);
+                    }
+                    if (data.neonovedades_library) {
+                        localStorage.setItem('neonovedades_library', JSON.stringify(data.neonovedades_library));
+                    }
+                    if (data.neoquiz_library) {
+                        localStorage.setItem('neoquiz_library', JSON.stringify(data.neoquiz_library));
+                    }
+                    if (data.videosinc_library) {
+                        localStorage.setItem('videosinc_library', JSON.stringify(data.videosinc_library));
+                    }
+                    alert('✓ Datos sincronizados correctamente');
+                } catch (err) {
+                    alert('✗ Error importando JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
 
     const addToLibrary = (item) => {
         const title = item.title || scenario.title || 'Sin título';
@@ -1558,14 +1590,16 @@ const App = () => {
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>
                         <span className="font-black text-xl tracking-tighter uppercase">NeoMonitor</span>
                     </div>
-                    <button onClick={() => driveConnected ? DriveSync.signOut() : DriveSync.signIn()}
-                        className={`text-[9px] font-black px-2 py-1 rounded-lg transition-all ${
-                            driveConnected
-                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700/70'
-                        }`}>
-                        {driveConnected ? '🔗 Drive' : '📴 Drive'}
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={exportLibraries}
+                            className="text-[9px] font-black px-2 py-1 rounded-lg transition-all bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">
+                            📥 Exportar
+                        </button>
+                        <button onClick={importLibraries}
+                            className="text-[9px] font-black px-2 py-1 rounded-lg transition-all bg-green-600/20 text-green-400 hover:bg-green-600/30">
+                            📤 Importar
+                        </button>
+                    </div>
                 </div>
                 <nav className="w-full space-y-2">
                     <div className="p-4 rounded-2xl bg-blue-600/10 border border-blue-500/30 flex items-center gap-4 text-blue-400">

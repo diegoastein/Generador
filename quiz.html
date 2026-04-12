@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="drive-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -25,8 +24,6 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
-
-DriveSync.init().catch(e => console.warn('Drive Sync init error:', e));
 
 /* ─────────────────────────────────────────────────────────────────────────────
    PRESETS — 12 quiz NRP (AHA/AAP 8ª ed. 2021 + actualización 2023)
@@ -537,7 +534,6 @@ const App = () => {
     const [batchDescriptions, setBatchDescriptions] = useState('');
     const [isBatchGenerating, setIsBatchGenerating] = useState(false);
     const [batchProgress, setBatchProgress] = useState('');
-    const [driveConnected, setDriveConnected] = useState(false);
     const [data, setData] = useState({
         title:"Desafío Clínico",
         caseText:"Describe aquí el escenario...",
@@ -547,41 +543,80 @@ const App = () => {
         explanation:"Explica aquí la resolución técnica..."
     });
 
-    // Listener de Drive
+    // Cargar biblioteca desde localStorage
     useEffect(() => {
-        DriveSync.onStatusChange(({ isSignedIn }) => {
-            setDriveConnected(isSignedIn);
-        });
+        try {
+            const saved = localStorage.getItem('neoquiz_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch (e) {
+            console.warn('Error cargando biblioteca:', e);
+        }
     }, []);
 
-    // ─── Biblioteca ───────────────────────────────────────────────────────────
-    useEffect(() => {
-        const loadLibrary = async () => {
-            try {
-                const data = await DriveSync.loadAll();
-                const lib = data.neoquiz_library || [];
-                setLibrary(lib);
-            } catch (err) {
-                try {
-                    const saved = localStorage.getItem('neoquiz_library');
-                    if (saved) setLibrary(JSON.parse(saved));
-                } catch(e) {}
-            }
-        };
-        loadLibrary();
-    }, []);
-
+    // Guardar biblioteca a localStorage
     useEffect(() => {
         try {
             localStorage.setItem('neoquiz_library', JSON.stringify(library));
-            DriveSync.saveAll({
-                neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
-                neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
-                neoquiz_library: library,
-                videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]')
-            }).catch(e => console.warn('Error guardando a Drive:', e));
-        } catch(e) {}
+        } catch(e) {
+            console.warn('Error guardando biblioteca:', e);
+        }
     }, [library]);
+
+    // Exportar todas las bibliotecas a JSON
+    const exportLibraries = () => {
+        const allData = {
+            neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
+            neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
+            neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
+            videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]'),
+            exportDate: new Date().toISOString()
+        };
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `neomonitor-sync-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    };
+
+    // Importar bibliotecas desde JSON
+    const importLibraries = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.neocontent_library) {
+                        localStorage.setItem('neocontent_library', JSON.stringify(data.neocontent_library));
+                    }
+                    if (data.neonovedades_library) {
+                        localStorage.setItem('neonovedades_library', JSON.stringify(data.neonovedades_library));
+                    }
+                    if (data.neoquiz_library) {
+                        localStorage.setItem('neoquiz_library', JSON.stringify(data.neoquiz_library));
+                        setLibrary(data.neoquiz_library);
+                    }
+                    if (data.videosinc_library) {
+                        localStorage.setItem('videosinc_library', JSON.stringify(data.videosinc_library));
+                    }
+                    alert('✓ Datos sincronizados correctamente');
+                } catch (err) {
+                    alert('✗ Error importando JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
 
     const addToLibrary = (quizData) => {
         const title = quizData.title || 'Sin título';
@@ -813,14 +848,16 @@ const App = () => {
                         <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
                         <p className="text-slate-400 text-sm">32 presets · Neonatología, Pediatría y Adultos · Pack de 5 imágenes Stories 9:16 + CTA.</p>
                     </div>
-                    <button onClick={() => driveConnected ? DriveSync.signOut() : DriveSync.signIn()}
-                        className={`text-[10px] font-black px-3 py-2 rounded-lg transition-all whitespace-nowrap ${
-                            driveConnected
-                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-                                : 'bg-slate-800 text-slate-500 hover:bg-slate-700/70'
-                        }`}>
-                        {driveConnected ? '🔗 Drive' : '📴 Drive'}
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={exportLibraries}
+                            className="text-[10px] font-black px-3 py-2 rounded-lg transition-all whitespace-nowrap bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">
+                            📥 Exportar
+                        </button>
+                        <button onClick={importLibraries}
+                            className="text-[10px] font-black px-3 py-2 rounded-lg transition-all whitespace-nowrap bg-green-600/20 text-green-400 hover:bg-green-600/30">
+                            📤 Importar
+                        </button>
+                    </div>
                 </header>
 
                 <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">

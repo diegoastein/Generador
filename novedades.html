@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="drive-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         * { box-sizing: border-box; }
@@ -38,8 +37,6 @@
 
 <script type="text/babel">
 const { useState, useRef, useEffect, useCallback } = React;
-
-DriveSync.init().catch(e => console.warn('Drive Sync init error:', e));
 
 /* ─── PALETAS DE COLOR ───────────────────────────────────────────────────── */
 const PALETTES = {
@@ -318,46 +315,84 @@ function App() {
     const chunksRef = useRef([]);
     const audioRef = useRef(null);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-    const [driveConnected, setDriveConnected] = useState(false);
 
     const fmt = FORMATS[format];
     const slide = slides[activeIdx] || slides[0];
 
-    // Listener de Drive
+    // Cargar biblioteca desde localStorage
     useEffect(() => {
-        DriveSync.onStatusChange(({ isSignedIn }) => {
-            setDriveConnected(isSignedIn);
-        });
+        try {
+            const saved = localStorage.getItem('neonovedades_library');
+            if (saved) setLibrary(JSON.parse(saved));
+        } catch (e) {
+            console.warn('Error cargando biblioteca:', e);
+        }
     }, []);
 
-    // ─── Biblioteca ───────────────────────────────────────────────────────────
-    useEffect(() => {
-        const loadLibrary = async () => {
-            try {
-                const data = await DriveSync.loadAll();
-                const lib = data.neonovedades_library || [];
-                setLibrary(lib);
-            } catch (err) {
-                try {
-                    const saved = localStorage.getItem('neonovedades_library');
-                    if (saved) setLibrary(JSON.parse(saved));
-                } catch(e) {}
-            }
-        };
-        loadLibrary();
-    }, []);
-
+    // Guardar biblioteca a localStorage
     useEffect(() => {
         try {
             localStorage.setItem('neonovedades_library', JSON.stringify(library));
-            DriveSync.saveAll({
-                neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
-                neonovedades_library: library,
-                neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
-                videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]')
-            }).catch(e => console.warn('Error guardando a Drive:', e));
-        } catch(e) {}
+        } catch(e) {
+            console.warn('Error guardando biblioteca:', e);
+        }
     }, [library]);
+
+    // Exportar todas las bibliotecas a JSON
+    const exportLibraries = () => {
+        const allData = {
+            neocontent_library: JSON.parse(localStorage.getItem('neocontent_library') || '[]'),
+            neonovedades_library: JSON.parse(localStorage.getItem('neonovedades_library') || '[]'),
+            neoquiz_library: JSON.parse(localStorage.getItem('neoquiz_library') || '[]'),
+            videosinc_library: JSON.parse(localStorage.getItem('videosinc_library') || '[]'),
+            exportDate: new Date().toISOString()
+        };
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `neomonitor-sync-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    };
+
+    // Importar bibliotecas desde JSON
+    const importLibraries = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.neocontent_library) {
+                        localStorage.setItem('neocontent_library', JSON.stringify(data.neocontent_library));
+                    }
+                    if (data.neonovedades_library) {
+                        localStorage.setItem('neonovedades_library', JSON.stringify(data.neonovedades_library));
+                        setLibrary(data.neonovedades_library);
+                    }
+                    if (data.neoquiz_library) {
+                        localStorage.setItem('neoquiz_library', JSON.stringify(data.neoquiz_library));
+                    }
+                    if (data.videosinc_library) {
+                        localStorage.setItem('videosinc_library', JSON.stringify(data.videosinc_library));
+                    }
+                    alert('✓ Datos sincronizados correctamente');
+                } catch (err) {
+                    alert('✗ Error importando JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
 
     useEffect(() => {
         try {
@@ -733,14 +768,14 @@ function App() {
                         className={`btn px-3 py-1.5 rounded-xl text-[10px] border ${mainTab === 'library' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'}`}>
                         📚 Biblioteca {library.length > 0 ? `(${library.length})` : ''}
                     </button>
-                    {/* DRIVE */}
-                    <button onClick={() => driveConnected ? DriveSync.signOut() : DriveSync.signIn()}
-                        className={`btn px-3 py-1.5 rounded-xl text-[10px] border transition-all ${
-                            driveConnected
-                                ? 'bg-green-600/20 text-green-400 border-green-500/30 hover:bg-green-600/30'
-                                : 'bg-slate-800 text-slate-400 border-white/5 hover:text-white'
-                        }`}>
-                        {driveConnected ? '🔗 Drive' : '📴 Drive'}
+                    {/* SYNC BUTTONS */}
+                    <button onClick={exportLibraries}
+                        className="btn px-3 py-1.5 rounded-xl text-[10px] border bg-blue-600/20 text-blue-400 border-blue-500/30 hover:bg-blue-600/30">
+                        📥 Exportar
+                    </button>
+                    <button onClick={importLibraries}
+                        className="btn px-3 py-1.5 rounded-xl text-[10px] border bg-green-600/20 text-green-400 border-green-500/30 hover:bg-green-600/30">
+                        📤 Importar
                     </button>
                 </div>
             </header>
