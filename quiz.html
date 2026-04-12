@@ -753,7 +753,6 @@ const App = () => {
         drawQuizCTASlide(ctaC, CTA_POOL[Math.floor(Math.random()*CTA_POOL.length)]);
         imgs.push(ctaC.toDataURL('image/png'));
         setGallery(imgs);
-        addToLibrary(data);
         setStatus(''); setGenerating(false);
     };
 
@@ -921,10 +920,16 @@ const App = () => {
                                         : <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Generar Pack de Stories</>}
                                 </button>
                                 {gallery.length > 0 && (
-                                    <button onClick={downloadQuizAsZip}
-                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/5">
-                                        📦 Descargar ZIP
-                                    </button>
+                                    <>
+                                        <button onClick={() => addToLibrary(data)}
+                                            className="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                                            💾 Guardar a Biblioteca
+                                        </button>
+                                        <button onClick={downloadQuizAsZip}
+                                            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-white/5">
+                                            📦 Descargar ZIP
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
