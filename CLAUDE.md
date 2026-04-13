@@ -217,6 +217,46 @@ Todos los módulos usan el mismo patrón:
 - **`height: 100vh`** en el contenedor raíz no contempla la barra de direcciones del navegador móvil — sobreescribir con `height: auto; min-height: 100svh` en móvil
 - **`flex-shrink-0`** en el panel central dentro de un contenedor columna fija — el panel se desborda y recorta contenido; usar `flex-1` en móvil
 
+## Sincronización Firebase (pendiente de implementar)
+
+### Proyecto Firebase
+- Proyecto: `studio-378906782-70dc4` (Firebase app, antes vacío — reutilizado para NeoMonitor)
+- Firestore creado en región `nam5` (default database)
+- Config SDK ya obtenida (apiKey, authDomain, appId, etc.)
+- Firebase CLI v13.35.1 instalado globalmente (`sudo npm install -g firebase-tools@13`)
+
+### Arquitectura definida
+- Sin servidor, sin login — app personal, uso en múltiples dispositivos
+- Archivo compartido `firebase-sync.js` incluido via `<script src="firebase-sync.js">` en cada HTML
+- Estructura Firestore:
+  ```
+  /neomonitor/novedades/{itemId}
+  /neomonitor/casos/{itemId}
+  /neomonitor/quiz/{itemId}
+  ```
+- API pública que expone `firebase-sync.js`:
+  ```js
+  NeoSync.save(coleccion, item)   // guarda/actualiza item en Firestore + localStorage
+  NeoSync.delete(coleccion, id)   // elimina de Firestore + localStorage
+  NeoSync.loadAll(coleccion)      // descarga Firestore y mergea con localStorage (gana el más reciente por id timestamp)
+  NeoSync.status                  // 'ok' | 'syncing' | 'offline'
+  ```
+
+### Flujo de sync
+- Al **abrir** la app: `NeoSync.loadAll()` → merge con localStorage
+- Al **guardar** en biblioteca: escribe en localStorage Y llama `NeoSync.save()`
+- Al **eliminar**: borra en localStorage Y llama `NeoSync.delete()`
+- Indicador visual de estado sync en cada módulo: "✓ sincronizado" / "↻ sincronizando..." / "⚠ sin conexión"
+
+### Plan de implementación
+1. Crear `firebase-sync.js` con la lógica compartida y config del proyecto
+2. Integrar en `novedades.html` como prueba piloto
+3. Validar y replicar en `casosexp.html`, `quiz.html`, `neoplanner.html`
+4. Configurar reglas de seguridad Firestore (actualmente cerradas)
+
+### Pendiente antes de arrancar
+- Definir reglas de Firestore (por ahora bloqueado — hay que abrir lectura/escritura o usar Auth anónima)
+
 ## Convenciones
 
 - Al agregar nuevos módulos, seguir el patrón de archivo único autocontenido
