@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>NeoPlanner — NeoMonitor</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="firebase-sync.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { background: #020617; color: #f1f5f9; font-family: Arial, sans-serif; }
@@ -85,8 +86,9 @@
       </div>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
+      <span id="syncIndicator" style="font-size:9px; font-weight:700; color:#475569;">⚠ local</span>
       <span class="counter" id="counterLabel">0 items</span>
-      <button class="btn-secondary" onclick="loadFromLibrary()">↻ Actualizar Biblioteca</button>
+      <button class="btn-secondary" onclick="syncAndReload()">↻ Actualizar Biblioteca</button>
       <button class="btn-primary" onclick="exportCSV()">⬇ Exportar CSV</button>
     </div>
   </div>
@@ -124,9 +126,47 @@ let library = [];
 let plan = {}; // { [id]: { date, time, caption, driveUrl } }
 let activeFilter = 'all';
 
+// ─── Indicador de sync ────────────────────────────────────────────────────────
+function setSyncIndicator(status) {
+    const el = document.getElementById('syncIndicator');
+    if (!el) return;
+    if (status === 'ok')      { el.textContent = '☁ sync'; el.style.color = '#34d399'; }
+    else if (status === 'syncing') { el.textContent = '↻ sync'; el.style.color = '#fbbf24'; }
+    else                      { el.textContent = '⚠ local'; el.style.color = '#475569'; }
+}
+
 // ─── Inicialización ───────────────────────────────────────────────────────────
-function init() {
+async function init() {
     loadPlan();
+    loadFromLibrary(); // carga local inmediata
+
+    if (typeof NeoSync !== 'undefined') {
+        NeoSync.onStatusChange(setSyncIndicator);
+        try {
+            await NeoSync.init();
+            await Promise.all([
+                NeoSync.loadAll('casos'),
+                NeoSync.loadAll('quiz'),
+                NeoSync.loadAll('novedades')
+            ]);
+            loadFromLibrary(); // re-render con datos de Firestore
+        } catch (e) {
+            console.warn('[neoplanner] NeoSync no disponible, usando local:', e.message);
+        }
+    }
+}
+
+async function syncAndReload() {
+    if (typeof NeoSync !== 'undefined' && NeoSync.status === 'ok') {
+        setSyncIndicator('syncing');
+        try {
+            await Promise.all([
+                NeoSync.loadAll('casos'),
+                NeoSync.loadAll('quiz'),
+                NeoSync.loadAll('novedades')
+            ]);
+        } catch (e) {}
+    }
     loadFromLibrary();
 }
 
