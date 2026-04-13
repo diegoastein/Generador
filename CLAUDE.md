@@ -152,6 +152,10 @@ Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
 
 ### Biblioteca toggle:
 - Botón "📚 Biblioteca" en el header alterna `mainTab` entre `'editor'` y `'library'`
+- Cuando `mainTab === 'library'`, el **panel central** reemplaza el editor con la lista de items — funciona en todos los tamaños de pantalla (móvil, tablet, desktop)
+- En desktop lg+, el panel derecho también muestra la biblioteca (comportamiento previo, sin romper nada)
+- Cada card de biblioteca muestra: tipo, cantidad de slides, selector de estado, título, fecha, botón **↻ Recargar** (carga `slidesData` en el editor y vuelve a `mainTab='editor'`), botón eliminar y caption con "📋 Copiar"
+- Botón "✕ Cerrar" dentro de la vista biblioteca vuelve a `mainTab='editor'`
 
 ## Renderizado de Canvas (casosexp.html)
 
