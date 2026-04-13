@@ -1611,14 +1611,6 @@ const App = () => {
                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${syncStatus === 'ok' ? 'text-emerald-400' : syncStatus === 'syncing' ? 'text-yellow-400' : 'text-slate-500'}`}>
                             {syncStatus === 'ok' ? '☁ sync' : syncStatus === 'syncing' ? '↻ sync' : '⚠ local'}
                         </span>
-                        <button onClick={exportLibraries}
-                            className="text-[9px] font-black px-2 py-1 rounded-lg transition-all bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">
-                            📥 Exportar
-                        </button>
-                        <button onClick={importLibraries}
-                            className="text-[9px] font-black px-2 py-1 rounded-lg transition-all bg-green-600/20 text-green-400 hover:bg-green-600/30">
-                            📤 Importar
-                        </button>
                     </div>
                 </div>
                 <nav className="w-full space-y-2">
