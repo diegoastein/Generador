@@ -785,7 +785,7 @@ function App() {
             </header>
 
             {/* ─── BODY ─── */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
+            <div className="flex flex-col md:flex-row" style={{ flex: 1, overflow: 'hidden' }}>
 
                 {/* ══ PANEL IZQUIERDO — Lista de slides ══ */}
                 <div className="hidden md:flex flex-col border-r border-white/5 flex-shrink-0" style={{ width: '200px' }}>
@@ -816,7 +816,7 @@ function App() {
                 </div>
 
                 {/* ══ PANEL CENTRAL — Editor (el más importante) ══ */}
-                <div className="flex flex-col border-r border-white/5 flex-shrink-0 overflow-hidden w-full md:w-96 lg:w-[420px]" style={{ minWidth: window.innerWidth < 768 ? '100%' : undefined }}>
+                <div className="flex flex-col border-r border-white/5 flex-1 md:flex-none md:w-96 lg:w-[420px] overflow-hidden">
 
                     {/* Tabs editor */}
                     <div className="flex gap-1 p-3 border-b border-white/5 flex-shrink-0">
