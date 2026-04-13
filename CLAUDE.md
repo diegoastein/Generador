@@ -139,10 +139,16 @@ Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
 
 ### Responsive móvil (novedades.html):
 - Panel izquierdo oculto en móvil (`hidden md:flex`)
-- Panel central ocupa ancho completo (`w-full md:w-96 lg:w-[420px]`)
+- Panel central toma `flex-1` en móvil / `md:flex-none md:w-96` en desktop
 - Panel derecho oculto en móvil (`hidden lg:flex`)
-- Header en columna en móvil, fila en desktop
-- Botones Exportar/Importar ocultos en móvil (`hidden md:block`)
+- Header siempre en fila única con botones siempre visibles
+- Body scrollea normalmente en móvil: `body { overflow-y: auto; height: auto }` via media query, `.app-root { height: auto; min-height: 100svh }`, `.body-section { overflow: visible }`
+- Contenido del panel: `md:flex-1 md:overflow-y-auto` (en móvil altura natural, scroll a cargo de la página)
+
+### Header (novedades.html):
+- Mismo patrón que casosexp: botones `text-[9px] font-black px-2 py-1 rounded-lg` siempre visibles
+- Botones: **📥 Exportar** (azul) | **📤 Importar** (verde) | **📚 Biblioteca** (ámbar)
+- Format switcher (⬜ Carrusel / 📱 Reel) movido al panel de acciones de exportación, no en el header
 
 ### Biblioteca toggle:
 - Botón "📚 Biblioteca" en el header alterna `mainTab` entre `'editor'` y `'library'`
@@ -203,7 +209,9 @@ Todos los módulos usan el mismo patrón:
 ### Trampas conocidas:
 - **No usar `window.innerWidth`** en props de React para layout — no es reactivo; usar clases Tailwind responsive
 - **No usar `style={{ width: '420px' }}` fijo** en paneles — rompe móvil; usar clases como `w-full md:w-96`
-- **`overflow: hidden` en body** puede bloquear scroll en móvil — usar con cuidado
+- **`overflow: hidden` en body** bloquea scroll en móvil — en móvil usar `overflow-y: auto; height: auto` via media query
+- **`height: 100vh`** en el contenedor raíz no contempla la barra de direcciones del navegador móvil — sobreescribir con `height: auto; min-height: 100svh` en móvil
+- **`flex-shrink-0`** en el panel central dentro de un contenedor columna fija — el panel se desborda y recorta contenido; usar `flex-1` en móvil
 
 ## Convenciones
 
