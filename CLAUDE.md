@@ -43,6 +43,22 @@ Todos los módulos generan un caption automático al guardar en biblioteca:
 
 El caption se muestra en la card de biblioteca con botón "📋 Copiar".
 
+## Notificaciones (Toasts)
+
+Todos los módulos muestran un **toast confirmatorio** verde en la esquina inferior derecha cuando se guarda un elemento en biblioteca:
+
+- **Duración**: 2.5 segundos
+- **Estilo**: Fondo emerald-600, texto blanco, ícono ✅
+- **Animación**: `animate-pulse` para visibilidad
+- **Z-index**: 50 (siempre visible)
+- **Posición**: `fixed bottom-4 right-4`
+
+Mensaje por módulo:
+- **Quiz**: "✅ Quiz guardado en biblioteca"
+- **Casos**: "✅ Carrusel guardado en biblioteca" o "✅ Reel guardado en biblioteca"
+- **Novedades**: "✅ Carrusel guardado en biblioteca" o "✅ Video guardado en biblioteca"
+- **Video Sync**: "✅ Video guardado en biblioteca"
+
 ## Servidor Node.js (server.js)
 
 Puerto 8000. Sirve archivos estáticos y proxea llamadas a Claude API.
@@ -147,7 +163,7 @@ Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
 
 ### Header (novedades.html):
 - Mismo patrón que casosexp: botones `text-[9px] font-black px-2 py-1 rounded-lg` siempre visibles
-- Botones: **📥 Exportar** (azul) | **📤 Importar** (verde) | **📚 Biblioteca** (ámbar)
+- Botón: **📚 Biblioteca** (ámbar)
 - Format switcher (⬜ Carrusel / 📱 Reel) movido al panel de acciones de exportación, no en el header
 
 ### Biblioteca toggle:
@@ -216,6 +232,13 @@ Todos los módulos usan el mismo patrón:
 - **`overflow: hidden` en body** bloquea scroll en móvil — en móvil usar `overflow-y: auto; height: auto` via media query
 - **`height: 100vh`** en el contenedor raíz no contempla la barra de direcciones del navegador móvil — sobreescribir con `height: auto; min-height: 100svh` en móvil
 - **`flex-shrink-0`** en el panel central dentro de un contenedor columna fija — el panel se desborda y recorta contenido; usar `flex-1` en móvil
+
+## API y Modelos
+
+### Model ID de Claude (server.js)
+- Todos los endpoints usan `claude-sonnet-4-6`
+- Endpoints: `/api/generate-case`, `/api/generate-quiz`, `/api/generate-novedades`
+- Las respuestas son JSON estructurado (sin markdown)
 
 ## Sincronización Firebase (pendiente de implementar)
 
