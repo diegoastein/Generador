@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="firebase-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         * { box-sizing: border-box; }
@@ -314,6 +315,7 @@ function App() {
     const [tab, setTab] = useState('editor'); // 'editor' | 'preview'
     const [mainTab, setMainTab] = useState('editor'); // 'editor' | 'library'
     const [library, setLibrary] = useState([]);
+    const [syncStatus, setSyncStatus] = useState('offline'); // 'offline' | 'syncing' | 'ok'
     const [defaultAudioFileName, setDefaultAudioFileName] = useState('');
     const [defaultAudioUrl, setDefaultAudioUrl] = useState(null);
     const canvasRef = useRef(null);
@@ -325,24 +327,34 @@ function App() {
     const fmt = FORMATS[format];
     const slide = slides[activeIdx] || slides[0];
 
-    // Cargar biblioteca desde localStorage
+    // Inicializar NeoSync y cargar biblioteca
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem('neonovedades_library');
-            if (saved) setLibrary(JSON.parse(saved));
-        } catch (e) {
-            console.warn('Error cargando biblioteca:', e);
+        // Escuchar cambios de estado de sync
+        if (typeof NeoSync !== 'undefined') {
+            NeoSync.onStatusChange(setSyncStatus);
         }
-    }, []);
 
-    // Guardar biblioteca a localStorage
-    useEffect(() => {
-        try {
-            localStorage.setItem('neonovedades_library', JSON.stringify(library));
-        } catch(e) {
-            console.warn('Error guardando biblioteca:', e);
-        }
-    }, [library]);
+        const loadLibrary = async () => {
+            // Carga local inmediata
+            try {
+                const saved = localStorage.getItem('neonovedades_library');
+                if (saved) setLibrary(JSON.parse(saved));
+            } catch (e) {}
+
+            // Sync con Firebase en segundo plano
+            if (typeof NeoSync !== 'undefined') {
+                try {
+                    await NeoSync.init();
+                    const merged = await NeoSync.loadAll('novedades');
+                    setLibrary(merged);
+                } catch (e) {
+                    console.warn('[novedades] NeoSync no disponible, usando local:', e.message);
+                }
+            }
+        };
+
+        loadLibrary();
+    }, []);
 
     // Exportar todas las bibliotecas a JSON
     const exportLibraries = () => {
@@ -411,7 +423,7 @@ function App() {
         } catch(e) {}
     }, []);
 
-    const addToLibrary = (type) => {
+    const addToLibrary = async (type) => {
         const title = slides[0]?.title || 'Sin título';
         const caption = `✨ ${title}. Conocé las últimas novedades de NeoMonitor en www.neomonitor.pro\n\n#neomonitor #novedades #neonatologia #educacionmedica #pediatria #tecnologiamedica #medicina`;
         const newItem = {
@@ -425,15 +437,21 @@ function App() {
             slidesData: slides.map(s => ({ ...s, audioUrl: null }))
         };
         setLibrary(prev => [newItem, ...prev]);
+        if (typeof NeoSync !== 'undefined') {
+            try { await NeoSync.save('novedades', newItem); } catch (e) {}
+        }
     };
 
     const updateLibraryStatus = (id, status) => {
         setLibrary(prev => prev.map(item => item.id === id ? { ...item, status } : item));
     };
 
-    const deleteLibraryItem = (id) => {
+    const deleteLibraryItem = async (id) => {
         if (confirm('¿Eliminar de la biblioteca?')) {
             setLibrary(prev => prev.filter(item => item.id !== id));
+            if (typeof NeoSync !== 'undefined') {
+                try { await NeoSync.delete('novedades', id); } catch (e) {}
+            }
         }
     };
 
@@ -760,6 +778,9 @@ function App() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${syncStatus === 'ok' ? 'text-emerald-400' : syncStatus === 'syncing' ? 'text-yellow-400' : 'text-slate-500'}`}>
+                        {syncStatus === 'ok' ? '☁ sync' : syncStatus === 'syncing' ? '↻ sync' : '⚠ local'}
+                    </span>
                     <button onClick={exportLibraries}
                         className="text-[9px] font-black px-2 py-1 rounded-lg transition-all bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">
                         📥 Exportar
