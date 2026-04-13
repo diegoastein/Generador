@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="firebase-sync.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
@@ -533,6 +534,7 @@ const App = () => {
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('editor');
     const [library, setLibrary] = useState([]);
+    const [syncStatus, setSyncStatus] = useState('offline'); // 'offline' | 'syncing' | 'ok'
     const [editorMode, setEditorMode] = useState('manual'); // 'manual' | 'ai'
     const [aiDescription, setAiDescription] = useState('');
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -548,24 +550,31 @@ const App = () => {
         explanation:"Explica aquí la resolución técnica..."
     });
 
-    // Cargar biblioteca desde localStorage
+    // Inicializar NeoSync y cargar biblioteca
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem('neoquiz_library');
-            if (saved) setLibrary(JSON.parse(saved));
-        } catch (e) {
-            console.warn('Error cargando biblioteca:', e);
+        if (typeof NeoSync !== 'undefined') {
+            NeoSync.onStatusChange(setSyncStatus);
         }
-    }, []);
 
-    // Guardar biblioteca a localStorage
-    useEffect(() => {
-        try {
-            localStorage.setItem('neoquiz_library', JSON.stringify(library));
-        } catch(e) {
-            console.warn('Error guardando biblioteca:', e);
-        }
-    }, [library]);
+        const loadLibrary = async () => {
+            try {
+                const saved = localStorage.getItem('neoquiz_library');
+                if (saved) setLibrary(JSON.parse(saved));
+            } catch (e) {}
+
+            if (typeof NeoSync !== 'undefined') {
+                try {
+                    await NeoSync.init();
+                    const merged = await NeoSync.loadAll('quiz');
+                    setLibrary(merged);
+                } catch (e) {
+                    console.warn('[quiz] NeoSync no disponible, usando local:', e.message);
+                }
+            }
+        };
+
+        loadLibrary();
+    }, []);
 
     // Exportar todas las bibliotecas a JSON
     const exportLibraries = () => {
@@ -623,7 +632,7 @@ const App = () => {
         input.click();
     };
 
-    const addToLibrary = (quizData) => {
+    const addToLibrary = async (quizData) => {
         const title = quizData.title || 'Sin título';
         const caption = `🧠 ${title}. ¿Podés resolver este desafío clínico? Escenario basado en NRP 8ª Ed. y AHA/AAP 2023.\n\n#rcp #educacionmedica #quiz #neonatologia #nrp #reanimacion #pediatria #neomonitor`;
         const newItem = {
@@ -636,15 +645,21 @@ const App = () => {
             quizData: { ...quizData }
         };
         setLibrary(prev => [newItem, ...prev]);
+        if (typeof NeoSync !== 'undefined') {
+            try { await NeoSync.save('quiz', newItem); } catch (e) {}
+        }
     };
 
     const updateLibraryStatus = (id, status) => {
         setLibrary(prev => prev.map(item => item.id === id ? { ...item, status } : item));
     };
 
-    const deleteLibraryItem = (id) => {
+    const deleteLibraryItem = async (id) => {
         if (confirm('¿Eliminar este quiz de la biblioteca?')) {
             setLibrary(prev => prev.filter(item => item.id !== id));
+            if (typeof NeoSync !== 'undefined') {
+                try { await NeoSync.delete('quiz', id); } catch (e) {}
+            }
         }
     };
 
@@ -746,7 +761,7 @@ const App = () => {
                 storiesFolder.file(`${labels[4]}.png`, ctaC.toDataURL('image/png').replace(/^data:image\/png;base64,/, ''), { base64: true });
 
                 const batchTitle = quizData.title || description;
-                setLibrary(prev => [{
+                const batchItem = {
                     id: Date.now() + i,
                     title: batchTitle,
                     type: 'Quiz Pack',
@@ -754,7 +769,11 @@ const App = () => {
                     status: 'Borrador',
                     caption: `🧠 ${batchTitle}. ¿Podés resolver este desafío clínico? Escenario basado en NRP 8ª Ed. y AHA/AAP 2023.\n\n#rcp #educacionmedica #quiz #neonatologia #nrp #reanimacion #pediatria #neomonitor`,
                     quizData
-                }, ...prev]);
+                };
+                setLibrary(prev => [batchItem, ...prev]);
+                if (typeof NeoSync !== 'undefined') {
+                    try { await NeoSync.save('quiz', batchItem); } catch (e) {}
+                }
             }
             setBatchProgress('Comprimiendo ZIP…');
             const blob = await zip.generateAsync({ type: 'blob' });
@@ -853,7 +872,10 @@ const App = () => {
                         <h2 className="text-4xl font-black tracking-tight uppercase mb-2">NeoQuiz <span className="text-amber-500">Expert</span></h2>
                         <p className="text-slate-400 text-sm">32 presets · Neonatología, Pediatría y Adultos · Pack de 5 imágenes Stories 9:16 + CTA.</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${syncStatus === 'ok' ? 'text-emerald-400' : syncStatus === 'syncing' ? 'text-yellow-400' : 'text-slate-500'}`}>
+                            {syncStatus === 'ok' ? '☁ sync' : syncStatus === 'syncing' ? '↻ sync' : '⚠ local'}
+                        </span>
                         <button onClick={exportLibraries}
                             className="text-[10px] font-black px-3 py-2 rounded-lg transition-all whitespace-nowrap bg-blue-600/20 text-blue-400 hover:bg-blue-600/30">
                             📥 Exportar
