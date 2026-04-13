@@ -8,6 +8,7 @@ Static HTML/CSS/JS web app para generar contenido médico para redes sociales (c
 - Tailwind CSS vía CDN
 - Vanilla JavaScript
 - Cada archivo es completamente autocontenido
+- Todos los módulos son **responsive** (mobile-first): breakpoints `sm:`, `md:`, `lg:` de Tailwind
 
 ## Archivos
 
@@ -131,10 +132,17 @@ Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
 - `audioEl.play()` se llama en el mismo tick que `mediaRecRef.current.start()`
 - El reel se agrega a la biblioteca en `onstop` (no antes)
 
-### Layout 3 columnas:
-- **Izquierda (200px)**: lista de slides con orden, agregar/eliminar
-- **Centro (420px)**: tabs "✨ Generar con IA" | "✏️ Editor manual" + acciones de exportación
-- **Derecha (flex-1)**: preview canvas o biblioteca
+### Layout 3 columnas (desktop):
+- **Izquierda (200px)**: lista de slides con orden, agregar/eliminar — `hidden md:flex` en móvil
+- **Centro (420px → w-full en móvil)**: tabs "✨ Generar con IA" | "✏️ Editor manual" + acciones de exportación
+- **Derecha (flex-1)**: preview canvas o biblioteca — `hidden lg:flex` en móvil
+
+### Responsive móvil (novedades.html):
+- Panel izquierdo oculto en móvil (`hidden md:flex`)
+- Panel central ocupa ancho completo (`w-full md:w-96 lg:w-[420px]`)
+- Panel derecho oculto en móvil (`hidden lg:flex`)
+- Header en columna en móvil, fila en desktop
+- Botones Exportar/Importar ocultos en móvil (`hidden md:block`)
 
 ### Biblioteca toggle:
 - Botón "📚 Biblioteca" en el header alterna `mainTab` entre `'editor'` y `'library'`
@@ -180,6 +188,22 @@ Sección "Generar en Masa" en `casosexp.html`:
 - **ZIP** con estructura `{tema}/carruseles/` y/o `{tema}/reels/`
 - Reels: ~35s por reel. Batch de 10 reels ≈ 6 min.
 - En Chromebook los ZIPs se descargan a Google Drive automáticamente
+
+## Responsive / Mobile
+
+Todos los módulos usan el mismo patrón:
+
+- **Sidebar/aside**: `hidden md:flex` — se oculta en móvil
+- **Layout principal**: `flex flex-col md:flex-row` — apilado vertical en móvil
+- **Grids**: `grid-cols-1 lg:grid-cols-12` — columna única en móvil
+- **Padding**: `p-4 md:p-8 lg:p-12` — reducido en pantallas chicas
+- **Inputs**: `font-size: 16px` en CSS global — evita zoom automático en iOS/Android
+- Media query: `@media (max-width: 768px) { input, textarea, select { padding: 12px !important; font-size: 16px; } }`
+
+### Trampas conocidas:
+- **No usar `window.innerWidth`** en props de React para layout — no es reactivo; usar clases Tailwind responsive
+- **No usar `style={{ width: '420px' }}` fijo** en paneles — rompe móvil; usar clases como `w-full md:w-96`
+- **`overflow: hidden` en body** puede bloquear scroll en móvil — usar con cuidado
 
 ## Convenciones
 
