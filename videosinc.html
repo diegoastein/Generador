@@ -112,6 +112,7 @@ const App = () => {
     const [library, setLibrary] = useState([]);
     const [lastVideo, setLastVideo] = useState(null);
     const [showLibrary, setShowLibrary] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     const canvasRef  = useRef(null);
     const monRef     = useRef(null);
@@ -206,7 +207,8 @@ const App = () => {
             caption: `🎬 Video sincronizado NeoMonitor. Monitor y control en 9:16 vertical.\n\n#neomonitor #videosync #educacionmedica #neonatologia #pediatria #medicina`
         };
         setLibrary(prev => [newItem, ...prev]);
-        alert('✓ Video guardado en biblioteca');
+        setToastMessage('✅ Video guardado en biblioteca');
+        setTimeout(() => setToastMessage(''), 2500);
     };
 
     const updateLibraryStatus = (id, status) => {
@@ -347,6 +349,11 @@ const App = () => {
 
     return (
         <div className="min-h-screen flex flex-col md:flex-row" style={{height:'100vh',overflow:'hidden'}}>
+            {toastMessage && (
+                <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg font-bold text-sm z-50 animate-pulse">
+                    {toastMessage}
+                </div>
+            )}
 
             {/* Sidebar */}
             <aside className="hidden md:flex w-full md:w-64 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/5 p-6 flex-col shrink-0">

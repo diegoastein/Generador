@@ -541,6 +541,7 @@ const App = () => {
     const [batchDescriptions, setBatchDescriptions] = useState('');
     const [isBatchGenerating, setIsBatchGenerating] = useState(false);
     const [batchProgress, setBatchProgress] = useState('');
+    const [toastMessage, setToastMessage] = useState('');
     const [data, setData] = useState({
         title:"Desafío Clínico",
         caseText:"Describe aquí el escenario...",
@@ -645,6 +646,8 @@ const App = () => {
             quizData: { ...quizData }
         };
         setLibrary(prev => [newItem, ...prev]);
+        setToastMessage(`✅ Quiz guardado en biblioteca`);
+        setTimeout(() => setToastMessage(''), 2500);
         if (typeof NeoSync !== 'undefined') {
             try { await NeoSync.save('quiz', newItem); } catch (e) {}
         }
@@ -847,6 +850,11 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
+            {toastMessage && (
+                <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg font-bold text-sm z-50 animate-pulse">
+                    {toastMessage}
+                </div>
+            )}
             <aside className="hidden md:flex w-full md:w-72 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/5 p-6 flex-col shrink-0">
                 <div className="flex items-center gap-3 mb-12">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/40">NM</div>

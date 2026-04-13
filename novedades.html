@@ -316,6 +316,7 @@ function App() {
     const [mainTab, setMainTab] = useState('editor'); // 'editor' | 'library'
     const [library, setLibrary] = useState([]);
     const [syncStatus, setSyncStatus] = useState('offline'); // 'offline' | 'syncing' | 'ok'
+    const [toastMessage, setToastMessage] = useState('');
     const [defaultAudioFileName, setDefaultAudioFileName] = useState('');
     const [defaultAudioUrl, setDefaultAudioUrl] = useState(null);
     const canvasRef = useRef(null);
@@ -437,6 +438,8 @@ function App() {
             slidesData: slides.map(s => ({ ...s, audioUrl: null }))
         };
         setLibrary(prev => [newItem, ...prev]);
+        setToastMessage(`✅ ${type} guardado en biblioteca`);
+        setTimeout(() => setToastMessage(''), 2500);
         if (typeof NeoSync !== 'undefined') {
             try { await NeoSync.save('novedades', newItem); } catch (e) {}
         }
@@ -764,6 +767,11 @@ function App() {
 
     return (
         <div className="app-root flex flex-col" style={{ height: '100vh' }}>
+            {toastMessage && (
+                <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg font-bold text-sm z-50 animate-pulse">
+                    {toastMessage}
+                </div>
+            )}
 
             {/* ─── HEADER ─── */}
             <header className="glass flex-shrink-0 px-3 md:px-6 py-2 md:py-3 flex items-center justify-between gap-2 border-b border-white/5">

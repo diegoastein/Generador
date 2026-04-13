@@ -906,6 +906,7 @@ const App = () => {
     const [library, setLibrary] = useState([]);
     const [activeTab, setActiveTab] = useState('editor'); // 'editor', 'library'
     const [syncStatus, setSyncStatus] = useState('offline'); // 'offline' | 'syncing' | 'ok'
+    const [toastMessage, setToastMessage] = useState('');
 
     // Inicializar NeoSync y cargar biblioteca
     useEffect(() => {
@@ -1003,6 +1004,8 @@ const App = () => {
             scenarioData: scenario
         };
         setLibrary([newItem, ...library]);
+        setToastMessage(`✅ ${item.type} guardado en biblioteca`);
+        setTimeout(() => setToastMessage(''), 2500);
         if (typeof NeoSync !== 'undefined') {
             try { await NeoSync.save('casos', newItem); } catch (e) {}
         }
@@ -1601,6 +1604,11 @@ const App = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
+            {toastMessage && (
+                <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg font-bold text-sm z-50 animate-pulse">
+                    {toastMessage}
+                </div>
+            )}
             <aside className="w-full md:w-72 bg-slate-900/50 border-b md:border-b-0 md:border-r border-white/5 p-4 md:p-6 flex flex-col items-center md:items-start shrink-0 max-h-96 md:max-h-none overflow-y-auto md:overflow-visible">
                 <div className="flex items-center gap-3 mb-12 w-full justify-between md:justify-start">
                     <div className="flex items-center gap-3">
