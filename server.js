@@ -82,7 +82,7 @@ RESPONDE SOLO CON JSON VÁLIDO (sin markdown, sin explicaciones adicionales):
                         'anthropic-version': '2023-06-01'
                     },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'claude-sonnet-4-6',
                         max_tokens: 2048,
                         system: systemPrompt,
                         messages: [{ role: 'user', content: `Genera un caso clínico sobre: ${caseDescription}` }]
@@ -155,7 +155,7 @@ RESPONDE SOLO CON JSON:
                         'anthropic-version': '2023-06-01'
                     },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'claude-sonnet-4-6',
                         max_tokens: 1024,
                         system: systemPrompt,
                         messages: [{ role: 'user', content: `Generá un quiz clínico sobre: ${quizDescription}` }]
@@ -218,7 +218,7 @@ RESPONDE SOLO CON JSON VÁLIDO (sin markdown):
                         'anthropic-version': '2023-06-01'
                     },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'claude-sonnet-4-6',
                         max_tokens: 2048,
                         system: systemPrompt,
                         messages: [{ role: 'user', content: `Generá slides de novedades para: ${description}` }]
