@@ -149,12 +149,13 @@ Agrega las 3 bibliotecas en una vista unificada para planificar publicaciones.
 - El reel se agrega a la biblioteca en `onstop` (no antes)
 
 ### Layout 3 columnas (desktop):
-- **Izquierda (200px)**: lista de slides con orden, agregar/eliminar — `hidden md:flex` en móvil
+- **Izquierda (200px)**: lista de slides con orden, agregar/eliminar — `hidden md:flex` en desktop
 - **Centro (420px → w-full en móvil)**: tabs "✨ Generar con IA" | "✏️ Editor manual" + acciones de exportación
 - **Derecha (flex-1)**: preview canvas o biblioteca — `hidden lg:flex` en móvil
 
 ### Responsive móvil (novedades.html):
-- Panel izquierdo oculto en móvil (`hidden md:flex`)
+- **Carrusel horizontal en móvil** (`flex md:hidden`): lista scrolleable de slides con highlight del activo
+- **Controles de slide en móvil** (`flex md:hidden`): botones "↑ Arriba", "↓ Abajo", "✕ Eliminar" accesibles
 - Panel central toma `flex-1` en móvil / `md:flex-none md:w-96` en desktop
 - Panel derecho oculto en móvil (`hidden lg:flex`)
 - Header siempre en fila única con botones siempre visibles
@@ -240,45 +241,14 @@ Todos los módulos usan el mismo patrón:
 - Endpoints: `/api/generate-case`, `/api/generate-quiz`, `/api/generate-novedades`
 - Las respuestas son JSON estructurado (sin markdown)
 
-## Sincronización Firebase (pendiente de implementar)
+## Sincronización Firebase (roadmap futuro)
 
-### Proyecto Firebase
-- Proyecto: `studio-378906782-70dc4` (Firebase app, antes vacío — reutilizado para NeoMonitor)
-- Firestore creado en región `nam5` (default database)
-- Config SDK ya obtenida (apiKey, authDomain, appId, etc.)
-- Firebase CLI v13.35.1 instalado globalmente (`sudo npm install -g firebase-tools@13`)
+Infraestructura preparada pero no activada. Proyecto Firebase `studio-378906782-70dc4` con Firestore en región `nam5`. Firebase CLI v13.35.1 instalado.
 
-### Arquitectura definida
-- Sin servidor, sin login — app personal, uso en múltiples dispositivos
-- Archivo compartido `firebase-sync.js` incluido via `<script src="firebase-sync.js">` en cada HTML
-- Estructura Firestore:
-  ```
-  /neomonitor/novedades/{itemId}
-  /neomonitor/casos/{itemId}
-  /neomonitor/quiz/{itemId}
-  ```
-- API pública que expone `firebase-sync.js`:
-  ```js
-  NeoSync.save(coleccion, item)   // guarda/actualiza item en Firestore + localStorage
-  NeoSync.delete(coleccion, id)   // elimina de Firestore + localStorage
-  NeoSync.loadAll(coleccion)      // descarga Firestore y mergea con localStorage (gana el más reciente por id timestamp)
-  NeoSync.status                  // 'ok' | 'syncing' | 'offline'
-  ```
-
-### Flujo de sync
-- Al **abrir** la app: `NeoSync.loadAll()` → merge con localStorage
-- Al **guardar** en biblioteca: escribe en localStorage Y llama `NeoSync.save()`
-- Al **eliminar**: borra en localStorage Y llama `NeoSync.delete()`
-- Indicador visual de estado sync en cada módulo: "✓ sincronizado" / "↻ sincronizando..." / "⚠ sin conexión"
-
-### Plan de implementación
-1. Crear `firebase-sync.js` con la lógica compartida y config del proyecto
-2. Integrar en `novedades.html` como prueba piloto
-3. Validar y replicar en `casosexp.html`, `quiz.html`, `neoplanner.html`
-4. Configurar reglas de seguridad Firestore (actualmente cerradas)
-
-### Pendiente antes de arrancar
-- Definir reglas de Firestore (por ahora bloqueado — hay que abrir lectura/escritura o usar Auth anónima)
+Cuando se implemente:
+- Archivo `firebase-sync.js` con API: `NeoSync.save()`, `NeoSync.delete()`, `NeoSync.loadAll()`, `NeoSync.status`
+- Integración en módulos: guardar en Firestore + localStorage, merge al abrir app
+- Indicador visual de estado (sincronizado/sincronizando/sin conexión)
 
 ## Convenciones
 
