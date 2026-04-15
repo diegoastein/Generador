@@ -799,7 +799,7 @@ function App() {
             {/* ─── BODY ─── */}
             <div className="body-section flex flex-col md:flex-row" style={{ flex: 1, overflow: 'hidden' }}>
 
-                {/* ══ PANEL IZQUIERDO — Lista de slides ══ */}
+                {/* ══ PANEL IZQUIERDO — Lista de slides (desktop) ══ */}
                 <div className="hidden md:flex flex-col border-r border-white/5 flex-shrink-0" style={{ width: '200px' }}>
 
                     {/* Header lista */}
@@ -823,6 +823,28 @@ function App() {
                                     <button onClick={e => { e.stopPropagation(); removeSlide(i); }} className="text-slate-700 hover:text-red-400 p-0.5 text-[10px]">✕</button>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ══ CARRUSEL MÓVIL — Lista horizontal de slides ══ */}
+                <div className="flex md:hidden flex-col border-b border-white/5 flex-shrink-0 gap-2 p-3 bg-slate-950/50">
+                    <div className="flex items-center justify-between flex-shrink-0">
+                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Slides ({slides.length})</span>
+                        <button onClick={addSlide} className="btn px-2 py-1 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg border border-amber-500/20 text-[9px]">+</button>
+                    </div>
+                    <div className="overflow-x-auto pb-1 flex gap-2 flex-row">
+                        {slides.map((s, i) => (
+                            <button key={s.id} onClick={() => setActiveIdx(i)}
+                                className="flex-shrink-0 px-3 py-2 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap flex items-center gap-2"
+                                style={{
+                                    background: i === activeIdx ? (PALETTES[s.palette]?.accent + '30') : 'rgba(255,255,255,0.05)',
+                                    color: i === activeIdx ? PALETTES[s.palette]?.accent : '#94a3b8',
+                                    border: i === activeIdx ? `1px solid ${PALETTES[s.palette]?.accent}40` : '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                <span className="font-black">{i + 1}</span>
+                                <span className="truncate max-w-[80px]">{s.title}</span>
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -887,6 +909,24 @@ function App() {
                                     ))}
                                   </div>
                             }
+                        </div>
+                    )}
+
+                    {/* ── Controles de slide en móvil ── */}
+                    {mainTab === 'editor' && (
+                        <div className="flex md:hidden gap-2 p-3 border-b border-white/5 flex-shrink-0 bg-slate-950/50">
+                            <button onClick={() => moveSlide(activeIdx, -1)} disabled={activeIdx === 0}
+                                className="flex-1 px-3 py-2 rounded-lg text-[10px] font-bold bg-slate-700/30 text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                ↑ Arriba
+                            </button>
+                            <button onClick={() => moveSlide(activeIdx, 1)} disabled={activeIdx === slides.length - 1}
+                                className="flex-1 px-3 py-2 rounded-lg text-[10px] font-bold bg-slate-700/30 text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                ↓ Abajo
+                            </button>
+                            <button onClick={() => removeSlide(activeIdx)} disabled={slides.length === 1}
+                                className="flex-1 px-3 py-2 rounded-lg text-[10px] font-bold bg-red-900/30 text-red-400 hover:text-red-300 hover:bg-red-900/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                ✕ Eliminar
+                            </button>
                         </div>
                     )}
 
