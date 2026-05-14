@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Generator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #111;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 32px 16px 64px;
+}
+
+.container { max-width: 740px; margin: 0 auto; }
+
+header { margin-bottom: 28px; }
+header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+header p { color: #555; font-size: 0.85rem; margin-top: 4px; }
+
+/* ── Upload zone ── */
+.upload-zone {
+  border: 2px dashed #2a2a2a;
+  border-radius: 14px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 24px;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: #c026d3;
+  background: rgba(192,38,211,0.05);
+}
+.upload-icon { font-size: 2rem; margin-bottom: 10px; }
+.upload-zone strong { display: block; font-size: 0.92rem; color: #fff; margin-bottom: 4px; }
+.upload-zone span { font-size: 0.78rem; color: #555; }
+
+/* ── List header ── */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.list-header h2 { font-size: 0.72rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
+.list-actions { display: flex; gap: 6px; }
+.small-btn {
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.small-btn:hover { border-color: #444; color: #ccc; }
+
+/* ── Image list ── */
+.image-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 24px; min-height: 48px; }
+
+.empty-state {
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  color: #3a3a3a;
+  font-size: 0.85rem;
+}
+
+.image-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.image-item:hover { border-color: #2a2a2a; }
+.image-item.sortable-ghost { opacity: 0.2; }
+.image-item.sortable-chosen { background: #222; }
+
+.drag-handle { color: #333; cursor: grab; font-size: 0.9rem; flex-shrink: 0; padding: 2px 4px; line-height: 1; transition: color 0.15s; }
+.drag-handle:hover { color: #666; }
+
+.item-num { font-size: 0.68rem; color: #3a3a3a; min-width: 16px; text-align: right; flex-shrink: 0; }
+
+.item-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
+
+.item-name { flex: 1; font-size: 0.8rem; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.item-remove {
+  background: none; border: none; color: #333; cursor: pointer;
+  font-size: 0.82rem; padding: 4px 6px; border-radius: 4px;
+  flex-shrink: 0; transition: color 0.15s; line-height: 1;
+}
+.item-remove:hover { color: #ef4444; }
+
+/* ── Settings ── */
+.settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+
+.setting-card { background: #1a1a1a; border-radius: 10px; padding: 14px 16px; }
+.setting-card.full-width { grid-column: span 2; }
+
+.setting-card label {
+  display: block; font-size: 0.68rem; font-weight: 700;
+  color: #4a4a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+}
+
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: '▾'; position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%); color: #555; pointer-events: none; font-size: 0.72rem;
+}
+
+.setting-card select,
+.setting-card input[type="number"] {
+  width: 100%; background: #222; border: 1px solid #2d2d2d;
+  border-radius: 7px; color: #e0e0e0; padding: 8px 10px;
+  font-size: 0.86rem; appearance: none; -webkit-appearance: none;
+  transition: border-color 0.15s; font-family: inherit;
+}
+.setting-card select:focus,
+.setting-card input[type="number"]:focus { outline: none; border-color: #c026d3; }
+
+.duration-hint { font-size: 0.7rem; color: #444; margin-top: 6px; }
+
+/* ── Audio upload ── */
+.audio-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #222; border: 1px solid #2d2d2d;
+  border-radius: 7px; padding: 8px 10px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.audio-row:hover { border-color: #444; }
+.audio-icon { font-size: 0.95rem; flex-shrink: 0; }
+.audio-name { flex: 1; font-size: 0.82rem; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audio-row.has-file .audio-name { color: #c026d3; }
+.audio-clear {
+  background: none; border: none; color: #444; cursor: pointer;
+  font-size: 0.78rem; padding: 2px 5px; border-radius: 4px;
+  display: none; flex-shrink: 0; transition: color 0.15s;
+}
+.audio-row.has-file .audio-clear { display: block; }
+.audio-clear:hover { color: #ef4444; }
+
+/* ── Generate ── */
+.generate-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
+  border: none; border-radius: 12px; color: #fff;
+  font-size: 0.96rem; font-weight: 700; cursor: pointer;
+  letter-spacing: 0.01em; transition: opacity 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+.generate-btn:hover:not(:disabled) { opacity: 0.9; }
+.generate-btn:active:not(:disabled) { transform: scale(0.99); }
+.generate-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Progress ── */
+.progress-section { margin-top: 16px; display: none; }
+.progress-section.visible { display: block; }
+.progress-bar { height: 4px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, #c026d3, #7c3aed);
+  border-radius: 2px; transition: width 0.35s ease; width: 0%;
+}
+.progress-label { font-size: 0.75rem; color: #555; text-align: center; margin-top: 8px; }
+
+canvas { position: fixed; left: -9999px; top: -9999px; pointer-events: none; }
+
+@media (max-width: 520px) {
+  .settings { grid-template-columns: 1fr; }
+  .setting-card.full-width { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Reel Generator</h1>
+    <p>Generá videos para Instagram Reels desde imágenes · todo en el navegador</p>
+  </header>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone">
+    <div class="upload-icon">🖼</div>
+    <strong>Arrastrá imágenes o hacé clic para seleccionar</strong>
+    <span>PNG · JPG · JPEG — se ordenan alfabéticamente por defecto</span>
+  </div>
+  <input type="file" id="imageInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg" multiple style="display:none">
+
+  <!-- List header -->
+  <div class="list-header">
+    <h2>Imágenes &nbsp;<span id="imgCount" style="color:#666">0</span></h2>
+    <div class="list-actions">
+      <button class="small-btn" id="sortAlphaBtn">A–Z</button>
+      <button class="small-btn" id="clearAllBtn">Limpiar todo</button>
+    </div>
+  </div>
+  <div class="image-list" id="imageList">
+    <div class="empty-state">Las imágenes que subas aparecerán aquí</div>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <div class="setting-card">
+      <label>Formato de video</label>
+      <div class="select-wrap">
+        <select id="formatSelect">
+          <option value="vertical">Vertical 9:16 — Reels / Stories</option>
+          <option value="square">Cuadrado 1:1</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <label>Duración por imagen (seg.)</label>
+      <input type="number" id="durationInput" value="3" min="0.5" max="60" step="0.5">
+      <div class="duration-hint" id="durationHint">Duración total: —</div>
+    </div>
+
+    <div class="setting-card">
+      <label>Formato de exportación</label>
+      <div class="select-wrap">
+        <select id="outputFormat">
+          <option value="webm">WebM (universal)</option>
+          <option value="mp4">MP4 (requiere Chrome/Edge)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <label>Ajuste de imagen</label>
+      <div class="select-wrap">
+        <select id="fitMode">
+          <option value="contain">Ajustar — imagen completa, sin recorte</option>
+          <option value="cover">Rellenar — recorta bordes para llenar el frame</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <label>Audio MP3 (opcional)</label>
+      <div class="audio-row" id="audioRow">
+        <span class="audio-icon">♫</span>
+        <span class="audio-name" id="audioName">Sin audio</span>
+        <button class="audio-clear" id="audioClear">✕</button>
+      </div>
+      <input type="file" id="audioInput" accept=".mp3,audio/mpeg" style="display:none">
+    </div>
+  </div>
+
+  <button class="generate-btn" id="generateBtn" disabled>Generar video</button>
+
+  <div class="progress-section" id="progressSection">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">Preparando…</div>
+  </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────────
+let imageItems = []; // { file, url, img, name }
+let audioFile  = null;
+let sortable   = null;
+
+// ── DOM refs ───────────────────────────────────────────────────────────
+const uploadZone     = document.getElementById('uploadZone');
+const imageInput     = document.getElementById('imageInput');
+const imageList      = document.getElementById('imageList');
+const imgCount       = document.getElementById('imgCount');
+const generateBtn    = document.getElementById('generateBtn');
+const progressSection= document.getElementById('progressSection');
+const progressFill   = document.getElementById('progressFill');
+const progressLabel  = document.getElementById('progressLabel');
+const canvas         = document.getElementById('canvas');
+const ctx            = canvas.getContext('2d');
+const durationInput  = document.getElementById('durationInput');
+const durationHint   = document.getElementById('durationHint');
+const audioRow       = document.getElementById('audioRow');
+const audioName      = document.getElementById('audioName');
+const audioClear     = document.getElementById('audioClear');
+const audioInput     = document.getElementById('audioInput');
+
+// ── Upload zone ────────────────────────────────────────────────────────
+uploadZone.addEventListener('click', () => imageInput.click());
+
+uploadZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadZone.classList.add('drag-over');
+});
+uploadZone.addEventListener('dragleave', e => {
+  if (!uploadZone.contains(e.relatedTarget)) uploadZone.classList.remove('drag-over');
+});
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  addImages(Array.from(e.dataTransfer.files));
+});
+
+imageInput.addEventListener('change', e => {
+  addImages(Array.from(e.target.files));
+  imageInput.value = '';
+});
+
+// ── Audio ──────────────────────────────────────────────────────────────
+audioRow.addEventListener('click', e => {
+  if (e.target !== audioClear) audioInput.click();
+});
+audioInput.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  audioFile = f;
+  audioName.textContent = f.name;
+  audioRow.classList.add('has-file');
+  audioInput.value = '';
+});
+audioClear.addEventListener('click', e => {
+  e.stopPropagation();
+  audioFile = null;
+  audioName.textContent = 'Sin audio';
+  audioRow.classList.remove('has-file');
+});
+
+// ── Controls ───────────────────────────────────────────────────────────
+document.getElementById('sortAlphaBtn').addEventListener('click', () => {
+  imageItems.sort((a, b) => a.name.localeCompare(b.name));
+  renderList();
+});
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  imageItems.forEach(item => URL.revokeObjectURL(item.url));
+  imageItems = [];
+  renderList();
+});
+durationInput.addEventListener('input', updateDurationHint);
+
+// ── Load images ────────────────────────────────────────────────────────
+function addImages(files) {
+  const valid = files.filter(f => /\.(png|jpe?g)$/i.test(f.name));
+  if (!valid.length) return;
+
+  Promise.all(valid.map(file => new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => resolve({ file, url, img, name: file.name });
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  }))).then(results => {
+    imageItems.push(...results.filter(Boolean));
+    imageItems.sort((a, b) => a.name.localeCompare(b.name));
+    renderList();
+  });
+}
+
+function renderList() {
+  imgCount.textContent = imageItems.length;
+  updateDurationHint();
+
+  if (sortable) { sortable.destroy(); sortable = null; }
+
+  if (!imageItems.length) {
+    imageList.innerHTML = '<div class="empty-state">Las imágenes que subas aparecerán aquí</div>';
+    generateBtn.disabled = true;
+    return;
+  }
+
+  generateBtn.disabled = false;
+  imageList.innerHTML = imageItems.map((item, i) => `
+    <div class="image-item" data-idx="${i}">
+      <span class="drag-handle" title="Arrastrar para reordenar">⠿⠿</span>
+      <span class="item-num">${i + 1}</span>
+      <img class="item-thumb" src="${item.url}" alt="">
+      <span class="item-name">${esc(item.name)}</span>
+      <button class="item-remove" data-idx="${i}" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+
+  imageList.querySelectorAll('.item-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.idx, 10);
+      URL.revokeObjectURL(imageItems[i].url);
+      imageItems.splice(i, 1);
+      renderList();
+    });
+  });
+
+  sortable = Sortable.create(imageList, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd(evt) {
+      const [moved] = imageItems.splice(evt.oldIndex, 1);
+      imageItems.splice(evt.newIndex, 0, moved);
+      renderList();
+    },
+  });
+}
+
+function updateDurationHint() {
+  const dur   = parseFloat(durationInput.value) || 0;
+  const total = imageItems.length * dur;
+  durationHint.textContent = imageItems.length > 0
+    ? `Duración total: ${total.toFixed(1)} seg. (${imageItems.length} img × ${dur}s)`
+    : 'Duración total: —';
+}
+
+// ── Generate video ─────────────────────────────────────────────────────
+generateBtn.addEventListener('click', generateVideo);
+
+async function generateVideo() {
+  if (!imageItems.length) return;
+
+  const format    = document.getElementById('formatSelect').value;
+  const duration  = Math.max(0.5, parseFloat(durationInput.value) || 3);
+  const outputFmt = document.getElementById('outputFormat').value;
+  const fitMode   = document.getElementById('fitMode').value;
+
+  canvas.width  = 1080;
+  canvas.height = format === 'vertical' ? 1920 : 1080;
+
+  // MIME negotiation
+  const preferMp4 = outputFmt === 'mp4';
+  const candidates = preferMp4
+    ? ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+    : ['video/webm;codecs=vp9', 'video/webm'];
+
+  const mimeType = candidates.find(m => {
+    try { return MediaRecorder.isTypeSupported(m); } catch { return false; }
+  });
+
+  if (!mimeType) {
+    alert('Tu navegador no soporta MediaRecorder. Usá Chrome, Edge o Firefox.');
+    return;
+  }
+
+  const ext = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+  if (preferMp4 && ext === 'webm') {
+    showProgress(0, 'MP4 no disponible en este navegador — se usará WebM');
+    await sleep(1500);
+  }
+
+  // Video stream
+  const videoStream = canvas.captureStream(30);
+
+  // Audio setup
+  let combinedStream = videoStream;
+  let audioCtx       = null;
+  let bufferSource   = null;
+
+  if (audioFile) {
+    try {
+      audioCtx = new AudioContext();
+      const arrayBuffer   = await audioFile.arrayBuffer();
+      const audioBuffer   = await audioCtx.decodeAudioData(arrayBuffer);
+      bufferSource        = audioCtx.createBufferSource();
+      bufferSource.buffer = audioBuffer;
+      bufferSource.loop   = true;
+      const dest = audioCtx.createMediaStreamDestination();
+      bufferSource.connect(dest);
+      combinedStream = new MediaStream([
+        ...videoStream.getVideoTracks(),
+        ...dest.stream.getAudioTracks(),
+      ]);
+    } catch (err) {
+      console.warn('No se pudo procesar el audio:', err);
+    }
+  }
+
+  const recorder = new MediaRecorder(combinedStream, {
+    mimeType,
+    videoBitsPerSecond: 8_000_000,
+  });
+  const chunks = [];
+
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: mimeType });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    const baseName = imageItems[0].name.replace(/\.[^.]+$/, '');
+    a.download = `${baseName}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    generateBtn.disabled    = false;
+    generateBtn.textContent = 'Generar video';
+    progressFill.style.width = '100%';
+    progressLabel.textContent = `✓ Video listo: reel.${ext}`;
+    if (audioCtx) audioCtx.close();
+  };
+
+  // Start recording
+  generateBtn.disabled    = true;
+  generateBtn.textContent = 'Generando…';
+  progressSection.classList.add('visible');
+  showProgress(0, 'Preparando…');
+
+  recorder.start(200);
+  if (bufferSource) bufferSource.start(0);
+
+  for (let i = 0; i < imageItems.length; i++) {
+    drawFrame(ctx, imageItems[i].img, canvas.width, canvas.height, fitMode);
+    showProgress(
+      (i / imageItems.length) * 100,
+      `Procesando imagen ${i + 1} de ${imageItems.length}…`
+    );
+    await sleep(duration * 1000);
+  }
+
+  showProgress(98, 'Finalizando…');
+  recorder.stop();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function drawFrame(ctx, img, w, h, mode) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
+  const iA = img.naturalWidth / img.naturalHeight;
+  const cA = w / h;
+  let dw, dh;
+  if (mode === 'cover') {
+    // Rellena el frame completo, recortando lo que sobra
+    if (iA > cA) { dh = h; dw = dh * iA; }
+    else          { dw = w; dh = dw / iA; }
+  } else {
+    // Ajusta la imagen entera sin recortar (contain)
+    if (iA > cA) { dw = w; dh = dw / iA; }
+    else          { dh = h; dw = dh * iA; }
+  }
+  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+}
+
+function showProgress(pct, text) {
+  progressFill.style.width  = `${pct}%`;
+  progressLabel.textContent = text;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function esc(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

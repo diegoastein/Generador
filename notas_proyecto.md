@@ -2,7 +2,8 @@
 
 ## Pendientes
 
-- [ ] 
+- mejorar sincronizacion[ x]
+- 
 
 ## En progreso
 
@@ -18,7 +19,7 @@
 
 ## Ideas / A evaluar
 
-- [ ] 
+- sincro[x ] 
 
 ---
 

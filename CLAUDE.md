@@ -250,6 +250,93 @@ Cuando se implemente:
 - Integración en módulos: guardar en Firestore + localStorage, merge al abrir app
 - Indicador visual de estado (sincronizado/sincronizando/sin conexión)
 
+## Reel Generator
+
+Herramienta independiente para generar videos tipo Reels/Stories para Instagram a partir de imágenes PNG/JPG.
+
+### Archivos
+
+| Archivo | Descripción |
+|---|---|
+| `reel-gui.py` | Servidor local Python (puerto 8080) con interfaz web completa |
+| `reel-gui-start.sh` | Script de inicio — mata instancia anterior y arranca el servidor |
+| `reel-generator.html` | Versión standalone sin servidor (usa MediaRecorder del navegador) |
+| `reel-gen.sh` | Script de línea de comandos puro (ffmpeg directo) |
+
+Acceso directo en el launcher de ChromeOS: **Reel Generator** → abre `http://localhost:8080` en Chrome.
+
+### Servidor (`reel-gui.py`)
+
+**Stack**: Python 3.11 stdlib + ffmpeg. Sin dependencias externas.
+
+**Endpoints**:
+- `GET /` — sirve el HTML embebido (inyecta `HOME_PATH` y `DOWNLOADS_PATH`)
+- `GET /browse?path=...` — explorador de directorios (devuelve JSON con `{current, parent, dirs}`)
+- `GET /list-dirs?path=...` — lista subcarpetas que contienen imágenes
+- `POST /generate` — modo individual: recibe imágenes como base64 JSON, devuelve video
+- `POST /batch-start` — modo lote: recibe paths de carpetas, inicia job en background, devuelve `{jobId}`
+- `GET /batch-status?id=...` — estado del job `{total, done, current, complete, results}`
+
+**Rutas de sistema**:
+- `DOWNLOADS = '/mnt/chromeos/MyFiles/Downloads'`
+- `HOME = os.path.expanduser('~')`
+
+### Funcionalidades
+
+**Modo individual** (pestaña "Individual"):
+- Subida de imágenes por drag & drop o selector
+- Orden alfabético por defecto, reordenable con drag & drop (SortableJS)
+- Ajuste de imagen: `contain` (sin recorte, barras negras) | `cover` (rellena y recorta)
+- Formato: vertical 9:16 (1080×1920) | cuadrado 1:1 (1080×1080)
+- Audio MP3 opcional (hace loop si el video es más largo)
+- Exportación MP4 o WebM
+- Nombre del archivo de salida = nombre de la primera imagen sin extensión
+
+**Modo lote** (pestaña "Lote"):
+- Explorador de directorios integrado (botón "Examinar") — navega el filesystem del servidor
+- Selección de subcarpetas con checkboxes (todas tildadas por defecto)
+- Un MP3 compartido para todos los videos (opcional)
+- Genera un video por carpeta, lo guarda dentro de la misma carpeta
+- Nombre del video = nombre de la primera imagen de esa carpeta (sin extensión)
+- Progreso en tiempo real via polling cada 800ms
+- Lista de resultados con ✓/✗ por carpeta
+
+### Generación de video (ffmpeg)
+
+Patrón concat de ffmpeg para slideshow:
+```
+file '/path/img.png'
+duration 4
+...
+file '/path/last.png'   ← repetir último sin duration (quirk ffmpeg)
+```
+
+Filtro contain: `scale=W:H:force_original_aspect_ratio=decrease,pad=W:H:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1`
+Filtro cover: `scale=W:H:force_original_aspect_ratio=increase,crop=W:H,setsar=1`
+
+Codecs MP4: `libx264 -preset fast -crf 18 -pix_fmt yuv420p -r 30`
+Codecs WebM: `libvpx-vp9 -b:v 0 -crf 33 -r 30`
+Audio: AAC 192k (MP4) / Opus 192k (WebM), con `-stream_loop -1` para loop
+
+### Versión standalone (`reel-generator.html`)
+
+Mismas funciones que el modo individual del servidor pero usa `MediaRecorder` + `canvas.captureStream(30)` del navegador. Sin modo lote. Más lenta (tiempo real). No requiere servidor.
+
+### Script CLI (`reel-gen.sh`)
+
+```bash
+reel-gen.sh [opciones] [img1 img2 ...]
+  --dir CARPETA       Carpeta de imágenes (orden alfabético)
+  -t, --duration SEGS  Duración por imagen (default: 3)
+  -f, --format FORMAT  vertical (default) | square
+      --fit MODO       contain (default) | cover
+  -a, --audio MP3      Archivo MP3
+      --webm           Exportar WebM en lugar de MP4
+  -o, --output FILE    Nombre del archivo de salida
+```
+
+Imágenes en Descargas accesibles desde Linux en: `/mnt/chromeos/MyFiles/Downloads/`
+
 ## Convenciones
 
 - Al agregar nuevos módulos, seguir el patrón de archivo único autocontenido

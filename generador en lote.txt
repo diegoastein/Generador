@@ -1,0 +1,5 @@
+generador en lote
+
+bash /home/diegosteinberg/generador/reel-gui-start.sh
+
+● pkill -f reel-gui.py ; sleep 0.5 ; python3 ~/generador/reel-gui.py                                                                                 
